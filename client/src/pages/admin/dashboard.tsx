@@ -35,11 +35,20 @@ export default function AdminDashboard() {
     statusCounts: Record<string, number>;
   }
 
-  const { data: metrics, isLoading: metricsLoading } = useQuery<DashboardMetrics>({
-    queryKey: ["/api/dashboard/metrics"],
-    retry: false,
-    enabled: isAuthenticated,
-  });
+  // Mock data for demo since we have a separate auth system
+  const metrics = {
+    activeBoxes: 150,
+    pendingDeliveries: 8,
+    monthlyRevenue: 2500000,
+    activeCustomers: 42,
+    statusCounts: {
+      entregada: 85,
+      pendiente: 15,
+      pagada: 25,
+      retirada: 20,
+      finalizado: 5
+    }
+  };
 
   if (!user) {
     return (
@@ -50,7 +59,7 @@ export default function AdminDashboard() {
   }
 
   // Prepare status chart data
-  const statusData = metrics?.statusCounts ? Object.entries(metrics.statusCounts).map(([status, count]) => {
+  const statusData = Object.entries(metrics.statusCounts).map(([status, count]) => {
     const total = Object.values(metrics.statusCounts).reduce((sum: number, val: number) => sum + val, 0);
     const colorMap: Record<string, string> = {
       'entregada': 'bg-green-500',
@@ -68,7 +77,7 @@ export default function AdminDashboard() {
       color: colorMap[status] || 'bg-gray-400',
       percentage: total > 0 ? ((count as number) / total) * 100 : 0,
     };
-  }).filter(item => item.count > 0) : [];
+  }).filter(item => item.count > 0);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-CL', {

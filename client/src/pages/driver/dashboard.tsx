@@ -95,7 +95,8 @@ export default function DriverDashboard() {
       id: '1',
       type: 'delivery',
       customer: 'María González',
-      address: 'Av. Providencia 1234, Providencia',
+      address: 'Av. Providencia 1234, Providencia', // DESTINO: Dirección del cliente
+      origin: 'Bodega Central, Av. Industrial 1234, Quilicura', // ORIGEN: Desde donde se recogen las cajas
       boxes: 5,
       status: 'pending',
       time: '09:00',
@@ -105,7 +106,8 @@ export default function DriverDashboard() {
       id: '2',
       type: 'pickup',
       customer: 'Pedro Martínez',
-      address: 'Las Condes 567, Las Condes',
+      address: 'Las Condes 567, Las Condes', // ORIGEN: Dirección del cliente (donde se retiran)
+      destination: 'Bodega Central, Av. Industrial 1234, Quilicura', // DESTINO: Donde se llevan las cajas
       boxes: 3,
       status: 'completed',
       time: '11:30',
@@ -115,7 +117,8 @@ export default function DriverDashboard() {
       id: '3',
       type: 'delivery',
       customer: 'Ana López',
-      address: 'San Miguel 890, San Miguel',
+      address: 'San Miguel 890, San Miguel', // DESTINO: Dirección del cliente
+      origin: 'Bodega Central, Av. Industrial 1234, Quilicura', // ORIGEN: Desde donde se recogen las cajas
       boxes: 8,
       status: 'pending',
       time: '14:00',
@@ -238,10 +241,30 @@ export default function DriverDashboard() {
                       <span className="font-medium">{task.customer}</span>
                       <span className="ml-2 text-sm text-blue-600">{task.phone}</span>
                     </div>
-                    <div className="flex items-center text-gray-600">
-                      <MapPin className="w-4 h-4 mr-2" />
-                      <span className="text-sm">{task.address}</span>
-                    </div>
+                    
+                    {task.type === 'delivery' ? (
+                      <div className="space-y-1 text-sm">
+                        <div className="flex items-center text-gray-600">
+                          <span className="text-xs font-medium text-green-600 mr-2">DESDE:</span>
+                          <span>{task.origin}</span>
+                        </div>
+                        <div className="flex items-center text-gray-900">
+                          <MapPin className="w-4 h-4 mr-2 text-red-600" />
+                          <span className="font-medium">ENTREGAR EN: {task.address}</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-1 text-sm">
+                        <div className="flex items-center text-gray-900">
+                          <MapPin className="w-4 h-4 mr-2 text-blue-600" />
+                          <span className="font-medium">RETIRAR DE: {task.address}</span>
+                        </div>
+                        <div className="flex items-center text-gray-600">
+                          <span className="text-xs font-medium text-green-600 mr-2">LLEVAR A:</span>
+                          <span>{task.destination}</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                   
                   {task.status === 'pending' && (
