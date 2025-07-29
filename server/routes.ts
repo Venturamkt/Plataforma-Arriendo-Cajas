@@ -3,12 +3,16 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { setupAuthRoutes } from "./authRoutes";
+import { setupTaskRoutes } from "./taskRoutes";
 import { insertCustomerSchema, insertBoxSchema, insertRentalSchema, insertDeliveryTaskSchema, insertBoxMovementSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup new auth routes
   setupAuthRoutes(app);
+  
+  // Setup task routes for drivers
+  setupTaskRoutes(app);
 
   // Initialize default admin user and seed data
   await storage.initializeDefaultAdmin();

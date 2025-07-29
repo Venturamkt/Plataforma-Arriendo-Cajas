@@ -21,18 +21,11 @@ export default function AdminDashboard() {
 
   // Redirect to home if not authenticated
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/api/login";
-      }, 500);
+    if (!isAuthenticated) {
+      window.location.href = "/";
       return;
     }
-  }, [isAuthenticated, isLoading, toast]);
+  }, [isAuthenticated]);
 
   interface DashboardMetrics {
     activeBoxes: number;
@@ -48,7 +41,7 @@ export default function AdminDashboard() {
     enabled: isAuthenticated,
   });
 
-  if (isLoading || !user) {
+  if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-blue"></div>

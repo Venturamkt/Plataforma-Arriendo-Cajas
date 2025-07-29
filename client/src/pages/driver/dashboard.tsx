@@ -1,12 +1,23 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Truck, MapPin, Clock, CheckCircle, XCircle, Package, LogOut } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Truck, MapPin, Clock, CheckCircle, XCircle, Package, LogOut, AlertTriangle } from "lucide-react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useMutation } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 
 export default function DriverDashboard() {
   const { user } = useCurrentUser();
+  const { toast } = useToast();
+  const [selectedTask, setSelectedTask] = useState<any>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [taskStatus, setTaskStatus] = useState('');
+  const [observations, setObservations] = useState('');
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
@@ -17,6 +28,66 @@ export default function DriverDashboard() {
       window.location.href = '/';
     },
   });
+
+  const completeTaskMutation = useMutation({
+    mutationFn: async (data: { taskId: string; status: string; observations: string }) => {
+      const response = await fetch('/api/tasks/complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error('Error al completar tarea');
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Tarea completada",
+        description: "La tarea se ha actualizado correctamente",
+      });
+      setIsDialogOpen(false);
+      setObservations('');
+      setTaskStatus('');
+      // Refresh page or update state here
+      window.location.reload();
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "No se pudo completar la tarea",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleCompleteTask = (taskId: string, taskType: string) => {
+    const task = todayTasks.find(t => t.id === taskId);
+    setSelectedTask(task);
+    setTaskStatus(taskType === 'delivery' ? 'entregada' : 'retirada');
+    setIsDialogOpen(true);
+  };
+
+  const openGoogleMaps = (address: string) => {
+    const encodedAddress = encodeURIComponent(address);
+    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
+    window.open(mapsUrl, '_blank');
+  };
+
+  const submitTaskCompletion = () => {
+    if (!taskStatus) {
+      toast({
+        title: "Estado requerido",
+        description: "Selecciona el estado de la tarea",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    completeTaskMutation.mutate({
+      taskId: selectedTask?.id,
+      status: taskStatus,
+      observations: observations.trim(),
+    });
+  };
 
   // Mock data for demo
   const todayTasks = [
@@ -175,11 +246,19 @@ export default function DriverDashboard() {
                   
                   {task.status === 'pending' && (
                     <div className="flex space-x-2 mt-4">
-                      <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                      <Button 
+                        size="sm" 
+                        className="bg-green-600 hover:bg-green-700"
+                        onClick={() => handleCompleteTask(task.id, task.type)}
+                      >
                         <CheckCircle className="w-4 h-4 mr-2" />
                         Completar
                       </Button>
-                      <Button size="sm" variant="outline">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => openGoogleMaps(task.address)}
+                      >
                         <MapPin className="w-4 h-4 mr-2" />
                         Ver Mapa
                       </Button>
@@ -219,6 +298,78 @@ export default function DriverDashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Task Completion Dialog */}
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Completar Tarea</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              {selectedTask && (
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <div className="font-medium">{selectedTask.customer}</div>
+                  <div className="text-sm text-gray-600">{selectedTask.address}</div>
+                  <div className="text-sm text-gray-600">{selectedTask.boxes} cajas</div>
+                </div>
+              )}
+              
+              <div className="space-y-2">
+                <Label htmlFor="status">Estado de la tarea</Label>
+                <Select value={taskStatus} onValueChange={setTaskStatus}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona el estado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="entregada">✅ Entregada exitosamente</SelectItem>
+                    <SelectItem value="retirada">📦 Retirada exitosamente</SelectItem>
+                    <SelectItem value="no_entregada">❌ No se pudo entregar</SelectItem>
+                    <SelectItem value="no_retirada">❌ No se pudo retirar</SelectItem>
+                    <SelectItem value="incidencia">⚠️ Incidencia durante entrega</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="observations">Observaciones</Label>
+                <Textarea
+                  id="observations"
+                  placeholder="Ej: Cajas entregadas sin problemas, Nadie atendió la puerta, Cajas dañadas, etc."
+                  value={observations}
+                  onChange={(e) => setObservations(e.target.value)}
+                  rows={3}
+                />
+              </div>
+
+              <div className="flex space-x-2">
+                <Button
+                  onClick={submitTaskCompletion}
+                  disabled={completeTaskMutation.isPending}
+                  className="flex-1"
+                >
+                  {completeTaskMutation.isPending ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Guardando...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      Confirmar
+                    </>
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsDialogOpen(false)}
+                  disabled={completeTaskMutation.isPending}
+                >
+                  Cancelar
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

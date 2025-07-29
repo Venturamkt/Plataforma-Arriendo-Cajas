@@ -27,7 +27,9 @@ export default function CustomerDashboard() {
       boxes: 5,
       deliveryDate: '2025-01-25',
       daysRemaining: 10,
-      totalAmount: 15000
+      totalAmount: 15000,
+      originAddress: 'Bodega Central, Av. Industrial 1234, Quilicura',
+      destinationAddress: 'Oficina Cliente, Av. Providencia 567, Providencia'
     },
     {
       id: '2',
@@ -35,7 +37,9 @@ export default function CustomerDashboard() {
       boxes: 3,
       deliveryDate: '2025-01-30',
       daysRemaining: null,
-      totalAmount: 9000
+      totalAmount: 9000,
+      originAddress: 'Bodega Central, Av. Industrial 1234, Quilicura',
+      destinationAddress: 'Sucursal Norte, Las Condes 890, Las Condes'
     }
   ];
 
@@ -141,21 +145,34 @@ export default function CustomerDashboard() {
                     </div>
                   </div>
                   
-                  <div className="grid md:grid-cols-3 gap-4 text-sm">
-                    <div>
-                      <span className="text-gray-600">Cajas:</span>
-                      <span className="ml-2 font-medium">{rental.boxes} unidades</span>
-                    </div>
-                    <div>
-                      <span className="text-gray-600">Entrega:</span>
-                      <span className="ml-2 font-medium">{rental.deliveryDate}</span>
-                    </div>
-                    {rental.daysRemaining && (
+                  <div className="space-y-3 text-sm">
+                    <div className="grid md:grid-cols-3 gap-4">
                       <div>
-                        <span className="text-gray-600">Días restantes:</span>
-                        <span className="ml-2 font-medium text-green-600">{rental.daysRemaining}</span>
+                        <span className="text-gray-600">Cajas:</span>
+                        <span className="ml-2 font-medium">{rental.boxes} unidades</span>
                       </div>
-                    )}
+                      <div>
+                        <span className="text-gray-600">Entrega:</span>
+                        <span className="ml-2 font-medium">{rental.deliveryDate}</span>
+                      </div>
+                      {rental.daysRemaining && (
+                        <div>
+                          <span className="text-gray-600">Días restantes:</span>
+                          <span className="ml-2 font-medium text-green-600">{rental.daysRemaining}</span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="space-y-2 pt-2 border-t border-gray-200">
+                      <div>
+                        <span className="text-gray-600 text-xs">Origen:</span>
+                        <div className="text-sm">{rental.originAddress}</div>
+                      </div>
+                      <div>
+                        <span className="text-gray-600 text-xs">Destino:</span>
+                        <div className="text-sm font-medium">{rental.destinationAddress}</div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               ))}
