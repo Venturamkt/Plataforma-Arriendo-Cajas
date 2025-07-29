@@ -1,0 +1,95 @@
+Prompt detallado para Replit – Plataforma Arriendo Cajas
+Desarrolla una plataforma web moderna y profesional para el negocio "Arriendo Cajas". Usa como referencia de diseño la paleta de colores del sitio actual (rojo #C8201D, azul #2E5CA6, y el color azul específico de las cajas plásticas que te adjunto como imagen). El look debe ser limpio, intuitivo y responsivo.
+
+Módulos de la Plataforma:
+Panel de Administración (Backoffice)
+
+Visualizar el inventario de cajas clasificadas por estados: Pendientes, Pagadas, Entregadas, Canceladas, Retiradas, Finalizado.
+
+Base de datos de clientes con historial de arriendos y datos de contacto.
+
+Registro de ingresos y reportes económicos.
+
+Historial de movimientos de cada caja (quién la tuvo, fechas de entrega y retiro, problemas reportados).
+
+Dashboard visual con métricas clave: cajas activas, entregas pendientes, ingresos del mes, etc.
+
+Panel de Repartidores
+
+Listado de entregas y retiros asignados para el día.
+
+Permitir marcar cada caja como: Entregada, No entregada (motivo), Retirada (con o sin problemas), y añadir comentarios.
+
+Escaneo de código de barras (usando cámara del celular) para asociar cada movimiento al historial de la caja y del cliente.
+
+Opción rápida para reportar incidencias.
+
+Panel de Clientes (Mi Cuenta)
+
+Ver arriendos activos y pasados, estado de cada caja (con los mismos estados).
+
+Días restantes de arriendo y recordatorios automáticos (notificaciones).
+
+Detalles de entrega y retiro.
+
+Próximamente: poder ver la ubicación de sus cajas (para futura integración con tags NFC/RFID).
+
+Flujo de Operación:
+Reserva → Pendiente
+
+Pago → Pagada
+
+Entrega al cliente → Entregada
+
+Uso normal → Entregada
+
+Retiro de las cajas → Retirada
+
+Lavado, revisión y disponibilidad → Finalizado
+
+Cancelación (en cualquier momento antes de entrega) → Cancelada
+
+Funcionalidades Adicionales:
+Escaneo de códigos de barras: cada caja debe tener un identificador único escaneable con la cámara del celular. El sistema debe permitir asociar y buscar cajas por código.
+
+Compatibilidad móvil: toda la plataforma debe ser responsiva y fácil de usar desde smartphones (especialmente el panel de repartidores y clientes).
+
+Paneles visuales: usa dashboards modernos con tarjetas, gráficos y colores de la marca para mostrar información clave de un vistazo.
+
+Permisos y roles: usuarios de tipo administrador, repartidor y cliente, cada uno con acceso solo a su módulo correspondiente.
+
+Soporte futuro para tracking por tags NFC/RFID.
+
+Diseño/UI:
+Usa el rojo #C8201D para botones, encabezados y detalles llamativos.
+
+Usa el azul #2E5CA6 y el azul exacto de las cajas (según la imagen adjunta) como color base de fondos y secciones principales.
+
+Mantén fondos blancos o muy claros para contraste y lectura.
+
+Tipografía simple, moderna y legible.
+
+Imágenes reales de las cajas como parte de la interfaz (por ejemplo, en inventario o pantalla de inicio).
+
+Pantallas clave:
+Inicio (admin): Dashboard con métricas.
+
+Inventario: Lista de cajas filtrable por estado.
+
+Detalle de caja: Historial, movimientos, estado, escaneo de código de barras.
+
+Mi arriendo (cliente): Resumen de arriendos, estados, días restantes.
+
+Repartidor: Lista de entregas/retiros, escaneo y reporte de problemas.
+
+Extras:
+Incluir campos para observaciones y reportes en cada movimiento de caja.
+
+Filtros rápidos para buscar por cliente, estado de caja o código de barras.
+
+Integración futura con pasarela de pagos para automatizar el flujo “Pendiente” → “Pagada”.
+
+Opción de envío de notificaciones por email/SMS al cliente en cada cambio de estado relevante.
+
+Adjunto imagen de color de caja para extraer color exacto:
+[adjunta la imagen que subiste como referencia visual para el color azul de las cajas]
