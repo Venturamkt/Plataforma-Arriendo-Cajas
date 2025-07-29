@@ -5,7 +5,8 @@ import {
   Users, 
   Truck, 
   BarChart3,
-  QrCode
+  QrCode,
+  UserCog
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 
@@ -22,6 +23,7 @@ export default function Sidebar({ role }: SidebarProps) {
     { href: "/admin/customers", icon: Users, label: "Clientes" },
     { href: "/admin/deliveries", icon: Truck, label: "Entregas" },
     { href: "/admin/reports", icon: BarChart3, label: "Reportes" },
+    { href: "/admin/users", icon: UserCog, label: "Usuarios" },
   ];
 
   const driverNavItems = [

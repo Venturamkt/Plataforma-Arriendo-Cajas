@@ -10,6 +10,7 @@ import AdminInventory from "@/pages/admin/inventory";
 import AdminCustomers from "@/pages/admin/customers";
 import AdminDeliveries from "@/pages/admin/deliveries";
 import AdminReports from "@/pages/admin/reports";
+import UserManagement from "@/pages/admin/user-management";
 import DriverDashboard from "@/pages/driver/dashboard";
 import CustomerDashboard from "@/pages/customer/dashboard";
 import NotFound from "@/pages/not-found";
@@ -40,6 +41,7 @@ function Router() {
               <Route path="/admin/customers" component={AdminCustomers} />
               <Route path="/admin/deliveries" component={AdminDeliveries} />
               <Route path="/admin/reports" component={AdminReports} />
+              <Route path="/admin/users" component={UserManagement} />
             </>
           )}
           
@@ -56,6 +58,15 @@ function Router() {
             <>
               <Route path="/" component={CustomerDashboard} />
               <Route path="/customer/dashboard" component={CustomerDashboard} />
+            </>
+          )}
+          
+          {/* Default fallback based on role */}
+          {user && (
+            <>
+              {user.role === 'admin' && <Route path="/*" component={AdminDashboard} />}
+              {user.role === 'driver' && <Route path="/*" component={DriverDashboard} />}
+              {user.role === 'customer' && <Route path="/*" component={CustomerDashboard} />}
             </>
           )}
         </>

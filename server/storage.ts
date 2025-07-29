@@ -28,7 +28,9 @@ import { eq, desc, and, count, sql, or, like } from "drizzle-orm";
 export interface IStorage {
   // User operations (mandatory for Replit Auth)
   getUser(id: string): Promise<User | undefined>;
+  getUsers(): Promise<User[]>;
   upsertUser(user: UpsertUser): Promise<User>;
+  updateUserRole(id: string, role: string): Promise<User | undefined>;
   
   // Customer operations
   getCustomers(): Promise<Customer[]>;
@@ -87,6 +89,10 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async getUsers(): Promise<User[]> {
+    return await db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
   async upsertUser(userData: UpsertUser): Promise<User> {
     const [user] = await db
       .insert(users)
@@ -98,6 +104,15 @@ export class DatabaseStorage implements IStorage {
           updatedAt: new Date(),
         },
       })
+      .returning();
+    return user;
+  }
+
+  async updateUserRole(id: string, role: string): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set({ role: role as any, updatedAt: new Date() })
+      .where(eq(users.id, id))
       .returning();
     return user;
   }
@@ -325,6 +340,11 @@ export class DatabaseStorage implements IStorage {
         lastName: "Alarcón",
         role: "admin",
       });
+    } else {
+      // Update existing user to ensure they have admin role
+      await db.update(users)
+        .set({ role: "admin" })
+        .where(eq(users.email, adminEmail));
     }
   }
 }

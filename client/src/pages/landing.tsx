@@ -14,8 +14,11 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <Package className="h-8 w-8 text-box-blue mr-3" />
-              <h1 className="text-xl font-bold text-brand-blue">Arriendo Cajas</h1>
+              <img 
+                src="/logo.png" 
+                alt="Arriendo Cajas" 
+                className="h-8 mr-3"
+              />
             </div>
             <Button onClick={handleLogin} className="bg-brand-red hover:bg-brand-red text-white">
               Iniciar Sesión
