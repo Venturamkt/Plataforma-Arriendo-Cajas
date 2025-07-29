@@ -1,0 +1,104 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(0, 0%, 100%);
+  --foreground: hsl(224, 71.4%, 4.1%);
+  --muted: hsl(220, 14.3%, 95.9%);
+  --muted-foreground: hsl(220, 8.9%, 46.1%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(224, 71.4%, 4.1%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(224, 71.4%, 4.1%);
+  --border: hsl(220, 13%, 91%);
+  --input: hsl(220, 13%, 91%);
+  --primary: hsl(210, 95%, 56%);
+  --primary-foreground: hsl(210, 40%, 98%);
+  --secondary: hsl(220, 14.3%, 95.9%);
+  --secondary-foreground: hsl(220.9, 39.3%, 11%);
+  --accent: hsl(220, 14.3%, 95.9%);
+  --accent-foreground: hsl(220.9, 39.3%, 11%);
+  --destructive: hsl(0, 84.2%, 60.2%);
+  --destructive-foreground: hsl(210, 40%, 98%);
+  --ring: hsl(224, 71.4%, 4.1%);
+  --radius: 0.5rem;
+  
+  /* Brand colors */
+  --brand-red: hsl(2, 84%, 45%);
+  --brand-red-foreground: hsl(0, 0%, 100%);
+  --brand-blue: hsl(209, 69%, 41%);
+  --brand-blue-foreground: hsl(0, 0%, 100%);
+  --box-blue: hsl(207, 90%, 54%);
+  --box-blue-foreground: hsl(0, 0%, 100%);
+}
+
+.dark {
+  --background: hsl(224, 71.4%, 4.1%);
+  --foreground: hsl(210, 40%, 98%);
+  --muted: hsl(223, 47%, 11%);
+  --muted-foreground: hsl(215.4, 16.3%, 56.9%);
+  --popover: hsl(224, 71.4%, 4.1%);
+  --popover-foreground: hsl(210, 40%, 98%);
+  --card: hsl(224, 71.4%, 4.1%);
+  --card-foreground: hsl(210, 40%, 98%);
+  --border: hsl(215, 27.9%, 16.9%);
+  --input: hsl(215, 27.9%, 16.9%);
+  --primary: hsl(210, 95%, 56%);
+  --primary-foreground: hsl(210, 40%, 98%);
+  --secondary: hsl(215, 27.9%, 16.9%);
+  --secondary-foreground: hsl(210, 40%, 98%);
+  --accent: hsl(215, 27.9%, 16.9%);
+  --accent-foreground: hsl(210, 40%, 98%);
+  --destructive: hsl(0, 62.8%, 30.6%);
+  --destructive-foreground: hsl(210, 40%, 98%);
+  --ring: hsl(216, 12.2%, 83.9%);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .text-brand-red {
+    color: hsl(2, 84%, 45%);
+  }
+  
+  .bg-brand-red {
+    background-color: hsl(2, 84%, 45%);
+  }
+  
+  .text-brand-blue {
+    color: hsl(209, 69%, 41%);
+  }
+  
+  .bg-brand-blue {
+    background-color: hsl(209, 69%, 41%);
+  }
+  
+  .text-box-blue {
+    color: hsl(207, 90%, 54%);
+  }
+  
+  .bg-box-blue {
+    background-color: hsl(207, 90%, 54%);
+  }
+  
+  .hover\:bg-brand-red:hover {
+    background-color: hsl(2, 84%, 35%);
+  }
+  
+  .hover\:bg-brand-blue:hover {
+    background-color: hsl(209, 69%, 31%);
+  }
+  
+  .hover\:bg-box-blue:hover {
+    background-color: hsl(207, 90%, 44%);
+  }
+}

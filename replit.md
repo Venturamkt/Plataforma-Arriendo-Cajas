@@ -1,0 +1,135 @@
+# Arriendo Cajas - Box Rental Management Platform
+
+## Overview
+
+This is a comprehensive web platform for managing a box rental business called "Arriendo Cajas". The system provides role-based access for administrators, drivers, and customers to handle the complete rental lifecycle from reservation to return. The platform uses a modern tech stack with React frontend, Express backend, PostgreSQL database, and implements a robust authentication system.
+
+## User Preferences
+
+Preferred communication style: Simple, everyday language.
+
+## System Architecture
+
+### Frontend Architecture
+- **Framework**: React 18 with TypeScript
+- **Build Tool**: Vite for fast development and optimized builds
+- **UI Library**: Shadcn/ui components built on Radix UI primitives
+- **Styling**: Tailwind CSS with custom brand colors (red #C8201D, blue #2E5CA6)
+- **State Management**: TanStack Query for server state management
+- **Routing**: Wouter for lightweight client-side routing
+- **Mobile Support**: Responsive design with mobile-first approach
+
+### Backend Architecture
+- **Runtime**: Node.js with Express.js
+- **Language**: TypeScript with ES modules
+- **API Design**: RESTful API with role-based endpoints
+- **Session Management**: Express sessions with PostgreSQL storage
+- **Build Process**: ESBuild for production bundling
+
+### Database Architecture
+- **Database**: PostgreSQL with Neon serverless driver
+- **ORM**: Drizzle ORM for type-safe database operations
+- **Schema**: Shared schema between frontend and backend
+- **Migrations**: Drizzle Kit for database migrations
+
+## Key Components
+
+### Authentication System
+- **Provider**: Replit Auth with OpenID Connect
+- **Session Storage**: PostgreSQL-backed sessions using connect-pg-simple
+- **User Roles**: Admin, Driver, Customer with role-based access control
+- **Security**: HTTP-only cookies, CSRF protection, secure session management
+
+### Role-Based Modules
+
+#### Admin Panel (Backoffice)
+- Dashboard with key metrics and status charts
+- Complete inventory management with box status tracking
+- Customer database with rental history
+- Delivery task management and assignment
+- Financial reporting and revenue tracking
+- Box movement history and audit trails
+
+#### Driver Panel
+- Daily task lists for deliveries and pickups
+- Barcode scanning functionality using device camera
+- Real-time status updates (delivered, not delivered, retrieved)
+- Incident reporting with comments
+- Mobile-optimized interface
+
+#### Customer Panel
+- Personal rental history and active rentals
+- Real-time status tracking of rented boxes
+- Days remaining notifications
+- Delivery and pickup scheduling
+- Account management
+
+### Business Logic
+The system implements a comprehensive rental workflow:
+1. **Reservation** → Pendiente (Pending)
+2. **Payment** → Pagada (Paid)
+3. **Delivery** → Entregada (Delivered)
+4. **Usage Period** → Entregada (Active)
+5. **Pickup** → Retirada (Retrieved)
+6. **Processing** → Finalizado (Completed)
+7. **Cancellation** → Cancelada (Cancelled - at any point before delivery)
+
+## Data Flow
+
+### Database Schema
+- **Users**: Authentication and role management
+- **Customers**: Extended customer information and contact details
+- **Boxes**: Inventory with barcode tracking and status
+- **Rentals**: Rental agreements and pricing
+- **Rental Boxes**: Many-to-many relationship between rentals and boxes
+- **Box Movements**: Complete audit trail of box history
+- **Delivery Tasks**: Driver assignments and task tracking
+- **Sessions**: Secure session storage for authentication
+
+### API Structure
+- **Authentication Routes**: `/api/auth/*` for user management
+- **Dashboard Routes**: `/api/dashboard/*` for metrics and analytics
+- **Customer Routes**: `/api/customers/*` for customer management
+- **Box Routes**: `/api/boxes/*` for inventory management
+- **Rental Routes**: `/api/rentals/*` for rental operations
+- **Task Routes**: `/api/tasks/*` for delivery management
+
+## External Dependencies
+
+### Core Dependencies
+- **UI Components**: Radix UI primitives for accessible components
+- **Database**: Neon PostgreSQL serverless with connection pooling
+- **Authentication**: Replit Auth for secure user management
+- **Validation**: Zod for runtime type validation and schema validation
+- **Date Handling**: date-fns for date manipulation and formatting
+
+### Development Dependencies
+- **TypeScript**: Full type safety across the stack
+- **Vite**: Fast development server and build tool
+- **Tailwind CSS**: Utility-first styling with custom design system
+- **ESBuild**: Fast JavaScript bundler for production
+
+## Deployment Strategy
+
+### Development Environment
+- **Hot Module Replacement**: Vite provides fast refresh during development
+- **Type Checking**: Continuous TypeScript checking across client and server
+- **Database**: Local PostgreSQL or Neon development database
+- **Authentication**: Replit Auth integration for seamless development
+
+### Production Build
+- **Frontend**: Vite builds optimized static assets to `dist/public`
+- **Backend**: ESBuild bundles server code to `dist/index.js`
+- **Database**: Production PostgreSQL database with migrations
+- **Environment**: Node.js production server with environment variables
+
+### Deployment Requirements
+- **Environment Variables**: 
+  - `DATABASE_URL` for PostgreSQL connection
+  - `SESSION_SECRET` for session security
+  - `REPL_ID` and `ISSUER_URL` for Replit Auth
+- **Database Setup**: Automated migrations using Drizzle Kit
+- **Static Assets**: Served by Express in production
+- **Session Storage**: PostgreSQL-backed sessions for scalability
+
+The architecture emphasizes type safety, scalability, and maintainability while providing a seamless user experience across different roles and devices.
