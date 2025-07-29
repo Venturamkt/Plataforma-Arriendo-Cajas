@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Package, Bell, LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import type { User } from "@shared/schema";
 
 export default function Header() {
   const { user } = useAuth();

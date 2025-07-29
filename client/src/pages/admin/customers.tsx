@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
+import type { Customer } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/layout/header";
 import Sidebar from "@/components/layout/sidebar";
@@ -32,19 +33,19 @@ export default function AdminCustomers() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  const { data: customers, isLoading: customersLoading } = useQuery({
+  const { data: customers, isLoading: customersLoading } = useQuery<Customer[]>({
     queryKey: ["/api/customers"],
     retry: false,
     enabled: isAuthenticated,
   });
 
-  const { data: rentals } = useQuery({
+  const { data: rentals } = useQuery<any[]>({
     queryKey: ["/api/rentals"],
     retry: false,
     enabled: isAuthenticated,
   });
 
-  const filteredCustomers = customers?.filter((customer: any) => 
+  const filteredCustomers = customers?.filter((customer) => 
     searchQuery === "" || 
     customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     customer.email.toLowerCase().includes(searchQuery.toLowerCase()) ||

@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
+import type { Box, Customer, Rental } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import Header from "@/components/layout/header";
@@ -33,7 +34,15 @@ export default function AdminDashboard() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  const { data: metrics, isLoading: metricsLoading } = useQuery({
+  interface DashboardMetrics {
+    activeBoxes: number;
+    pendingDeliveries: number;
+    monthlyRevenue: number;
+    activeCustomers: number;
+    statusCounts: Record<string, number>;
+  }
+
+  const { data: metrics, isLoading: metricsLoading } = useQuery<DashboardMetrics>({
     queryKey: ["/api/dashboard/metrics"],
     retry: false,
     enabled: isAuthenticated,

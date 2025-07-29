@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
+import type { Box } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/layout/header";
 import Sidebar from "@/components/layout/sidebar";
@@ -10,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Plus, QrCode } from "lucide-react";
+import { Search, Plus, QrCode, Package } from "lucide-react";
 import BarcodeScanner from "@/components/barcode-scanner";
 
 export default function AdminInventory() {
@@ -35,7 +36,7 @@ export default function AdminInventory() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  const { data: boxes, isLoading: boxesLoading } = useQuery({
+  const { data: boxes, isLoading: boxesLoading } = useQuery<Box[]>({
     queryKey: ["/api/boxes", statusFilter !== "all" ? `?status=${statusFilter}` : ""],
     retry: false,
     enabled: isAuthenticated,
@@ -46,7 +47,7 @@ export default function AdminInventory() {
     setSearchQuery(barcode);
   };
 
-  const filteredBoxes = boxes?.filter((box: any) => 
+  const filteredBoxes = boxes?.filter((box) => 
     searchQuery === "" || 
     box.barcode.toLowerCase().includes(searchQuery.toLowerCase()) ||
     box.id.toLowerCase().includes(searchQuery.toLowerCase())
@@ -162,7 +163,7 @@ export default function AdminInventory() {
                   </Card>
                 </div>
               ) : (
-                filteredBoxes.map((box: any) => (
+                filteredBoxes.map((box) => (
                   <Card key={box.id} className="hover:shadow-md transition-shadow">
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between mb-3">

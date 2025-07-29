@@ -92,7 +92,7 @@ export class DatabaseStorage implements IStorage {
       .insert(users)
       .values(userData)
       .onConflictDoUpdate({
-        target: users.id,
+        target: users.email,
         set: {
           ...userData,
           updatedAt: new Date(),
@@ -161,7 +161,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getBoxesByStatus(status: string): Promise<Box[]> {
-    return await db.select().from(boxes).where(eq(boxes.status, status));
+    return await db.select().from(boxes).where(eq(boxes.status, status as any));
   }
 
   // Rental operations
@@ -193,7 +193,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getRentalsByStatus(status: string): Promise<Rental[]> {
-    return await db.select().from(rentals).where(eq(rentals.status, status));
+    return await db.select().from(rentals).where(eq(rentals.status, status as any));
   }
 
   // Rental box operations
@@ -297,7 +297,9 @@ export class DatabaseStorage implements IStorage {
       .groupBy(boxes.status);
 
     const statusCounts = statusCountsResult.reduce((acc, item) => {
-      acc[item.status] = item.count;
+      if (item.status) {
+        acc[item.status] = item.count;
+      }
       return acc;
     }, {} as Record<string, number>);
 
