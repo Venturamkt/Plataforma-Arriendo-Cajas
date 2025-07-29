@@ -26,7 +26,7 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
-// User storage table with roles
+// Legacy user table (keep for sessions)
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   email: varchar("email").unique(),
@@ -36,6 +36,44 @@ export const users = pgTable("users", {
   role: varchar("role", { enum: ["admin", "driver", "customer"] }).default("customer"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Separate authentication tables for SaaS model
+export const adminUsers = pgTable("admin_users", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: varchar("email").unique().notNull(),
+  password: varchar("password").notNull(),
+  firstName: varchar("first_name").notNull(),
+  lastName: varchar("last_name").notNull(),
+  isActive: boolean("is_active").default(true),
+  lastLogin: timestamp("last_login"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const driverUsers = pgTable("driver_users", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: varchar("email").unique().notNull(),
+  password: varchar("password").notNull(),
+  firstName: varchar("first_name").notNull(),
+  lastName: varchar("last_name").notNull(),
+  phone: varchar("phone"),
+  licenseNumber: varchar("license_number"),
+  isActive: boolean("is_active").default(true),
+  lastLogin: timestamp("last_login"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const customerAccess = pgTable("customer_access", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: varchar("email"),
+  rut: varchar("rut").unique(),
+  phone: varchar("phone"),
+  firstName: varchar("first_name"),
+  lastName: varchar("last_name"),
+  lastAccess: timestamp("last_access"),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 // Customers table for extended customer information

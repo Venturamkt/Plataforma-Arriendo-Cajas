@@ -2,14 +2,22 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
+import { setupAuthRoutes } from "./authRoutes";
 import { insertCustomerSchema, insertBoxSchema, insertRentalSchema, insertDeliveryTaskSchema, insertBoxMovementSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Initialize default admin user
-  await storage.initializeDefaultAdmin();
+  // Setup new auth routes
+  setupAuthRoutes(app);
 
-  // Auth middleware
+  // Initialize default admin user and seed data
+  await storage.initializeDefaultAdmin();
+  
+  // Import and run seed data
+  const { seedInitialData } = await import("./seedData");
+  await seedInitialData();
+
+  // Legacy auth middleware (keep for compatibility)
   await setupAuth(app);
 
   // Auth routes
