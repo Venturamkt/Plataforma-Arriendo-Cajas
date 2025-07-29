@@ -12,8 +12,8 @@ export function setupAuthRoutes(app: Express) {
       const { type, value } = req.body;
       
       // Search in customers table and customer_access table
-      let customer;
-      let accessRecord;
+      let customer: any[] = [];
+      let accessRecord: any[] = [];
       
       if (type === 'rut') {
         // Search by RUT in customer_access
@@ -66,6 +66,9 @@ export function setupAuthRoutes(app: Express) {
       }
       
       // Set customer session
+      if (!req.session) {
+        req.session = {} as any;
+      }
       (req.session as any).customer = {
         id: customer?.[0]?.id || accessRecord?.[0]?.id,
         email: customer?.[0]?.email || accessRecord?.[0]?.email,
@@ -109,6 +112,9 @@ export function setupAuthRoutes(app: Express) {
         .where(eq(adminUsers.id, admin[0].id));
       
       // Set admin session
+      if (!req.session) {
+        req.session = {} as any;
+      }
       (req.session as any).admin = {
         id: admin[0].id,
         email: admin[0].email,
@@ -153,6 +159,9 @@ export function setupAuthRoutes(app: Express) {
         .where(eq(driverUsers.id, driver[0].id));
       
       // Set driver session
+      if (!req.session) {
+        req.session = {} as any;
+      }
       (req.session as any).driver = {
         id: driver[0].id,
         email: driver[0].email,

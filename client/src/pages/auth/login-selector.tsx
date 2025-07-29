@@ -12,12 +12,12 @@ export default function LoginSelector() {
           <img 
             src="/logo.png" 
             alt="Arriendo Cajas" 
-            className="h-16 mx-auto mb-6"
+            className="h-20 mx-auto mb-6 filter brightness-110"
           />
-          <h1 className="text-4xl font-bold text-white mb-4">
+          <h1 className="text-5xl font-bold text-white mb-4 drop-shadow-lg">
             Arriendo Cajas
           </h1>
-          <p className="text-blue-100 text-lg">
+          <p className="text-white text-xl font-medium drop-shadow">
             Sistema de gestión integral para arriendo de cajas plásticas
           </p>
         </div>
