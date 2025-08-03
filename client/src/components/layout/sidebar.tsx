@@ -6,7 +6,8 @@ import {
   Truck, 
   BarChart3,
   QrCode,
-  UserCog
+  UserCog,
+  ClipboardList
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 
@@ -21,6 +22,7 @@ export default function Sidebar({ role }: SidebarProps) {
     { href: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard" },
     { href: "/admin/inventory", icon: Package, label: "Inventario" },
     { href: "/admin/customers", icon: Users, label: "Clientes" },
+    { href: "/admin/rental-status", icon: ClipboardList, label: "Estado Arriendos" },
     { href: "/admin/deliveries", icon: Truck, label: "Entregas" },
     { href: "/admin/reports", icon: BarChart3, label: "Reportes" },
     { href: "/admin/users", icon: UserCog, label: "Usuarios" },

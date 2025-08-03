@@ -256,6 +256,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.put('/api/rentals/:id', requireAdminSession, async (req, res) => {
+    try {
+      const rentalData = insertRentalSchema.partial().parse(req.body);
+      const rental = await storage.updateRental(req.params.id, rentalData);
+      if (!rental) {
+        return res.status(404).json({ message: "Rental not found" });
+      }
+      res.json(rental);
+    } catch (error) {
+      console.error("Error updating rental:", error);
+      res.status(400).json({ message: "Failed to update rental" });
+    }
+  });
+
   // Box movement routes
   app.get('/api/box-movements', requireAdminSession, async (req, res) => {
     try {

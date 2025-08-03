@@ -14,6 +14,7 @@ import AdminDeliveries from "@/pages/admin/deliveries";
 import AdminReports from "@/pages/admin/reports";
 import UserManagement from "@/pages/admin/user-management";
 import NewRental from "@/pages/admin/new-rental";
+import RentalStatus from "@/pages/admin/rental-status";
 import DriverDashboard from "@/pages/driver/dashboard";
 import CustomerDashboard from "@/pages/customer/dashboard";
 import NotFound from "@/pages/not-found";
@@ -37,6 +38,7 @@ function Router() {
       <Route path="/admin/reports" component={AdminReports} />
       <Route path="/admin/users" component={UserManagement} />
       <Route path="/admin/new-rental" component={NewRental} />
+      <Route path="/admin/rental-status" component={RentalStatus} />
       
       {/* Driver routes */}
       <Route path="/driver/dashboard" component={DriverDashboard} />

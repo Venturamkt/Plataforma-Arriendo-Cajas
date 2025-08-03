@@ -29,6 +29,8 @@ export default function AdminCustomers() {
   const [showRentalDialog, setShowRentalDialog] = useState(false);
   const [selectedCustomerForRental, setSelectedCustomerForRental] = useState<Customer | null>(null);
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('table');
+  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const [newCustomer, setNewCustomer] = useState({
     name: "",
     email: "",
@@ -102,6 +104,30 @@ export default function AdminCustomers() {
     },
   });
 
+  const updateCustomerMutation = useMutation({
+    mutationFn: async (customerData: typeof newCustomer) => {
+      const response = await apiRequest("PUT", `/api/customers/${editingCustomer?.id}`, customerData);
+      return await response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
+      setShowEditDialog(false);
+      setEditingCustomer(null);
+      setNewCustomer({ name: "", email: "", phone: "", address: "", rut: "" });
+      toast({
+        title: "Cliente actualizado",
+        description: "El cliente ha sido actualizado exitosamente",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar el cliente",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleCreateCustomer = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCustomer.name || !newCustomer.email) {
@@ -118,11 +144,36 @@ export default function AdminCustomers() {
   const handleCreateRental = (customer: Customer) => {
     setSelectedCustomerForRental(customer);
     setNewRental({
-      ...newRental,
+      boxSize: "standard",
+      boxQuantity: 1,
+      rentalDays: 7,
+      deliveryDate: "",
       deliveryAddress: customer.address || "",
-      pickupAddress: customer.address || ""
+      pickupAddress: customer.address || "",
+      notes: ""
     });
     setShowRentalDialog(true);
+  };
+
+  const handleEditCustomer = (customer: Customer) => {
+    setEditingCustomer(customer);
+    setNewCustomer({
+      name: customer.name,
+      email: customer.email,
+      phone: customer.phone || "",
+      address: customer.address || "",
+      rut: customer.rut || ""
+    });
+    setShowEditDialog(true);
+  };
+
+  const handleEditCustomerSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCustomer.name || !newCustomer.email) {
+      toast({ title: "Por favor completa los campos requeridos", variant: "destructive" });
+      return;
+    }
+    updateCustomerMutation.mutate(newCustomer);
   };
 
   // Check availability when rental details change
@@ -230,14 +281,14 @@ export default function AdminCustomers() {
 
     createRentalMutation.mutate({
       customerId: selectedCustomerForRental.id,
-      boxQuantity: newRental.boxQuantity,
-      deliveryDate: deliveryDate.toISOString(),
-      returnDate: returnDate.toISOString(),
+      totalBoxes: newRental.boxQuantity,
+      dailyRate: 2000,
+      totalAmount: newRental.boxQuantity * newRental.rentalDays * 2000,
+      startDate: deliveryDate.toISOString(),
+      endDate: returnDate.toISOString(),
       deliveryAddress: newRental.deliveryAddress,
-      pickupAddress: newRental.pickupAddress || newRental.deliveryAddress,
       notes: newRental.notes || "",
-      status: "pendiente",
-      totalPrice: newRental.boxQuantity * newRental.rentalDays * 2000 // $2000 per box per day
+      status: "pendiente"
     });
   };
 
@@ -425,20 +476,13 @@ export default function AdminCustomers() {
                     
                     <div>
                       <Label htmlFor="boxSize">Tamaño de Caja *</Label>
-                      <Select 
-                        value={newRental.boxSize} 
-                        onValueChange={(value) => setNewRental({ ...newRental, boxSize: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleccionar tamaño" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="pequeño">Pequeño</SelectItem>
-                          <SelectItem value="mediano">Mediano</SelectItem>
-                          <SelectItem value="grande">Grande</SelectItem>
-                          <SelectItem value="extra_grande">Extra Grande</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <Package className="h-4 w-4 text-blue-600" />
+                          <span className="font-medium text-blue-900">Caja Estándar (60x40 cm)</span>
+                        </div>
+                        <p className="text-sm text-blue-700 mt-1">Único tamaño disponible actualmente</p>
+                      </div>
                     </div>
 
                     <div>
@@ -684,7 +728,11 @@ export default function AdminCustomers() {
                                 >
                                   Arriendo
                                 </Button>
-                                <Button size="sm" className="bg-brand-blue hover:bg-brand-blue text-white">
+                                <Button 
+                                  size="sm" 
+                                  className="bg-brand-blue hover:bg-brand-blue text-white"
+                                  onClick={() => handleEditCustomer(customer)}
+                                >
                                   Editar
                                 </Button>
                               </div>
@@ -810,7 +858,11 @@ export default function AdminCustomers() {
                         >
                           Nuevo Arriendo
                         </Button>
-                        <Button size="sm" className="bg-brand-blue hover:bg-brand-blue text-white">
+                        <Button 
+                          size="sm" 
+                          className="bg-brand-blue hover:bg-brand-blue text-white"
+                          onClick={() => handleEditCustomer(customer)}
+                        >
                           Editar
                         </Button>
                       </div>
@@ -821,6 +873,85 @@ export default function AdminCustomers() {
             )}
             </div>
           )}
+
+          {/* Edit Customer Dialog */}
+          <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Editar Cliente</DialogTitle>
+                <DialogDescription>
+                  Actualiza la información del cliente
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleEditCustomerSubmit} className="space-y-4">
+                <div>
+                  <Label htmlFor="edit-name">Nombre Completo *</Label>
+                  <Input
+                    id="edit-name"
+                    value={newCustomer.name}
+                    onChange={(e) => setNewCustomer({ ...newCustomer, name: e.target.value })}
+                    placeholder="Nombre completo"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-email">Email *</Label>
+                  <Input
+                    id="edit-email"
+                    type="email"
+                    value={newCustomer.email}
+                    onChange={(e) => setNewCustomer({ ...newCustomer, email: e.target.value })}
+                    placeholder="correo@ejemplo.com"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-rut">RUT</Label>
+                  <Input
+                    id="edit-rut"
+                    value={newCustomer.rut}
+                    onChange={(e) => setNewCustomer({ ...newCustomer, rut: e.target.value })}
+                    placeholder="12.345.678-9"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-phone">Teléfono</Label>
+                  <Input
+                    id="edit-phone"
+                    value={newCustomer.phone}
+                    onChange={(e) => setNewCustomer({ ...newCustomer, phone: e.target.value })}
+                    placeholder="+56 9 1234 5678"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-address">Dirección</Label>
+                  <Input
+                    id="edit-address"
+                    value={newCustomer.address}
+                    onChange={(e) => setNewCustomer({ ...newCustomer, address: e.target.value })}
+                    placeholder="Dirección completa"
+                  />
+                </div>
+                <div className="flex gap-2 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowEditDialog(false)}
+                    className="flex-1"
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={updateCustomerMutation.isPending}
+                    className="flex-1 bg-brand-blue hover:bg-brand-blue text-white"
+                  >
+                    {updateCustomerMutation.isPending ? "Actualizando..." : "Actualizar"}
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
 
           {/* Summary */}
           {!customersLoading && filteredCustomers.length > 0 && (
