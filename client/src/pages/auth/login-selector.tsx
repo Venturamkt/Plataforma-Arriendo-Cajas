@@ -35,7 +35,7 @@ export default function LoginSelector() {
               </CardTitle>
             </CardHeader>
             <CardContent className="text-center">
-              <p className="text-gray-600 mb-6">
+              <p className="text-gray-800 font-medium mb-6">
                 Consulta tus arriendos con RUT o correo electrónico
               </p>
               <Link href="/auth/customer">
@@ -57,7 +57,7 @@ export default function LoginSelector() {
               </CardTitle>
             </CardHeader>
             <CardContent className="text-center">
-              <p className="text-gray-600 mb-6">
+              <p className="text-gray-800 font-medium mb-6">
                 Gestiona entregas y tareas diarias
               </p>
               <Link href="/auth/driver">
@@ -79,7 +79,7 @@ export default function LoginSelector() {
               </CardTitle>
             </CardHeader>
             <CardContent className="text-center">
-              <p className="text-gray-600 mb-6">
+              <p className="text-gray-800 font-medium mb-6">
                 Control total del sistema y reportes
               </p>
               <Link href="/auth/admin">

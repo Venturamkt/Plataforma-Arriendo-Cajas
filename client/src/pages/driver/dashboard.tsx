@@ -18,6 +18,11 @@ export default function DriverDashboard() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [taskStatus, setTaskStatus] = useState('');
   const [observations, setObservations] = useState('');
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [isReportOpen, setIsReportOpen] = useState(false);
+  const [scannedCode, setScannedCode] = useState('');
+  const [reportTitle, setReportTitle] = useState('');
+  const [reportDescription, setReportDescription] = useState('');
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
@@ -87,6 +92,61 @@ export default function DriverDashboard() {
       status: taskStatus,
       observations: observations.trim(),
     });
+  };
+
+  const openBarcodeScanner = () => {
+    setIsScannerOpen(true);
+  };
+
+  const handleBarcodeSubmit = () => {
+    if (!scannedCode.trim()) {
+      toast({
+        title: "Código requerido",
+        description: "Ingresa un código de barras",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    toast({
+      title: "Código escaneado",
+      description: `Código ${scannedCode} registrado exitosamente`,
+    });
+    
+    setScannedCode('');
+    setIsScannerOpen(false);
+  };
+
+  const openIncidentReport = () => {
+    setIsReportOpen(true);
+  };
+
+  const submitIncidentReport = () => {
+    if (!reportTitle.trim()) {
+      toast({
+        title: "Título requerido",
+        description: "Ingresa un título para el reporte",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Here you would normally send to API
+    console.log('Incident report:', {
+      title: reportTitle,
+      description: reportDescription,
+      timestamp: new Date().toISOString(),
+      driverId: user?.id
+    });
+
+    toast({
+      title: "Reporte enviado",
+      description: "El reporte de incidencia se ha enviado correctamente",
+    });
+
+    setReportTitle('');
+    setReportDescription('');
+    setIsReportOpen(false);
   };
 
   // Mock data for demo
@@ -302,7 +362,10 @@ export default function DriverDashboard() {
               <p className="text-sm text-gray-600 mb-4">
                 Escanea el código de barras de las cajas
               </p>
-              <Button className="w-full">
+              <Button 
+                className="w-full"
+                onClick={openBarcodeScanner}
+              >
                 Abrir Escáner
               </Button>
             </CardContent>
@@ -315,7 +378,11 @@ export default function DriverDashboard() {
               <p className="text-sm text-gray-600 mb-4">
                 Reporta problemas durante la entrega
               </p>
-              <Button variant="outline" className="w-full">
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={openIncidentReport}
+              >
                 Crear Reporte
               </Button>
             </CardContent>
@@ -386,6 +453,104 @@ export default function DriverDashboard() {
                   variant="outline"
                   onClick={() => setIsDialogOpen(false)}
                   disabled={completeTaskMutation.isPending}
+                >
+                  Cancelar
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Barcode Scanner Dialog */}
+        <Dialog open={isScannerOpen} onOpenChange={setIsScannerOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Escanear Código de Barras</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg text-center">
+                <Package className="w-12 h-12 mx-auto mb-3 text-blue-600" />
+                <p className="text-sm text-gray-600 mb-4">
+                  Escaneá el código o ingresalo manualmente
+                </p>
+                <div className="space-y-3">
+                  <Label htmlFor="barcode">Código de barras</Label>
+                  <input
+                    id="barcode"
+                    type="text"
+                    placeholder="Ej: 123456789"
+                    value={scannedCode}
+                    onChange={(e) => setScannedCode(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  />
+                </div>
+              </div>
+              
+              <div className="flex space-x-2">
+                <Button
+                  onClick={handleBarcodeSubmit}
+                  className="flex-1"
+                >
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Registrar Código
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsScannerOpen(false)}
+                >
+                  Cancelar
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Incident Report Dialog */}
+        <Dialog open={isReportOpen} onOpenChange={setIsReportOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Reportar Incidencia</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="report-title">Tipo de incidencia</Label>
+                <Select value={reportTitle} onValueChange={setReportTitle}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona el tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cajas_rotas">🔧 Cajas rotas o dañadas</SelectItem>
+                    <SelectItem value="no_atiende">🚪 No atiende nadie</SelectItem>
+                    <SelectItem value="direccion_incorrecta">📍 Dirección incorrecta</SelectItem>
+                    <SelectItem value="acceso_denegado">🚫 No permite acceso</SelectItem>
+                    <SelectItem value="cantidad_incorrecta">📦 Cantidad de cajas incorrecta</SelectItem>
+                    <SelectItem value="otro">❓ Otro problema</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="report-description">Descripción detallada</Label>
+                <Textarea
+                  id="report-description"
+                  placeholder="Describe en detalle lo ocurrido..."
+                  value={reportDescription}
+                  onChange={(e) => setReportDescription(e.target.value)}
+                  rows={4}
+                />
+              </div>
+
+              <div className="flex space-x-2">
+                <Button
+                  onClick={submitIncidentReport}
+                  className="flex-1"
+                >
+                  <AlertTriangle className="w-4 h-4 mr-2" />
+                  Enviar Reporte
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsReportOpen(false)}
                 >
                   Cancelar
                 </Button>

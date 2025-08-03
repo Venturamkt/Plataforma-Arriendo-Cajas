@@ -108,7 +108,7 @@ export default function AdminDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-8">
             <MetricCard
               title="Cajas Activas"
-              value={metricsLoading ? "..." : (metrics?.activeBoxes || 0)}
+              value={metrics.activeBoxes}
               icon={Package}
               iconColor="bg-box-blue"
               change="+12% desde el mes pasado"
@@ -117,7 +117,7 @@ export default function AdminDashboard() {
             
             <MetricCard
               title="Entregas Pendientes"
-              value={metricsLoading ? "..." : (metrics?.pendingDeliveries || 0)}
+              value={metrics.pendingDeliveries}
               icon={Clock}
               iconColor="bg-yellow-100"
               change="Para hoy"
@@ -126,7 +126,7 @@ export default function AdminDashboard() {
             
             <MetricCard
               title="Ingresos del Mes"
-              value={metricsLoading ? "..." : formatCurrency(metrics?.monthlyRevenue || 0)}
+              value={formatCurrency(metrics.monthlyRevenue)}
               icon={DollarSign}
               iconColor="bg-green-100"
               change="+18% vs mes anterior"
@@ -135,7 +135,7 @@ export default function AdminDashboard() {
             
             <MetricCard
               title="Clientes Activos"
-              value={metricsLoading ? "..." : (metrics?.activeCustomers || 0)}
+              value={metrics.activeCustomers}
               icon={Users}
               iconColor="bg-purple-100"
               change="Con arriendos vigentes"
