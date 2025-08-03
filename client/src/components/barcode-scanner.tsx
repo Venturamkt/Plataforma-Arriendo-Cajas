@@ -82,7 +82,16 @@ export default function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps)
             <CardTitle className="text-lg font-semibold text-gray-900">
               Escanear Código de Barras
             </CardTitle>
-            <Button variant="ghost" size="sm" onClick={handleClose} className="hover:bg-gray-100">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleClose();
+              }} 
+              className="hover:bg-gray-100 z-10"
+            >
               <X className="w-5 h-5" />
             </Button>
           </div>

@@ -172,12 +172,7 @@ export default function AdminDashboard() {
 
           {/* Quick Actions */}
           <QuickActions
-            onNewRental={() => {
-              toast({
-                title: "Nuevo Arriendo",
-                description: "Funcionalidad en desarrollo",
-              });
-            }}
+            onNewRental={() => setLocation("/admin/new-rental")}
             onViewReports={() => setLocation("/admin/reports")}
             onManageCustomers={() => setLocation("/admin/customers")}
             onSearch={(query) => {
