@@ -213,7 +213,7 @@ export default function AdminInventory() {
           </main>
         </div>
         
-        <MobileNav role={user.role || 'admin'} />
+        <MobileNav role={'admin'} />
       </div>
 
       {showScanner && (

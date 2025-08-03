@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useAuth } from "@/hooks/useAuth";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import type { User } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
@@ -17,28 +17,22 @@ import { Search, Users, Mail, UserCheck, Crown, Truck } from "lucide-react";
 
 export default function UserManagement() {
   const { toast } = useToast();
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { user, isLoading } = useCurrentUser();
   const [searchQuery, setSearchQuery] = useState("");
 
   // Redirect to home if not authenticated or not admin
   useEffect(() => {
-    if (!isLoading && (!isAuthenticated || user?.role !== 'admin')) {
-      toast({
-        title: "No autorizado",
-        description: "Solo los administradores pueden acceder a esta página",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/api/login";
-      }, 500);
+    if (isLoading) return;
+    if (!user || user.type !== 'admin') {
+      window.location.href = "/";
       return;
     }
-  }, [isAuthenticated, isLoading, user, toast]);
+  }, [user, isLoading]);
 
   const { data: users, isLoading: usersLoading } = useQuery<User[]>({
     queryKey: ["/api/users"],
     retry: false,
-    enabled: isAuthenticated && user?.role === 'admin',
+    enabled: !!user,
   });
 
   const updateUserRoleMutation = useMutation({
@@ -126,7 +120,7 @@ export default function UserManagement() {
       <Header />
       
       <div className="flex">
-        <Sidebar role={user.role || 'admin'} />
+        <Sidebar role={'admin'} />
         
         <main className="flex-1 p-4 lg:p-8 pb-20 lg:pb-8">
           {/* Page Header */}
@@ -261,7 +255,7 @@ export default function UserManagement() {
         </main>
       </div>
       
-      <MobileNav role={user.role || 'admin'} />
+      <MobileNav role={'admin'} />
     </div>
   );
 }

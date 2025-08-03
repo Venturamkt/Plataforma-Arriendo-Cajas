@@ -159,7 +159,7 @@ export default function AdminDeliveries() {
       <Header />
       
       <div className="flex">
-        <Sidebar role={user.role || 'admin'} />
+        <Sidebar role={'admin'} />
         
         <main className="flex-1 p-4 lg:p-8 pb-20 lg:pb-8">
           {/* Page Header */}
@@ -403,7 +403,7 @@ export default function AdminDeliveries() {
         </main>
       </div>
       
-      <MobileNav role={user.role || 'admin'} />
+      <MobileNav role={'admin'} />
     </div>
   );
 }
