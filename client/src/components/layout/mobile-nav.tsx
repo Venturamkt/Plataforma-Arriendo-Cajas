@@ -19,20 +19,20 @@ export default function MobileNav({ role }: MobileNavProps) {
     switch (role) {
       case 'admin':
         return [
-          { href: "/", icon: LayoutDashboard, label: "Dashboard" },
+          { href: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard" },
           { href: "/admin/inventory", icon: Package, label: "Inventario" },
           { href: "/admin/customers", icon: Users, label: "Clientes" },
           { href: "/admin/deliveries", icon: Truck, label: "Entregas" },
         ];
       case 'driver':
         return [
-          { href: "/", icon: LayoutDashboard, label: "Dashboard" },
+          { href: "/driver/dashboard", icon: LayoutDashboard, label: "Dashboard" },
           { href: "/driver/tasks", icon: Truck, label: "Tareas" },
           { href: "/driver/scan", icon: QrCode, label: "Escanear" },
         ];
       case 'customer':
         return [
-          { href: "/", icon: LayoutDashboard, label: "Mi Cuenta" },
+          { href: "/customer/dashboard", icon: LayoutDashboard, label: "Mi Cuenta" },
           { href: "/customer/rentals", icon: Package, label: "Arriendos" },
         ];
       default:
@@ -48,7 +48,7 @@ export default function MobileNav({ role }: MobileNavProps) {
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = location === item.href || 
-            (item.href !== "/" && location.startsWith(item.href));
+            (item.href !== "/admin/dashboard" && item.href !== "/driver/dashboard" && item.href !== "/customer/dashboard" && location.startsWith(item.href));
           
           return (
             <Link key={item.href} href={item.href}>
