@@ -16,16 +16,29 @@ import { useLocation } from "wouter";
 
 export default function AdminDashboard() {
   const { toast } = useToast();
-  const { isAuthenticated, user } = useCurrentUser();
+  const { user, isLoading } = useCurrentUser();
   const [, setLocation] = useLocation();
 
-  // Redirect to home if not authenticated
+  // Wait for authentication to load, then check permissions
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (isLoading) return; // Still loading
+    
+    if (!user) {
+      // No user found, redirect to login
       window.location.href = "/";
       return;
     }
-  }, [isAuthenticated]);
+    
+    if (user.type !== 'admin') {
+      toast({
+        title: "Acceso Denegado",
+        description: "No tienes permisos de administrador",
+        variant: "destructive",
+      });
+      window.location.href = "/";
+      return;
+    }
+  }, [user, isLoading, toast]);
 
   interface DashboardMetrics {
     activeBoxes: number;
@@ -50,7 +63,8 @@ export default function AdminDashboard() {
     }
   };
 
-  if (!user) {
+  // Show loading while checking authentication
+  if (isLoading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-blue"></div>
