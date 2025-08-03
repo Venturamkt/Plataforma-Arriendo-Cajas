@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useAuth } from "@/hooks/useAuth";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import type { Box } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/layout/header";
@@ -16,30 +16,24 @@ import BarcodeScanner from "@/components/barcode-scanner";
 
 export default function AdminInventory() {
   const { toast } = useToast();
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { user, isLoading } = useCurrentUser();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [showScanner, setShowScanner] = useState(false);
 
   // Redirect to home if not authenticated
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/api/login";
-      }, 500);
+    if (isLoading) return;
+    if (!user || user.type !== 'admin') {
+      window.location.href = "/";
       return;
     }
-  }, [isAuthenticated, isLoading, toast]);
+  }, [user, isLoading]);
 
   const { data: boxes, isLoading: boxesLoading } = useQuery<Box[]>({
     queryKey: ["/api/boxes", statusFilter !== "all" ? `?status=${statusFilter}` : ""],
     retry: false,
-    enabled: isAuthenticated,
+    enabled: !!user,
   });
 
   const handleScanSuccess = (barcode: string) => {
@@ -67,7 +61,7 @@ export default function AdminInventory() {
         <Header />
         
         <div className="flex">
-          <Sidebar role={user.role || 'admin'} />
+          <Sidebar role={'admin'} />
           
           <main className="flex-1 p-4 lg:p-8 pb-20 lg:pb-8">
             {/* Page Header */}

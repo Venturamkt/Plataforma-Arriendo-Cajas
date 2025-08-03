@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useAuth } from "@/hooks/useAuth";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -17,42 +17,36 @@ import { Search, Plus, Truck, Clock, MapPin, CheckCircle, XCircle, Calendar } fr
 
 export default function AdminDeliveries() {
   const { toast } = useToast();
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { user, isLoading } = useCurrentUser();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
 
   // Redirect to home if not authenticated
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/api/login";
-      }, 500);
+    if (isLoading) return;
+    if (!user || user.type !== 'admin') {
+      window.location.href = "/";
       return;
     }
-  }, [isAuthenticated, isLoading, toast]);
+  }, [user, isLoading]);
 
   const { data: deliveryTasks, isLoading: tasksLoading } = useQuery({
     queryKey: ["/api/delivery-tasks"],
     retry: false,
-    enabled: isAuthenticated,
+    enabled: !!user,
   });
 
   const { data: rentals } = useQuery({
     queryKey: ["/api/rentals"],
     retry: false,
-    enabled: isAuthenticated,
+    enabled: !!user,
   });
 
   const { data: customers } = useQuery({
     queryKey: ["/api/customers"],
     retry: false,
-    enabled: isAuthenticated,
+    enabled: !!user,
   });
 
   const updateTaskMutation = useMutation({

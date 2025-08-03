@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useAuth } from "@/hooks/useAuth";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import type { Customer } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/layout/header";
@@ -15,34 +15,28 @@ import { Search, Plus, Mail, Phone, MapPin, User } from "lucide-react";
 
 export default function AdminCustomers() {
   const { toast } = useToast();
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { user, isLoading } = useCurrentUser();
   const [searchQuery, setSearchQuery] = useState("");
 
   // Redirect to home if not authenticated
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/api/login";
-      }, 500);
+    if (isLoading) return;
+    if (!user || user.type !== 'admin') {
+      window.location.href = "/";
       return;
     }
-  }, [isAuthenticated, isLoading, toast]);
+  }, [user, isLoading]);
 
   const { data: customers, isLoading: customersLoading } = useQuery<Customer[]>({
     queryKey: ["/api/customers"],
     retry: false,
-    enabled: isAuthenticated,
+    enabled: !!user,
   });
 
   const { data: rentals } = useQuery<any[]>({
     queryKey: ["/api/rentals"],
     retry: false,
-    enabled: isAuthenticated,
+    enabled: !!user,
   });
 
   const filteredCustomers = customers?.filter((customer) => 
