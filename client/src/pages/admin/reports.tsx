@@ -52,31 +52,31 @@ export default function AdminReports() {
   const { data: metrics } = useQuery({
     queryKey: ["/api/dashboard/metrics"],
     retry: false,
-    enabled: isAuthenticated,
+    enabled: !!user,
   });
 
   const { data: rentals } = useQuery({
     queryKey: ["/api/rentals"],
     retry: false,
-    enabled: isAuthenticated,
+    enabled: !!user,
   });
 
   const { data: customers } = useQuery({
     queryKey: ["/api/customers"],
     retry: false,
-    enabled: isAuthenticated,
+    enabled: !!user,
   });
 
   const { data: boxes } = useQuery({
     queryKey: ["/api/boxes"],
     retry: false,
-    enabled: isAuthenticated,
+    enabled: !!user,
   });
 
   const { data: deliveryTasks } = useQuery({
     queryKey: ["/api/delivery-tasks"],
     retry: false,
-    enabled: isAuthenticated,
+    enabled: !!user,
   });
 
   // Calculate revenue data for chart
