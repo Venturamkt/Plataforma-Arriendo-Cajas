@@ -1,5 +1,5 @@
 import bcrypt from "bcrypt";
-import { adminUsers, driverUsers, customerAccess } from "@shared/schema";
+import { adminUsers, driverUsers, customerAccess, boxes, customers } from "@shared/schema";
 import { db } from "./db";
 
 export async function seedInitialData() {
@@ -56,6 +56,67 @@ export async function seedInitialData() {
         }
       ]);
       console.log("✓ Sample customer access records created");
+    }
+
+    // Create sample customers for the main system
+    const customersExist = await db.select().from(customers).limit(1);
+    if (customersExist.length === 0) {
+      await db.insert(customers).values([
+        {
+          name: "José Alarcón Lizama",
+          email: "jalarcon@agenciaventura.cl",
+          phone: "5698290995",
+          address: "Av. Providencia 1208",
+          rut: "12345678-9"
+        },
+        {
+          name: "María González Silva",
+          email: "mgonzalez@empresa.cl", 
+          phone: "+56987654321",
+          address: "Los Leones 1234, Las Condes",
+          rut: "98765432-1"
+        },
+        {
+          name: "Pedro Martínez López",
+          email: "pmartinez@company.cl",
+          phone: "+56912345678", 
+          address: "Providencia 567, Providencia",
+          rut: "11223344-5"
+        }
+      ]);
+      console.log("✓ Sample customers created");
+    }
+
+    // Create sample boxes inventory
+    const boxesExist = await db.select().from(boxes).limit(1);
+    if (boxesExist.length === 0) {
+      const boxesToCreate = [];
+      
+      // Create boxes of different sizes
+      const sizes = ['pequeño', 'mediano', 'grande', 'extra_grande'];
+      const quantities = [15, 25, 20, 10]; // Quantity for each size
+      
+      for (let sizeIndex = 0; sizeIndex < sizes.length; sizeIndex++) {
+        const size = sizes[sizeIndex];
+        const quantity = quantities[sizeIndex];
+        
+        for (let i = 1; i <= quantity; i++) {
+          const sizeCode = size === 'pequeño' ? 'P' : 
+                          size === 'mediano' ? 'M' : 
+                          size === 'grande' ? 'G' : 'XL';
+          
+          boxesToCreate.push({
+            barcode: `ARR${sizeCode}${i.toString().padStart(3, '0')}`,
+            size: size,
+            status: 'disponible' as const,
+            condition: 'excelente' as const,
+            location: 'bodega'
+          });
+        }
+      }
+      
+      await db.insert(boxes).values(boxesToCreate);
+      console.log(`✓ Created ${boxesToCreate.length} sample boxes in inventory`);
     }
     
     console.log("Initial data seeding completed!");

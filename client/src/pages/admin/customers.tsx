@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import type { Customer, InsertCustomer } from "@shared/schema";
+import type { Customer, InsertCustomer, Box } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useLocation } from "wouter";
 import Header from "@/components/layout/header";
 import Sidebar from "@/components/layout/sidebar";
 import MobileNav from "@/components/layout/mobile-nav";
@@ -11,16 +12,21 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, Mail, Phone, MapPin, User } from "lucide-react";
+import { Search, Plus, Mail, Phone, MapPin, User, Package, Calendar, AlertTriangle, CheckCircle } from "lucide-react";
 
 export default function AdminCustomers() {
   const { toast } = useToast();
   const { user, isLoading } = useCurrentUser();
+  const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [showNewCustomerDialog, setShowNewCustomerDialog] = useState(false);
+  const [showRentalDialog, setShowRentalDialog] = useState(false);
+  const [selectedCustomerForRental, setSelectedCustomerForRental] = useState<Customer | null>(null);
   const [newCustomer, setNewCustomer] = useState({
     name: "",
     email: "",
@@ -28,6 +34,21 @@ export default function AdminCustomers() {
     address: "",
     rut: ""
   });
+  const [newRental, setNewRental] = useState({
+    boxQuantity: 1,
+    rentalDays: 7,
+    deliveryDate: "",
+    deliveryAddress: "",
+    pickupAddress: "",
+    notes: "",
+    boxSize: "mediano"
+  });
+  const [availabilityCheck, setAvailabilityCheck] = useState<{
+    available: number;
+    total: number;
+    conflicts: any[];
+    canRent: boolean;
+  } | null>(null);
 
   // Redirect to home if not authenticated
   useEffect(() => {
@@ -46,6 +67,12 @@ export default function AdminCustomers() {
 
   const { data: rentals } = useQuery<any[]>({
     queryKey: ["/api/rentals"],
+    retry: false,
+    enabled: !!user,
+  });
+
+  const { data: boxes } = useQuery<Box[]>({
+    queryKey: ["/api/boxes"],
     retry: false,
     enabled: !!user,
   });
@@ -84,6 +111,133 @@ export default function AdminCustomers() {
       return;
     }
     createCustomerMutation.mutate(newCustomer);
+  };
+
+  const handleCreateRental = (customer: Customer) => {
+    setSelectedCustomerForRental(customer);
+    setNewRental({
+      ...newRental,
+      deliveryAddress: customer.address || "",
+      pickupAddress: customer.address || ""
+    });
+    setShowRentalDialog(true);
+  };
+
+  // Check availability when rental details change
+  const checkAvailability = async () => {
+    if (!newRental.deliveryDate || !newRental.boxQuantity || !boxes) {
+      setAvailabilityCheck(null);
+      return;
+    }
+
+    const deliveryDate = new Date(newRental.deliveryDate);
+    const returnDate = new Date(deliveryDate);
+    returnDate.setDate(returnDate.getDate() + newRental.rentalDays);
+
+    // Get available boxes by size
+    const boxesBySize = boxes.filter(box => box.size === newRental.boxSize);
+    
+    // Check conflicts with existing rentals
+    const conflicts = rentals?.filter(rental => {
+      if (rental.status === 'cancelada' || rental.status === 'finalizado') return false;
+      
+      const rentalStart = new Date(rental.deliveryDate);
+      const rentalEnd = new Date(rental.returnDate);
+      
+      // Check if dates overlap
+      return (deliveryDate <= rentalEnd && returnDate >= rentalStart);
+    }) || [];
+
+    const conflictingBoxes = conflicts.reduce((count, rental) => {
+      return count + (rental.boxQuantity || 0);
+    }, 0);
+
+    const availableBoxes = boxesBySize.length - conflictingBoxes;
+    const canRent = availableBoxes >= newRental.boxQuantity;
+
+    setAvailabilityCheck({
+      available: availableBoxes,
+      total: boxesBySize.length,
+      conflicts,
+      canRent
+    });
+  };
+
+  // Run availability check when rental details change
+  useEffect(() => {
+    if (showRentalDialog) {
+      checkAvailability();
+    }
+  }, [newRental.deliveryDate, newRental.boxQuantity, newRental.rentalDays, newRental.boxSize, showRentalDialog]);
+
+  const createRentalMutation = useMutation({
+    mutationFn: async (rentalData: any) => {
+      const response = await apiRequest("POST", "/api/rentals", rentalData);
+      return await response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/rentals"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
+      setShowRentalDialog(false);
+      setNewRental({
+        boxQuantity: 1,
+        rentalDays: 7,
+        deliveryDate: "",
+        deliveryAddress: "",
+        pickupAddress: "",
+        notes: "",
+        boxSize: "mediano"
+      });
+      toast({
+        title: "Arriendo creado",
+        description: "El arriendo ha sido creado exitosamente",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "No se pudo crear el arriendo",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleCreateRentalSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedCustomerForRental || !newRental.deliveryDate || !newRental.deliveryAddress) {
+      toast({
+        title: "Campos requeridos",
+        description: "Complete todos los campos obligatorios",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!availabilityCheck?.canRent) {
+      toast({
+        title: "Sin disponibilidad",
+        description: "No hay suficientes cajas disponibles para las fechas seleccionadas",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const deliveryDate = new Date(newRental.deliveryDate);
+    const returnDate = new Date(deliveryDate);
+    returnDate.setDate(returnDate.getDate() + newRental.rentalDays);
+
+    createRentalMutation.mutate({
+      customerId: selectedCustomerForRental.id,
+      boxQuantity: newRental.boxQuantity,
+      deliveryDate: deliveryDate.toISOString(),
+      returnDate: returnDate.toISOString(),
+      deliveryAddress: newRental.deliveryAddress,
+      pickupAddress: newRental.pickupAddress,
+      notes: newRental.notes,
+      boxSize: newRental.boxSize,
+      status: "pendiente",
+      totalPrice: newRental.boxQuantity * newRental.rentalDays * 2000 // $2000 per box per day
+    });
   };
 
   const filteredCustomers = customers?.filter((customer) => 
@@ -233,6 +387,192 @@ export default function AdminCustomers() {
             </CardHeader>
           </Card>
 
+          {/* Rental Creation Dialog */}
+          <Dialog open={showRentalDialog} onOpenChange={setShowRentalDialog}>
+            <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Crear Nuevo Arriendo</DialogTitle>
+                <DialogDescription>
+                  Cliente: {selectedCustomerForRental?.name}
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleCreateRentalSubmit} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Box Configuration */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold flex items-center gap-2">
+                      <Package className="h-5 w-5" />
+                      Configuración de Cajas
+                    </h3>
+                    
+                    <div>
+                      <Label htmlFor="boxSize">Tamaño de Caja *</Label>
+                      <Select 
+                        value={newRental.boxSize} 
+                        onValueChange={(value) => setNewRental({ ...newRental, boxSize: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleccionar tamaño" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pequeño">Pequeño</SelectItem>
+                          <SelectItem value="mediano">Mediano</SelectItem>
+                          <SelectItem value="grande">Grande</SelectItem>
+                          <SelectItem value="extra_grande">Extra Grande</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="boxQuantity">Cantidad de Cajas *</Label>
+                      <Input
+                        id="boxQuantity"
+                        type="number"
+                        min="1"
+                        value={newRental.boxQuantity}
+                        onChange={(e) => setNewRental({ ...newRental, boxQuantity: parseInt(e.target.value) || 1 })}
+                        placeholder="1"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="rentalDays">Días de Arriendo *</Label>
+                      <Input
+                        id="rentalDays"
+                        type="number"
+                        min="1"
+                        value={newRental.rentalDays}
+                        onChange={(e) => setNewRental({ ...newRental, rentalDays: parseInt(e.target.value) || 7 })}
+                        placeholder="7"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Dates and Addresses */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold flex items-center gap-2">
+                      <Calendar className="h-5 w-5" />
+                      Fechas y Direcciones
+                    </h3>
+                    
+                    <div>
+                      <Label htmlFor="deliveryDate">Fecha de Entrega *</Label>
+                      <Input
+                        id="deliveryDate"
+                        type="date"
+                        value={newRental.deliveryDate}
+                        onChange={(e) => setNewRental({ ...newRental, deliveryDate: e.target.value })}
+                        min={new Date().toISOString().split('T')[0]}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="deliveryAddress">Dirección de Entrega *</Label>
+                      <Textarea
+                        id="deliveryAddress"
+                        value={newRental.deliveryAddress}
+                        onChange={(e) => setNewRental({ ...newRental, deliveryAddress: e.target.value })}
+                        placeholder="Dirección completa de entrega"
+                        className="min-h-[60px]"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="pickupAddress">Dirección de Retiro</Label>
+                      <Textarea
+                        id="pickupAddress"
+                        value={newRental.pickupAddress}
+                        onChange={(e) => setNewRental({ ...newRental, pickupAddress: e.target.value })}
+                        placeholder="Dirección de retiro (si es diferente)"
+                        className="min-h-[60px]"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Availability Check */}
+                {availabilityCheck && (
+                  <div className={`p-4 rounded-lg border ${
+                    availabilityCheck.canRent 
+                      ? "bg-green-50 border-green-200" 
+                      : "bg-red-50 border-red-200"
+                  }`}>
+                    <div className="flex items-center gap-2 mb-2">
+                      {availabilityCheck.canRent ? (
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                      ) : (
+                        <AlertTriangle className="h-5 w-5 text-red-600" />
+                      )}
+                      <h4 className="font-semibold">
+                        {availabilityCheck.canRent ? "Disponible" : "Sin Disponibilidad"}
+                      </h4>
+                    </div>
+                    <div className="text-sm">
+                      <p>
+                        <strong>Cajas disponibles:</strong> {availabilityCheck.available} de {availabilityCheck.total} 
+                        ({newRental.boxSize})
+                      </p>
+                      <p>
+                        <strong>Solicitadas:</strong> {newRental.boxQuantity} cajas
+                      </p>
+                      {availabilityCheck.conflicts.length > 0 && (
+                        <p className="mt-2">
+                          <strong>Conflictos encontrados:</strong> {availabilityCheck.conflicts.length} arriendos activos
+                        </p>
+                      )}
+                      {!availabilityCheck.canRent && (
+                        <p className="text-red-600 mt-2">
+                          No hay suficientes cajas disponibles para las fechas seleccionadas.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Price Calculation */}
+                {newRental.boxQuantity && newRental.rentalDays && (
+                  <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <h4 className="font-semibold mb-2">Resumen de Precio</h4>
+                    <div className="text-sm space-y-1">
+                      <p>{newRental.boxQuantity} cajas × {newRental.rentalDays} días × $2.000 = ${(newRental.boxQuantity * newRental.rentalDays * 2000).toLocaleString()}</p>
+                      <p className="font-semibold text-lg">Total: ${(newRental.boxQuantity * newRental.rentalDays * 2000).toLocaleString()}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Notes */}
+                <div>
+                  <Label htmlFor="notes">Notas Adicionales</Label>
+                  <Textarea
+                    id="notes"
+                    value={newRental.notes}
+                    onChange={(e) => setNewRental({ ...newRental, notes: e.target.value })}
+                    placeholder="Instrucciones especiales, comentarios..."
+                    className="min-h-[80px]"
+                  />
+                </div>
+
+                <div className="flex gap-2 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowRentalDialog(false)}
+                    className="flex-1"
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={createRentalMutation.isPending || !availabilityCheck?.canRent}
+                    className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    {createRentalMutation.isPending ? "Creando..." : "Crear Arriendo"}
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
+
           {/* Customer Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
             {customersLoading ? (
@@ -338,6 +678,13 @@ export default function AdminCustomers() {
                       <div className="flex gap-2">
                         <Button size="sm" variant="outline" className="flex-1">
                           Ver Historial
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          className="bg-green-600 hover:bg-green-700 text-white"
+                          onClick={() => handleCreateRental(customer)}
+                        >
+                          Nuevo Arriendo
                         </Button>
                         <Button size="sm" className="bg-brand-blue hover:bg-brand-blue text-white">
                           Editar
