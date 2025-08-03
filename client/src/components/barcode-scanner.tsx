@@ -63,15 +63,26 @@ export default function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps)
     onScan(mockBarcode);
   };
 
+  const handleClose = () => {
+    stopCamera();
+    onClose();
+  };
+
+  const handleOverlayClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      handleClose();
+    }
+  };
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-md">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={handleOverlayClick}>
+      <Card className="w-full max-w-md" onClick={(e) => e.stopPropagation()}>
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg font-semibold text-gray-900">
               Escanear Código de Barras
             </CardTitle>
-            <Button variant="ghost" size="sm" onClick={onClose}>
+            <Button variant="ghost" size="sm" onClick={handleClose} className="hover:bg-gray-100">
               <X className="w-5 h-5" />
             </Button>
           </div>
