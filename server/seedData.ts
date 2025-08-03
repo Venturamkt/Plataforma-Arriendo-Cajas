@@ -93,7 +93,7 @@ export async function seedInitialData() {
       const boxesToCreate = [];
       
       // Create boxes of different sizes
-      const sizes = ['pequeño', 'mediano', 'grande', 'extra_grande'];
+      const sizes = ['small', 'medium', 'large', 'large'] as const;
       const quantities = [15, 25, 20, 10]; // Quantity for each size
       
       for (let sizeIndex = 0; sizeIndex < sizes.length; sizeIndex++) {
@@ -101,15 +101,15 @@ export async function seedInitialData() {
         const quantity = quantities[sizeIndex];
         
         for (let i = 1; i <= quantity; i++) {
-          const sizeCode = size === 'pequeño' ? 'P' : 
-                          size === 'mediano' ? 'M' : 
-                          size === 'grande' ? 'G' : 'XL';
+          const sizeCode = size === 'small' ? 'P' : 
+                          size === 'medium' ? 'M' : 
+                          size === 'large' && sizeIndex === 2 ? 'G' : 'XL';
           
           boxesToCreate.push({
             barcode: `ARR${sizeCode}${i.toString().padStart(3, '0')}`,
             size: size,
-            status: 'disponible' as const,
-            condition: 'excelente' as const,
+            status: 'available' as const,
+            condition: 'excellent' as const,
             location: 'bodega'
           });
         }

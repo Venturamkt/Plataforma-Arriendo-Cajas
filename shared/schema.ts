@@ -84,6 +84,7 @@ export const customers = pgTable("customers", {
   email: varchar("email").notNull(),
   phone: varchar("phone"),
   address: text("address"),
+  rut: varchar("rut"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -97,6 +98,7 @@ export const boxes = pgTable("boxes", {
   }).default("available"),
   size: varchar("size", { enum: ["small", "medium", "large"] }).notNull(),
   condition: varchar("condition", { enum: ["excellent", "good", "fair", "needs_repair"] }).default("excellent"),
+  location: varchar("location"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

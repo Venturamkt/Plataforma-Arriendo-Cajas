@@ -15,9 +15,10 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Table as TableComponent, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, Mail, Phone, MapPin, User, Package, Calendar, AlertTriangle, CheckCircle } from "lucide-react";
+import { Search, Plus, Mail, Phone, MapPin, User, Package, Calendar, AlertTriangle, CheckCircle, Grid3X3, Table } from "lucide-react";
 
 export default function AdminCustomers() {
   const { toast } = useToast();
@@ -27,6 +28,7 @@ export default function AdminCustomers() {
   const [showNewCustomerDialog, setShowNewCustomerDialog] = useState(false);
   const [showRentalDialog, setShowRentalDialog] = useState(false);
   const [selectedCustomerForRental, setSelectedCustomerForRental] = useState<Customer | null>(null);
+  const [viewMode, setViewMode] = useState<'cards' | 'table'>('table');
   const [newCustomer, setNewCustomer] = useState({
     name: "",
     email: "",
@@ -232,9 +234,8 @@ export default function AdminCustomers() {
       deliveryDate: deliveryDate.toISOString(),
       returnDate: returnDate.toISOString(),
       deliveryAddress: newRental.deliveryAddress,
-      pickupAddress: newRental.pickupAddress,
-      notes: newRental.notes,
-      boxSize: newRental.boxSize,
+      pickupAddress: newRental.pickupAddress || newRental.deliveryAddress,
+      notes: newRental.notes || "",
       status: "pendiente",
       totalPrice: newRental.boxQuantity * newRental.rentalDays * 2000 // $2000 per box per day
     });
@@ -301,6 +302,23 @@ export default function AdminCustomers() {
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-10"
                   />
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant={viewMode === 'cards' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setViewMode('cards')}
+                  >
+                    <Grid3X3 className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant={viewMode === 'table' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setViewMode('table')}
+                  >
+                    <Table className="h-4 w-4" />
+                  </Button>
                 </div>
                 
                 <Dialog open={showNewCustomerDialog} onOpenChange={setShowNewCustomerDialog}>
@@ -573,8 +591,114 @@ export default function AdminCustomers() {
             </DialogContent>
           </Dialog>
 
-          {/* Customer Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+          {/* Customer Display */}
+          {viewMode === 'table' ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>Clientes Registrados</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {customersLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-blue"></div>
+                  </div>
+                ) : filteredCustomers.length === 0 ? (
+                  <div className="text-center py-8">
+                    <User className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                      No se encontraron clientes
+                    </h3>
+                    <p className="text-gray-600">
+                      {searchQuery 
+                        ? "Intenta ajustar tu búsqueda"
+                        : "Comienza agregando clientes al sistema"
+                      }
+                    </p>
+                  </div>
+                ) : (
+                  <TableComponent>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Cliente</TableHead>
+                        <TableHead>Contacto</TableHead>
+                        <TableHead>Dirección</TableHead>
+                        <TableHead className="text-center">Arriendos Activos</TableHead>
+                        <TableHead className="text-center">Total Arriendos</TableHead>
+                        <TableHead className="text-center">Estado</TableHead>
+                        <TableHead className="text-center">Acciones</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredCustomers.map((customer: any) => {
+                        const stats = getCustomerStats(customer.id);
+                        const initials = customer.name.split(' ').map((n: string) => n[0]).join('').toUpperCase();
+                        
+                        return (
+                          <TableRow key={customer.id}>
+                            <TableCell>
+                              <div className="flex items-center space-x-3">
+                                <Avatar className="h-8 w-8">
+                                  <AvatarFallback className="bg-brand-blue text-white text-xs">
+                                    {initials}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div>
+                                  <p className="font-medium">{customer.name}</p>
+                                  <p className="text-sm text-gray-600">{customer.rut}</p>
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="space-y-1">
+                                <p className="text-sm">{customer.email}</p>
+                                {customer.phone && (
+                                  <p className="text-sm text-gray-600">{customer.phone}</p>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <p className="text-sm">{customer.address || "No especificada"}</p>
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <span className="text-lg font-bold text-brand-blue">{stats.active}</span>
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <span className="text-lg font-bold">{stats.total}</span>
+                            </TableCell>
+                            <TableCell className="text-center">
+                              {stats.active > 0 ? (
+                                <Badge className="bg-green-100 text-green-800">Activo</Badge>
+                              ) : (
+                                <Badge variant="outline">Inactivo</Badge>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center justify-center gap-2">
+                                <Button size="sm" variant="outline">
+                                  Historial
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  className="bg-green-600 hover:bg-green-700 text-white"
+                                  onClick={() => handleCreateRental(customer)}
+                                >
+                                  Arriendo
+                                </Button>
+                                <Button size="sm" className="bg-brand-blue hover:bg-brand-blue text-white">
+                                  Editar
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </TableComponent>
+                )}
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
             {customersLoading ? (
               Array.from({ length: 6 }).map((_, i) => (
                 <Card key={i} className="animate-pulse">
@@ -695,7 +819,8 @@ export default function AdminCustomers() {
                 );
               })
             )}
-          </div>
+            </div>
+          )}
 
           {/* Summary */}
           {!customersLoading && filteredCustomers.length > 0 && (
