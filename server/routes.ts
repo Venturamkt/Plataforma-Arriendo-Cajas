@@ -24,6 +24,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Legacy auth middleware (keep for compatibility)
   await setupAuth(app);
 
+  // Middleware to check admin session
+  const requireAdminSession = (req: any, res: any, next: any) => {
+    if (req.session?.admin?.type === 'admin') {
+      return next();
+    }
+    return res.status(401).json({ message: "Unauthorized" });
+  };
+
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
@@ -37,12 +45,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // User management routes (admin only)
-  app.get('/api/users', isAuthenticated, async (req: any, res) => {
+  app.get('/api/users', requireAdminSession, async (req: any, res) => {
     try {
-      const currentUser = await storage.getUser(req.user.claims.sub);
-      if (currentUser?.role !== 'admin') {
-        return res.status(403).json({ message: "Admin access required" });
-      }
       const users = await storage.getUsers();
       res.json(users);
     } catch (error) {
@@ -51,7 +55,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/users/:id/role', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/users/:id/role', requireAdminSession, async (req: any, res) => {
     try {
       const currentUser = await storage.getUser(req.user.claims.sub);
       if (currentUser?.role !== 'admin') {
@@ -73,7 +77,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Dashboard metrics
-  app.get('/api/dashboard/metrics', isAuthenticated, async (req, res) => {
+  app.get('/api/dashboard/metrics', requireAdminSession, async (req, res) => {
     try {
       const metrics = await storage.getDashboardMetrics();
       res.json(metrics);
@@ -84,7 +88,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Customer routes
-  app.get('/api/customers', isAuthenticated, async (req, res) => {
+  app.get('/api/customers', requireAdminSession, async (req, res) => {
     try {
       const customers = await storage.getCustomers();
       res.json(customers);
@@ -94,7 +98,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/customers/:id', isAuthenticated, async (req, res) => {
+  app.get('/api/customers/:id', requireAdminSession, async (req, res) => {
     try {
       const customer = await storage.getCustomer(req.params.id);
       if (!customer) {
@@ -107,7 +111,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/customers', isAuthenticated, async (req, res) => {
+  app.post('/api/customers', requireAdminSession, async (req, res) => {
     try {
       const customerData = insertCustomerSchema.parse(req.body);
       const customer = await storage.createCustomer(customerData);
@@ -118,7 +122,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/customers/:id', isAuthenticated, async (req, res) => {
+  app.put('/api/customers/:id', requireAdminSession, async (req, res) => {
     try {
       const customerData = insertCustomerSchema.partial().parse(req.body);
       const customer = await storage.updateCustomer(req.params.id, customerData);
@@ -133,7 +137,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Box routes
-  app.get('/api/boxes', isAuthenticated, async (req, res) => {
+  app.get('/api/boxes', requireAdminSession, async (req, res) => {
     try {
       const { status } = req.query;
       const boxes = status ? await storage.getBoxesByStatus(status as string) : await storage.getBoxes();
@@ -144,7 +148,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/boxes/:id', isAuthenticated, async (req, res) => {
+  app.get('/api/boxes/:id', requireAdminSession, async (req, res) => {
     try {
       const box = await storage.getBox(req.params.id);
       if (!box) {
@@ -157,7 +161,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/boxes/barcode/:barcode', isAuthenticated, async (req, res) => {
+  app.get('/api/boxes/barcode/:barcode', requireAdminSession, async (req, res) => {
     try {
       const box = await storage.getBoxByBarcode(req.params.barcode);
       if (!box) {
@@ -170,7 +174,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/boxes', isAuthenticated, async (req, res) => {
+  app.post('/api/boxes', requireAdminSession, async (req, res) => {
     try {
       const boxData = insertBoxSchema.parse(req.body);
       const box = await storage.createBox(boxData);
@@ -181,7 +185,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/boxes/:id', isAuthenticated, async (req, res) => {
+  app.put('/api/boxes/:id', requireAdminSession, async (req, res) => {
     try {
       const boxData = insertBoxSchema.partial().parse(req.body);
       const box = await storage.updateBox(req.params.id, boxData);
@@ -196,7 +200,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Rental routes
-  app.get('/api/rentals', isAuthenticated, async (req, res) => {
+  app.get('/api/rentals', requireAdminSession, async (req, res) => {
     try {
       const { customerId, status } = req.query;
       let rentals;
@@ -214,7 +218,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/rentals/:id', isAuthenticated, async (req, res) => {
+  app.get('/api/rentals/:id', requireAdminSession, async (req, res) => {
     try {
       const rental = await storage.getRental(req.params.id);
       if (!rental) {
@@ -227,7 +231,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/rentals', isAuthenticated, async (req, res) => {
+  app.post('/api/rentals', requireAdminSession, async (req, res) => {
     try {
       const rentalData = insertRentalSchema.parse(req.body);
       const rental = await storage.createRental(rentalData);
@@ -238,7 +242,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/rentals/:id', isAuthenticated, async (req, res) => {
+  app.put('/api/rentals/:id', requireAdminSession, async (req, res) => {
     try {
       const rentalData = insertRentalSchema.partial().parse(req.body);
       const rental = await storage.updateRental(req.params.id, rentalData);
@@ -253,7 +257,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Box movement routes
-  app.get('/api/box-movements', isAuthenticated, async (req, res) => {
+  app.get('/api/box-movements', requireAdminSession, async (req, res) => {
     try {
       const { boxId } = req.query;
       const movements = await storage.getBoxMovements(boxId as string);
@@ -264,11 +268,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/box-movements', isAuthenticated, async (req: any, res) => {
+  app.post('/api/box-movements', requireAdminSession, async (req: any, res) => {
     try {
       const movementData = insertBoxMovementSchema.parse({
         ...req.body,
-        performedBy: req.user.claims.sub,
+        performedBy: req.session.admin.id,
       });
       const movement = await storage.createBoxMovement(movementData);
       res.status(201).json(movement);
