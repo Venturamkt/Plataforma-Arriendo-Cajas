@@ -14,10 +14,10 @@ export default function LoginSelector() {
             alt="Arriendo Cajas" 
             className="h-20 mx-auto mb-6 filter brightness-110"
           />
-          <h1 className="text-5xl font-bold text-white mb-4 drop-shadow-lg">
+          <h1 className="text-5xl font-bold text-white mb-4 drop-shadow-2xl" style={{textShadow: '2px 2px 4px rgba(0,0,0,0.8)'}}>
             Arriendo Cajas
           </h1>
-          <p className="text-white text-xl font-medium drop-shadow">
+          <p className="text-white text-xl font-medium drop-shadow-xl" style={{textShadow: '1px 1px 3px rgba(0,0,0,0.7)'}}>
             Sistema de gestión integral para arriendo de cajas plásticas
           </p>
         </div>
