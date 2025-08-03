@@ -1,14 +1,17 @@
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import type { Customer } from "@shared/schema";
+import type { Customer, InsertCustomer } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import Header from "@/components/layout/header";
 import Sidebar from "@/components/layout/sidebar";
 import MobileNav from "@/components/layout/mobile-nav";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Search, Plus, Mail, Phone, MapPin, User } from "lucide-react";
@@ -17,6 +20,14 @@ export default function AdminCustomers() {
   const { toast } = useToast();
   const { user, isLoading } = useCurrentUser();
   const [searchQuery, setSearchQuery] = useState("");
+  const [showNewCustomerDialog, setShowNewCustomerDialog] = useState(false);
+  const [newCustomer, setNewCustomer] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    address: "",
+    rut: ""
+  });
 
   // Redirect to home if not authenticated
   useEffect(() => {
@@ -38,6 +49,42 @@ export default function AdminCustomers() {
     retry: false,
     enabled: !!user,
   });
+
+  const createCustomerMutation = useMutation({
+    mutationFn: async (customerData: InsertCustomer) => {
+      const response = await apiRequest("POST", "/api/customers", customerData);
+      return await response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
+      setShowNewCustomerDialog(false);
+      setNewCustomer({ name: "", email: "", phone: "", address: "", rut: "" });
+      toast({
+        title: "Cliente creado",
+        description: "El cliente ha sido creado exitosamente",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "No se pudo crear el cliente",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleCreateCustomer = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCustomer.name || !newCustomer.email) {
+      toast({
+        title: "Campos requeridos",
+        description: "Nombre y email son obligatorios",
+        variant: "destructive",
+      });
+      return;
+    }
+    createCustomerMutation.mutate(newCustomer);
+  };
 
   const filteredCustomers = customers?.filter((customer) => 
     searchQuery === "" || 
@@ -102,10 +149,86 @@ export default function AdminCustomers() {
                   />
                 </div>
                 
-                <Button className="bg-brand-red hover:bg-brand-red text-white flex items-center gap-2">
-                  <Plus className="h-4 w-4" />
-                  Nuevo Cliente
-                </Button>
+                <Dialog open={showNewCustomerDialog} onOpenChange={setShowNewCustomerDialog}>
+                  <DialogTrigger asChild>
+                    <Button className="bg-brand-red hover:bg-brand-red text-white flex items-center gap-2">
+                      <Plus className="h-4 w-4" />
+                      Nuevo Cliente
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Crear Nuevo Cliente</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleCreateCustomer} className="space-y-4">
+                      <div>
+                        <Label htmlFor="name">Nombre *</Label>
+                        <Input
+                          id="name"
+                          value={newCustomer.name}
+                          onChange={(e) => setNewCustomer({ ...newCustomer, name: e.target.value })}
+                          placeholder="Nombre completo"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="email">Email *</Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          value={newCustomer.email}
+                          onChange={(e) => setNewCustomer({ ...newCustomer, email: e.target.value })}
+                          placeholder="correo@ejemplo.com"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="phone">Teléfono</Label>
+                        <Input
+                          id="phone"
+                          value={newCustomer.phone}
+                          onChange={(e) => setNewCustomer({ ...newCustomer, phone: e.target.value })}
+                          placeholder="+56 9 1234 5678"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="rut">RUT</Label>
+                        <Input
+                          id="rut"
+                          value={newCustomer.rut}
+                          onChange={(e) => setNewCustomer({ ...newCustomer, rut: e.target.value })}
+                          placeholder="12.345.678-9"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="address">Dirección</Label>
+                        <Input
+                          id="address"
+                          value={newCustomer.address}
+                          onChange={(e) => setNewCustomer({ ...newCustomer, address: e.target.value })}
+                          placeholder="Dirección completa"
+                        />
+                      </div>
+                      <div className="flex gap-2 pt-4">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setShowNewCustomerDialog(false)}
+                          className="flex-1"
+                        >
+                          Cancelar
+                        </Button>
+                        <Button
+                          type="submit"
+                          disabled={createCustomerMutation.isPending}
+                          className="flex-1 bg-brand-red hover:bg-brand-red text-white"
+                        >
+                          {createCustomerMutation.isPending ? "Creando..." : "Crear Cliente"}
+                        </Button>
+                      </div>
+                    </form>
+                  </DialogContent>
+                </Dialog>
               </div>
             </CardHeader>
           </Card>
