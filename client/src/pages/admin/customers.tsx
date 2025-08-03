@@ -128,6 +128,27 @@ export default function AdminCustomers() {
     },
   });
 
+  const updateRentalStatusMutation = useMutation({
+    mutationFn: async ({ rentalId, status }: { rentalId: string; status: string }) => {
+      const response = await apiRequest("PUT", `/api/rentals/${rentalId}`, { status });
+      return await response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/rentals"] });
+      toast({
+        title: "Estado actualizado",
+        description: "El estado del arriendo ha sido actualizado",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar el estado",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleCreateCustomer = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCustomer.name || !newCustomer.email) {
@@ -313,6 +334,30 @@ export default function AdminCustomers() {
       total: customerRentals.length,
       lastRental: customerRentals.length > 0 ? customerRentals[0] : null
     };
+  };
+
+  const getCustomerActiveRentals = (customerId: string) => {
+    if (!rentals) return [];
+    return rentals.filter((rental: any) => 
+      rental.customerId === customerId && 
+      !['finalizado', 'cancelada'].includes(rental.status)
+    );
+  };
+
+  const handleStatusChange = (rentalId: string, newStatus: string) => {
+    updateRentalStatusMutation.mutate({ rentalId, status: newStatus });
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'pendiente': return 'bg-yellow-100 text-yellow-800';
+      case 'pagada': return 'bg-blue-100 text-blue-800';
+      case 'entregada': return 'bg-green-100 text-green-800';
+      case 'retirada': return 'bg-purple-100 text-purple-800';
+      case 'finalizado': return 'bg-gray-100 text-gray-800';
+      case 'cancelada': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
   };
 
   if (isLoading || !user) {
@@ -668,7 +713,7 @@ export default function AdminCustomers() {
                         <TableHead>Dirección</TableHead>
                         <TableHead className="text-center">Arriendos Activos</TableHead>
                         <TableHead className="text-center">Total Arriendos</TableHead>
-                        <TableHead className="text-center">Estado</TableHead>
+                        <TableHead className="text-center">Estado del Último Arriendo</TableHead>
                         <TableHead className="text-center">Acciones</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -710,11 +755,39 @@ export default function AdminCustomers() {
                               <span className="text-lg font-bold">{stats.total}</span>
                             </TableCell>
                             <TableCell className="text-center">
-                              {stats.active > 0 ? (
-                                <Badge className="bg-green-100 text-green-800">Activo</Badge>
-                              ) : (
-                                <Badge variant="outline">Inactivo</Badge>
-                              )}
+                              {(() => {
+                                const activeRentals = getCustomerActiveRentals(customer.id);
+                                if (activeRentals.length === 0) {
+                                  return <Badge variant="outline">Sin arriendos activos</Badge>;
+                                }
+                                
+                                // Show the most recent active rental
+                                const mostRecentRental = activeRentals[0];
+                                return (
+                                  <div className="space-y-1">
+                                    <Select
+                                      value={mostRecentRental.status}
+                                      onValueChange={(newStatus) => handleStatusChange(mostRecentRental.id, newStatus)}
+                                      disabled={updateRentalStatusMutation.isPending}
+                                    >
+                                      <SelectTrigger className="w-32 h-7 text-xs">
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="pendiente">🟡 Pendiente</SelectItem>
+                                        <SelectItem value="pagada">🔵 Pagada</SelectItem>
+                                        <SelectItem value="entregada">🟢 Entregada</SelectItem>
+                                        <SelectItem value="retirada">🟣 Retirada</SelectItem>
+                                        <SelectItem value="finalizado">⚫ Finalizada</SelectItem>
+                                        <SelectItem value="cancelada">🔴 Cancelada</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                    <div className="text-xs text-gray-500">
+                                      {activeRentals.length > 1 && `+${activeRentals.length - 1} más`}
+                                    </div>
+                                  </div>
+                                );
+                              })()}
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center justify-center gap-2">
