@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import type { Box } from "@shared/schema";
+import type { Box, InsertBox } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import Header from "@/components/layout/header";
 import Sidebar from "@/components/layout/sidebar";
 import MobileNav from "@/components/layout/mobile-nav";
@@ -11,6 +12,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { Search, Plus, QrCode, Package } from "lucide-react";
 import BarcodeScanner from "@/components/barcode-scanner";
 
@@ -20,6 +23,13 @@ export default function AdminInventory() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [showScanner, setShowScanner] = useState(false);
+  const [showNewBoxDialog, setShowNewBoxDialog] = useState(false);
+  const [newBox, setNewBox] = useState({
+    barcode: "",
+    size: "mediano",
+    condition: "nuevo",
+    status: "available"
+  });
 
   // Redirect to home if not authenticated
   useEffect(() => {
@@ -39,6 +49,73 @@ export default function AdminInventory() {
   const handleScanSuccess = (barcode: string) => {
     setShowScanner(false);
     setSearchQuery(barcode);
+  };
+
+  // Create box mutation
+  const createBoxMutation = useMutation({
+    mutationFn: async (boxData: InsertBox) => {
+      const response = await apiRequest("POST", "/api/boxes", boxData);
+      return await response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/boxes"] });
+      setShowNewBoxDialog(false);
+      setNewBox({
+        barcode: "",
+        size: "mediano", 
+        condition: "nuevo",
+        status: "available"
+      });
+      toast({
+        title: "Caja creada",
+        description: "La nueva caja se ha agregado al inventario correctamente",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error al crear caja",
+        description: error.message || "Hubo un problema al agregar la caja",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleCreateBox = () => {
+    if (!newBox.barcode.trim()) {
+      toast({
+        title: "Error de validación",
+        description: "El código de barras es obligatorio",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Map frontend values to schema enum values
+    const sizeMapping = {
+      "pequeño": "small",
+      "mediano": "medium", 
+      "grande": "large"
+    };
+    
+    const conditionMapping = {
+      "nuevo": "excellent",
+      "usado": "good",
+      "dañado": "needs_repair"
+    };
+
+    createBoxMutation.mutate({
+      barcode: newBox.barcode.trim(),
+      size: sizeMapping[newBox.size as keyof typeof sizeMapping] as "small" | "medium" | "large",
+      condition: conditionMapping[newBox.condition as keyof typeof conditionMapping] as "excellent" | "good" | "fair" | "needs_repair",
+      status: "available"
+    });
+  };
+
+  const generateBarcode = () => {
+    const timestamp = Date.now().toString().slice(-6);
+    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    const barcode = `CJ${timestamp}${random}`;
+    setNewBox({ ...newBox, barcode });
   };
 
   const filteredBoxes = boxes?.filter((box) => 
@@ -118,10 +195,92 @@ export default function AdminInventory() {
                       <QrCode className="h-4 w-4" />
                       Escanear
                     </Button>
-                    <Button className="bg-brand-red hover:bg-brand-red text-white flex items-center gap-2">
-                      <Plus className="h-4 w-4" />
-                      Nueva Caja
-                    </Button>
+                    <Dialog open={showNewBoxDialog} onOpenChange={setShowNewBoxDialog}>
+                      <DialogTrigger asChild>
+                        <Button className="bg-brand-red hover:bg-brand-red text-white flex items-center gap-2">
+                          <Plus className="h-4 w-4" />
+                          Nueva Caja
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                          <DialogTitle>Agregar Nueva Caja</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="barcode">Código de Barras</Label>
+                            <div className="flex gap-2">
+                              <Input
+                                id="barcode"
+                                placeholder="Ej: CJ001234567"
+                                value={newBox.barcode}
+                                onChange={(e) => setNewBox({ ...newBox, barcode: e.target.value })}
+                                className="flex-1"
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={generateBarcode}
+                                className="px-3"
+                              >
+                                Generar
+                              </Button>
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="size">Tamaño</Label>
+                            <Select 
+                              value={newBox.size} 
+                              onValueChange={(value) => setNewBox({ ...newBox, size: value })}
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="pequeño">Pequeño</SelectItem>
+                                <SelectItem value="mediano">Mediano (60x40 cms)</SelectItem>
+                                <SelectItem value="grande">Grande</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="condition">Condición</Label>
+                            <Select 
+                              value={newBox.condition} 
+                              onValueChange={(value) => setNewBox({ ...newBox, condition: value })}
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="nuevo">Nuevo</SelectItem>
+                                <SelectItem value="usado">Usado</SelectItem>
+                                <SelectItem value="dañado">Dañado</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div className="flex gap-2 pt-4">
+                            <Button
+                              variant="outline"
+                              onClick={() => setShowNewBoxDialog(false)}
+                              className="flex-1"
+                            >
+                              Cancelar
+                            </Button>
+                            <Button
+                              onClick={handleCreateBox}
+                              disabled={createBoxMutation.isPending}
+                              className="flex-1 bg-brand-red hover:bg-brand-red text-white"
+                            >
+                              {createBoxMutation.isPending ? "Creando..." : "Crear Caja"}
+                            </Button>
+                          </div>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                   </div>
                 </div>
               </CardHeader>
