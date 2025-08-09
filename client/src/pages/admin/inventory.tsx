@@ -24,6 +24,8 @@ export default function AdminInventory() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [showScanner, setShowScanner] = useState(false);
   const [showNewBoxDialog, setShowNewBoxDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editingBox, setEditingBox] = useState<Box | null>(null);
   const [newBox, setNewBox] = useState({
     barcode: "",
     size: "mediano",
@@ -122,6 +124,66 @@ export default function AdminInventory() {
     // AC = Arriendo Cajas
     const barcode = `AC${year}${month}${day}${sequence}`;
     setNewBox({ ...newBox, barcode });
+  };
+
+  // Update box mutation
+  const updateBoxMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<InsertBox> }) => {
+      const response = await apiRequest("PUT", `/api/boxes/${id}`, data);
+      return await response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/boxes"] });
+      setShowEditDialog(false);
+      setEditingBox(null);
+      toast({
+        title: "Caja actualizada",
+        description: "Los cambios se han guardado correctamente",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error al actualizar caja",
+        description: error.message || "Hubo un problema al actualizar la caja",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleEditBox = (box: Box) => {
+    setEditingBox(box);
+    setShowEditDialog(true);
+  };
+
+  const handleUpdateBox = () => {
+    if (!editingBox) return;
+
+    const sizeMapping = {
+      "pequeño": "small",
+      "mediano": "medium", 
+      "grande": "large"
+    };
+    
+    const conditionMapping = {
+      "nuevo": "excellent",
+      "usado": "good",
+      "dañado": "needs_repair"
+    };
+
+    // Reverse mapping for display
+    const currentDisplaySize = editingBox.size === 'medium' ? 'mediano' : 
+                               editingBox.size === 'small' ? 'pequeño' : 'grande';
+    const currentDisplayCondition = editingBox.condition === 'excellent' ? 'nuevo' : 
+                                    editingBox.condition === 'good' ? 'usado' : 'dañado';
+
+    updateBoxMutation.mutate({
+      id: editingBox.id,
+      data: {
+        barcode: editingBox.barcode,
+        size: sizeMapping[currentDisplaySize as keyof typeof sizeMapping] as "small" | "medium" | "large",
+        condition: conditionMapping[currentDisplayCondition as keyof typeof conditionMapping] as "excellent" | "good" | "fair" | "needs_repair"
+      }
+    });
   };
 
   const filteredBoxes = boxes?.filter((box) => 
@@ -339,11 +401,17 @@ export default function AdminInventory() {
                       <div className="space-y-2">
                         <div className="flex justify-between">
                           <span className="text-sm text-gray-600">Tamaño:</span>
-                          <span className="text-sm font-medium capitalize">{box.size}</span>
+                          <span className="text-sm font-medium">
+                            {box.size === 'medium' ? '60x40 cms' : box.size === 'small' ? 'Pequeño' : 'Grande'}
+                          </span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-sm text-gray-600">Condición:</span>
-                          <span className="text-sm font-medium capitalize">{box.condition}</span>
+                          <span className="text-sm font-medium">
+                            {box.condition === 'excellent' ? 'Excelente' : 
+                             box.condition === 'good' ? 'Buena' :
+                             box.condition === 'fair' ? 'Regular' : 'Necesita reparación'}
+                          </span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-sm text-gray-600">Actualizado:</span>
@@ -357,7 +425,11 @@ export default function AdminInventory() {
                         <Button size="sm" variant="outline" className="flex-1">
                           Ver Historial
                         </Button>
-                        <Button size="sm" className="bg-brand-blue hover:bg-brand-blue text-white">
+                        <Button 
+                          size="sm" 
+                          onClick={() => handleEditBox(box)}
+                          className="bg-brand-blue hover:bg-brand-blue text-white"
+                        >
                           Editar
                         </Button>
                       </div>
@@ -389,6 +461,88 @@ export default function AdminInventory() {
           onScan={handleScanSuccess}
           onClose={() => setShowScanner(false)}
         />
+      )}
+
+      {/* Edit Box Dialog */}
+      {editingBox && (
+        <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Editar Caja</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-barcode">Código de Barras</Label>
+                <Input
+                  id="edit-barcode"
+                  value={editingBox.barcode}
+                  onChange={(e) => setEditingBox({ ...editingBox, barcode: e.target.value })}
+                  placeholder="Código de barras"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-size">Tamaño</Label>
+                <Select 
+                  value={editingBox.size === 'medium' ? 'mediano' : editingBox.size === 'small' ? 'pequeño' : 'grande'} 
+                  onValueChange={(value) => {
+                    const sizeMap = { 'pequeño': 'small', 'mediano': 'medium', 'grande': 'large' };
+                    setEditingBox({ ...editingBox, size: sizeMap[value as keyof typeof sizeMap] as any });
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pequeño">Pequeño</SelectItem>
+                    <SelectItem value="mediano">Mediano (60x40 cms)</SelectItem>
+                    <SelectItem value="grande">Grande</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-condition">Condición</Label>
+                <Select 
+                  value={editingBox.condition === 'excellent' ? 'nuevo' : editingBox.condition === 'good' ? 'usado' : 'dañado'} 
+                  onValueChange={(value) => {
+                    const conditionMap = { 'nuevo': 'excellent', 'usado': 'good', 'dañado': 'needs_repair' };
+                    setEditingBox({ ...editingBox, condition: conditionMap[value as keyof typeof conditionMap] as any });
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="nuevo">Nuevo</SelectItem>
+                    <SelectItem value="usado">Usado</SelectItem>
+                    <SelectItem value="dañado">Dañado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex gap-2 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowEditDialog(false);
+                    setEditingBox(null);
+                  }}
+                  className="flex-1"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={handleUpdateBox}
+                  disabled={updateBoxMutation.isPending}
+                  className="flex-1 bg-brand-blue hover:bg-brand-blue text-white"
+                >
+                  {updateBoxMutation.isPending ? "Guardando..." : "Guardar"}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
     </>
   );
