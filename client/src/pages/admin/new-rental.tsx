@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, Search, User, Package, Calendar, MapPin, DollarSign, ArrowLeft } from "lucide-react";
 
 export default function NewRental() {
@@ -31,6 +32,16 @@ export default function NewRental() {
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [notes, setNotes] = useState("");
   const [rentalDays, setRentalDays] = useState("7");
+  
+  // New customer form state
+  const [showNewCustomerDialog, setShowNewCustomerDialog] = useState(false);
+  const [newCustomer, setNewCustomer] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    rut: "",
+    address: ""
+  });
 
   // Redirect to home if not authenticated
   useEffect(() => {
@@ -71,6 +82,30 @@ export default function NewRental() {
       toast({
         title: "Error",
         description: "No se pudo crear el arriendo",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const createCustomerMutation = useMutation({
+    mutationFn: async (customerData: any) => {
+      const response = await apiRequest("POST", "/api/customers", customerData);
+      return await response.json();
+    },
+    onSuccess: (createdCustomer) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
+      setSelectedCustomer(createdCustomer);
+      setShowNewCustomerDialog(false);
+      setNewCustomer({ name: "", email: "", phone: "", rut: "", address: "" });
+      toast({
+        title: "Cliente creado exitosamente",
+        description: "Ahora puedes continuar creando el arriendo",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error al crear cliente",
+        description: "No se pudo crear el cliente",
         variant: "destructive",
       });
     },
@@ -143,6 +178,19 @@ export default function NewRental() {
     createRentalMutation.mutate(rentalData);
   };
 
+  const handleCreateCustomer = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCustomer.name || !newCustomer.email) {
+      toast({
+        title: "Datos requeridos",
+        description: "El nombre y email son obligatorios",
+        variant: "destructive",
+      });
+      return;
+    }
+    createCustomerMutation.mutate(newCustomer);
+  };
+
   if (isLoading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -204,26 +252,198 @@ export default function NewRental() {
                     </div>
                     
                     <div className="max-h-60 overflow-y-auto space-y-2">
-                      {filteredCustomers.map((customer: any) => (
-                        <div
-                          key={customer.id}
-                          className="p-3 border rounded-lg hover:bg-gray-50 cursor-pointer"
-                          onClick={() => setSelectedCustomer(customer)}
-                        >
-                          <div className="flex items-center gap-3">
-                            <Avatar className="h-8 w-8">
-                              <AvatarFallback className="bg-brand-blue text-white text-sm">
-                                {customer.name.split(' ').map((n: string) => n[0]).join('').toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <p className="font-medium text-gray-900">{customer.name}</p>
-                              <p className="text-sm text-gray-600">{customer.email}</p>
+                      {filteredCustomers.length > 0 ? (
+                        filteredCustomers.map((customer: any) => (
+                          <div
+                            key={customer.id}
+                            className="p-3 border rounded-lg hover:bg-gray-50 cursor-pointer"
+                            onClick={() => setSelectedCustomer(customer)}
+                          >
+                            <div className="flex items-center gap-3">
+                              <Avatar className="h-8 w-8">
+                                <AvatarFallback className="bg-brand-blue text-white text-sm">
+                                  {customer.name.split(' ').map((n: string) => n[0]).join('').toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <p className="font-medium text-gray-900">{customer.name}</p>
+                                <p className="text-sm text-gray-600">{customer.email}</p>
+                              </div>
                             </div>
                           </div>
+                        ))
+                      ) : (
+                        <div className="text-center p-6 text-gray-500">
+                          <p className="mb-4">No se encontraron clientes</p>
+                          <Dialog open={showNewCustomerDialog} onOpenChange={setShowNewCustomerDialog}>
+                            <DialogTrigger asChild>
+                              <Button className="bg-brand-blue hover:bg-brand-blue text-white">
+                                <Plus className="h-4 w-4 mr-2" />
+                                Crear Nuevo Cliente
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-md">
+                              <DialogHeader>
+                                <DialogTitle>Crear Nuevo Cliente</DialogTitle>
+                              </DialogHeader>
+                              <form onSubmit={handleCreateCustomer} className="space-y-4">
+                                <div>
+                                  <Label htmlFor="name">Nombre *</Label>
+                                  <Input
+                                    id="name"
+                                    value={newCustomer.name}
+                                    onChange={(e) => setNewCustomer({ ...newCustomer, name: e.target.value })}
+                                    placeholder="Nombre completo"
+                                    required
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor="email">Email *</Label>
+                                  <Input
+                                    id="email"
+                                    type="email"
+                                    value={newCustomer.email}
+                                    onChange={(e) => setNewCustomer({ ...newCustomer, email: e.target.value })}
+                                    placeholder="correo@ejemplo.com"
+                                    required
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor="phone">Teléfono</Label>
+                                  <Input
+                                    id="phone"
+                                    value={newCustomer.phone}
+                                    onChange={(e) => setNewCustomer({ ...newCustomer, phone: e.target.value })}
+                                    placeholder="+56 9 1234 5678"
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor="rut">RUT</Label>
+                                  <Input
+                                    id="rut"
+                                    value={newCustomer.rut}
+                                    onChange={(e) => setNewCustomer({ ...newCustomer, rut: e.target.value })}
+                                    placeholder="12.345.678-9"
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor="address">Dirección</Label>
+                                  <Input
+                                    id="address"
+                                    value={newCustomer.address}
+                                    onChange={(e) => setNewCustomer({ ...newCustomer, address: e.target.value })}
+                                    placeholder="Dirección completa"
+                                  />
+                                </div>
+                                <div className="flex gap-2 pt-4">
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setShowNewCustomerDialog(false)}
+                                    className="flex-1"
+                                  >
+                                    Cancelar
+                                  </Button>
+                                  <Button
+                                    type="submit"
+                                    disabled={createCustomerMutation.isPending}
+                                    className="flex-1 bg-brand-blue hover:bg-brand-blue text-white"
+                                  >
+                                    {createCustomerMutation.isPending ? "Creando..." : "Crear Cliente"}
+                                  </Button>
+                                </div>
+                              </form>
+                            </DialogContent>
+                          </Dialog>
                         </div>
-                      ))}
+                      )}
                     </div>
+                    
+                    {/* Botón para crear cliente siempre visible */}
+                    {filteredCustomers.length > 0 && (
+                      <div className="pt-4 border-t">
+                        <Dialog open={showNewCustomerDialog} onOpenChange={setShowNewCustomerDialog}>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" className="w-full">
+                              <Plus className="h-4 w-4 mr-2" />
+                              Crear Nuevo Cliente
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="sm:max-w-md">
+                            <DialogHeader>
+                              <DialogTitle>Crear Nuevo Cliente</DialogTitle>
+                            </DialogHeader>
+                            <form onSubmit={handleCreateCustomer} className="space-y-4">
+                              <div>
+                                <Label htmlFor="name">Nombre *</Label>
+                                <Input
+                                  id="name"
+                                  value={newCustomer.name}
+                                  onChange={(e) => setNewCustomer({ ...newCustomer, name: e.target.value })}
+                                  placeholder="Nombre completo"
+                                  required
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="email">Email *</Label>
+                                <Input
+                                  id="email"
+                                  type="email"
+                                  value={newCustomer.email}
+                                  onChange={(e) => setNewCustomer({ ...newCustomer, email: e.target.value })}
+                                  placeholder="correo@ejemplo.com"
+                                  required
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="phone">Teléfono</Label>
+                                <Input
+                                  id="phone"
+                                  value={newCustomer.phone}
+                                  onChange={(e) => setNewCustomer({ ...newCustomer, phone: e.target.value })}
+                                  placeholder="+56 9 1234 5678"
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="rut">RUT</Label>
+                                <Input
+                                  id="rut"
+                                  value={newCustomer.rut}
+                                  onChange={(e) => setNewCustomer({ ...newCustomer, rut: e.target.value })}
+                                  placeholder="12.345.678-9"
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="address">Dirección</Label>
+                                <Input
+                                  id="address"
+                                  value={newCustomer.address}
+                                  onChange={(e) => setNewCustomer({ ...newCustomer, address: e.target.value })}
+                                  placeholder="Dirección completa"
+                                />
+                              </div>
+                              <div className="flex gap-2 pt-4">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  onClick={() => setShowNewCustomerDialog(false)}
+                                  className="flex-1"
+                                >
+                                  Cancelar
+                                </Button>
+                                <Button
+                                  type="submit"
+                                  disabled={createCustomerMutation.isPending}
+                                  className="flex-1 bg-brand-blue hover:bg-brand-blue text-white"
+                                >
+                                  {createCustomerMutation.isPending ? "Creando..." : "Crear Cliente"}
+                                </Button>
+                              </div>
+                            </form>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-lg">

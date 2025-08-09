@@ -48,18 +48,24 @@ export default function AdminDashboard() {
     statusCounts: Record<string, number>;
   }
 
-  // Mock data for demo since we have a separate auth system
-  const metrics = {
-    activeBoxes: 150,
-    pendingDeliveries: 8,
-    monthlyRevenue: 2500000,
-    activeCustomers: 42,
+  // Fetch real data from the database
+  const { data: dashboardMetrics } = useQuery<DashboardMetrics>({
+    queryKey: ["/api/dashboard/metrics"],
+    retry: false,
+    enabled: !!user,
+  });
+
+  const metrics = dashboardMetrics || {
+    activeBoxes: 0,
+    pendingDeliveries: 0,
+    monthlyRevenue: 0,
+    activeCustomers: 0,
     statusCounts: {
-      entregada: 85,
-      pendiente: 15,
-      pagada: 25,
-      retirada: 20,
-      finalizado: 5
+      entregada: 0,
+      pendiente: 0,
+      pagada: 0,
+      retirada: 0,
+      finalizado: 0
     }
   };
 

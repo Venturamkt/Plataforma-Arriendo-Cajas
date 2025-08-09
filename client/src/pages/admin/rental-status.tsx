@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +13,9 @@ import { Search, Package, Calendar, Truck, CheckCircle, Clock, XCircle, Edit3 } 
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import type { Rental, Customer } from "@shared/schema";
+import Header from "@/components/layout/header";
+import Sidebar from "@/components/layout/sidebar";
+import MobileNav from "@/components/layout/mobile-nav";
 
 const statusConfig = {
   pendiente: { label: "Pendiente", color: "bg-yellow-100 text-yellow-800", icon: Clock },
@@ -24,15 +28,27 @@ const statusConfig = {
 
 export default function RentalStatus() {
   const { toast } = useToast();
+  const { user, isLoading } = useCurrentUser();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedRental, setSelectedRental] = useState<Rental | null>(null);
   const [showStatusDialog, setShowStatusDialog] = useState(false);
   const [newStatus, setNewStatus] = useState("");
 
+  // Redirect to home if not authenticated
+  useEffect(() => {
+    if (isLoading) return;
+    if (!user || user.type !== 'admin') {
+      window.location.href = "/";
+      return;
+    }
+  }, [user, isLoading]);
+
   // Fetch rentals
-  const { data: rentals, isLoading } = useQuery<Rental[]>({
+  const { data: rentals, isLoading: rentalsLoading } = useQuery<Rental[]>({
     queryKey: ["/api/rentals"],
+    retry: false,
+    enabled: !!user,
   });
 
   // Fetch customers for rental details
@@ -91,7 +107,7 @@ export default function RentalStatus() {
     return customers?.find(c => c.id === customerId)?.name || "Cliente no encontrado";
   };
 
-  if (isLoading) {
+  if (isLoading || !user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-blue"></div>
@@ -100,7 +116,14 @@ export default function RentalStatus() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+      
+      <div className="flex">
+        <Sidebar role={'admin'} />
+        
+        <main className="flex-1 p-4 lg:p-8 pb-20 lg:pb-8">
+          <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">Estado de Arriendos</h1>
@@ -202,7 +225,7 @@ export default function RentalStatus() {
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4 text-gray-500" />
-                          <span>{rental.startDate ? new Date(rental.startDate).toLocaleDateString() : "Sin fecha"}</span>
+                          <span>{rental.startDate ? new Date(rental.startDate as string).toLocaleDateString() : "Sin fecha"}</span>
                         </div>
                       </TableCell>
                       <TableCell className="font-semibold">
@@ -232,6 +255,12 @@ export default function RentalStatus() {
           )}
         </CardContent>
       </Card>
+
+          </div>
+        </main>
+      </div>
+      
+      <MobileNav role={'admin'} />
 
       {/* Status Update Dialog */}
       <Dialog open={showStatusDialog} onOpenChange={setShowStatusDialog}>
