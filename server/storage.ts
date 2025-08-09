@@ -272,10 +272,7 @@ export class DatabaseStorage implements IStorage {
     const activeBoxesResult = await db
       .select({ count: count() })
       .from(boxes)
-      .where(or(
-        eq(boxes.status, "entregada"),
-        eq(boxes.status, "pagada")
-      ));
+      .where(eq(boxes.status, "available"));
 
     const pendingDeliveriesResult = await db
       .select({ count: count() })

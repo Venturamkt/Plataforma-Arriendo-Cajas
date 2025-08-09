@@ -117,7 +117,7 @@ export default function NewRental() {
   ) : [];
 
   const filteredBoxes = Array.isArray(availableBoxes) ? availableBoxes.filter((box: any) => 
-    box.status === 'disponible'
+    box.status === 'available'
   ) : [];
 
   const handleAddBox = (box: any) => {
