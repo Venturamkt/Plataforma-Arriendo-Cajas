@@ -38,6 +38,7 @@ export default function AdminCustomers() {
     address: "",
     rut: ""
   });
+  const [includeRental, setIncludeRental] = useState(false);
   const [newRental, setNewRental] = useState({
     boxQuantity: 1,
     rentalDays: 7,
@@ -67,6 +68,7 @@ export default function AdminCustomers() {
     queryKey: ["/api/customers"],
     retry: false,
     enabled: !!user,
+    refetchOnMount: true,
   });
 
   const { data: rentals } = useQuery<any[]>({
@@ -86,13 +88,23 @@ export default function AdminCustomers() {
       const response = await apiRequest("POST", "/api/customers", customerData);
       return await response.json();
     },
-    onSuccess: () => {
+    onSuccess: (customer) => {
       queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
-      setShowNewCustomerDialog(false);
+      
+      if (includeRental) {
+        // Si se marcó incluir arriendo, abrir el diálogo de crear arriendo inmediatamente
+        setSelectedCustomerForRental(customer);
+        setShowRentalDialog(true);
+        setShowNewCustomerDialog(false);
+      } else {
+        setShowNewCustomerDialog(false);
+      }
+      
       setNewCustomer({ name: "", email: "", phone: "", address: "", rut: "" });
+      setIncludeRental(false);
       toast({
         title: "Cliente creado",
-        description: "El cliente ha sido creado exitosamente",
+        description: includeRental ? "Cliente creado. Ahora complete los datos del arriendo." : "El cliente ha sido creado exitosamente",
       });
     },
     onError: () => {
@@ -477,6 +489,21 @@ export default function AdminCustomers() {
                           placeholder="Dirección completa"
                         />
                       </div>
+                      
+                      {/* Opción para crear arriendo inmediatamente */}
+                      <div className="flex items-center space-x-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <input
+                          type="checkbox"
+                          id="includeRental"
+                          checked={includeRental}
+                          onChange={(e) => setIncludeRental(e.target.checked)}
+                          className="rounded border-blue-300"
+                        />
+                        <Label htmlFor="includeRental" className="text-sm font-medium text-blue-800">
+                          Crear arriendo inmediatamente después del cliente
+                        </Label>
+                      </div>
+                      
                       <div className="flex gap-2 pt-4">
                         <Button
                           type="button"
@@ -491,7 +518,7 @@ export default function AdminCustomers() {
                           disabled={createCustomerMutation.isPending}
                           className="flex-1 bg-brand-red hover:bg-brand-red text-white"
                         >
-                          {createCustomerMutation.isPending ? "Creando..." : "Crear Cliente"}
+                          {createCustomerMutation.isPending ? "Creando..." : (includeRental ? "Crear Cliente + Arriendo" : "Crear Cliente")}
                         </Button>
                       </div>
                     </form>

@@ -58,9 +58,9 @@ export async function seedInitialData() {
       console.log("✓ Sample customer access records created");
     }
 
-    // Create sample customers for the main system
+    // Create sample customers for the main system (disabled for production)
     const customersExist = await db.select().from(customers).limit(1);
-    if (customersExist.length === 0) {
+    if (false && customersExist.length === 0) {
       await db.insert(customers).values([
         {
           name: "José Alarcón Lizama",
@@ -87,9 +87,9 @@ export async function seedInitialData() {
       console.log("✓ Sample customers created");
     }
 
-    // Create sample boxes inventory
+    // Create sample boxes inventory (disabled for production)
     const boxesExist = await db.select().from(boxes).limit(1);
-    if (boxesExist.length === 0) {
+    if (false && boxesExist.length === 0) {
       const boxesToCreate = [];
       
       // Create boxes of different sizes
