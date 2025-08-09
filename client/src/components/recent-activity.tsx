@@ -16,36 +16,7 @@ interface RecentActivityProps {
   onViewAll?: () => void;
 }
 
-const mockActivities: Activity[] = [
-  {
-    id: "1",
-    type: "delivery",
-    title: "Caja CJ-001247 entregada",
-    description: "Cliente: María González - hace 15 min",
-    timestamp: "15 min ago"
-  },
-  {
-    id: "2",
-    type: "payment",
-    title: "Pago confirmado - $45.000",
-    description: "Pedido #ARR-2024-089 - hace 32 min",
-    timestamp: "32 min ago"
-  },
-  {
-    id: "3",
-    type: "reservation",
-    title: "Nueva reserva creada",
-    description: "Cliente: Carlos Rodríguez - hace 1 hora",
-    timestamp: "1 hour ago"
-  },
-  {
-    id: "4",
-    type: "return",
-    title: "Cajas retiradas y limpiadas",
-    description: "6 cajas listas para nuevo arriendo - hace 2 horas",
-    timestamp: "2 hours ago"
-  }
-];
+const emptyActivities: Activity[] = [];
 
 const getActivityIcon = (type: string) => {
   switch (type) {
@@ -78,7 +49,7 @@ const getActivityBgColor = (type: string) => {
 };
 
 export default function RecentActivity({ 
-  activities = mockActivities, 
+  activities = emptyActivities, 
   title = "Actividad Reciente", 
   onViewAll 
 }: RecentActivityProps) {
@@ -95,21 +66,9 @@ export default function RecentActivity({
         </div>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          {activities.map((activity) => (
-            <div 
-              key={activity.id} 
-              className="flex items-center space-x-3 p-3 bg-gray-50 rounded-md"
-            >
-              <div className={`${getActivityBgColor(activity.type)} p-2 rounded-full`}>
-                {getActivityIcon(activity.type)}
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-900">{activity.title}</p>
-                <p className="text-xs text-gray-500">{activity.description}</p>
-              </div>
-            </div>
-          ))}
+        <div className="text-center py-8 text-gray-500">
+          <p className="text-sm">No hay actividad reciente</p>
+          <p className="text-xs mt-1">Las actividades aparecerán aquí cuando comiences a usar el sistema</p>
         </div>
       </CardContent>
     </Card>

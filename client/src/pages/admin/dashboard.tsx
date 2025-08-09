@@ -131,8 +131,6 @@ export default function AdminDashboard() {
               value={metrics.activeBoxes}
               icon={Package}
               iconColor="bg-box-blue"
-              change="+12% desde el mes pasado"
-              changeType="positive"
             />
             
             <MetricCard
@@ -140,8 +138,6 @@ export default function AdminDashboard() {
               value={metrics.pendingDeliveries}
               icon={Clock}
               iconColor="bg-yellow-100"
-              change="Para hoy"
-              changeType="neutral"
             />
             
             <MetricCard
@@ -149,8 +145,6 @@ export default function AdminDashboard() {
               value={formatCurrency(metrics.monthlyRevenue)}
               icon={DollarSign}
               iconColor="bg-green-100"
-              change="+18% vs mes anterior"
-              changeType="positive"
             />
             
             <MetricCard
@@ -158,8 +152,6 @@ export default function AdminDashboard() {
               value={metrics.activeCustomers}
               icon={Users}
               iconColor="bg-purple-100"
-              change="Con arriendos vigentes"
-              changeType="neutral"
             />
           </div>
 
