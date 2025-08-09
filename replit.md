@@ -148,4 +148,6 @@ The architecture emphasizes type safety, scalability, and maintainability while 
 - ✓ **Estado de Arriendos has proper sidebar navigation**: Fixed missing layout components
 - ✓ **Nuevo Arriendo form includes customer creation**: Can create customers directly when needed
 - ✓ **Database completely clean**: Disabled automatic test data generation for production use
+- ✓ **Nueva Caja functionality**: Implemented complete box creation with barcode generation
+- ✓ **Barcode system**: Standardized format AC + YYMMDD + sequence (13 characters total)
 - ✓ Application fully functional with proper authentication flow and clean real data display

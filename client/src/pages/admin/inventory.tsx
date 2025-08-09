@@ -112,9 +112,15 @@ export default function AdminInventory() {
   };
 
   const generateBarcode = () => {
-    const timestamp = Date.now().toString().slice(-6);
-    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-    const barcode = `CJ${timestamp}${random}`;
+    // Formato estándar: AC + año (2 dígitos) + mes + día + número secuencial (4 dígitos)
+    const now = new Date();
+    const year = now.getFullYear().toString().slice(-2);
+    const month = (now.getMonth() + 1).toString().padStart(2, '0');
+    const day = now.getDate().toString().padStart(2, '0');
+    const sequence = Math.floor(Math.random() * 9999).toString().padStart(4, '0');
+    
+    // AC = Arriendo Cajas
+    const barcode = `AC${year}${month}${day}${sequence}`;
     setNewBox({ ...newBox, barcode });
   };
 
@@ -212,7 +218,7 @@ export default function AdminInventory() {
                             <div className="flex gap-2">
                               <Input
                                 id="barcode"
-                                placeholder="Ej: CJ001234567"
+                                placeholder="Ej: AC25010912345"
                                 value={newBox.barcode}
                                 onChange={(e) => setNewBox({ ...newBox, barcode: e.target.value })}
                                 className="flex-1"
@@ -226,6 +232,9 @@ export default function AdminInventory() {
                                 Generar
                               </Button>
                             </div>
+                            <p className="text-xs text-gray-500">
+                              Formato: AC + año + mes + día + secuencial (13 dígitos total)
+                            </p>
                           </div>
 
                           <div className="space-y-2">
