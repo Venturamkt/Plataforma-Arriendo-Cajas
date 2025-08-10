@@ -63,7 +63,7 @@ export const emailTemplates = {
             </div>
             
             <div class="footer">
-              <p>📞 +56 9 1234 5678 | 📧 info@arriendocajas.cl</p>
+              <p>📞 +56 9 1234 5678 | 📧 jalarcon@arriendocajas.cl</p>
               <p>Arriendo Cajas - Tu solución en almacenamiento temporal</p>
             </div>
           </div>
@@ -130,7 +130,8 @@ export const emailTemplates = {
             
             <div class="footer">
               <p>Arriendo Cajas - Tu solución de almacenamiento temporal</p>
-              <p>¿Preguntas? Contáctanos: info@arriendocajas.cl</p>
+              <p>¿Preguntas? Contáctanos: jalarcon@arriendocajas.cl</p>
+              <p><small>Recibiste este email porque tienes un arriendo activo con nosotros. Para darse de baja, responde con "STOP".</small></p>
             </div>
           </div>
         </body>
@@ -190,7 +191,8 @@ export const emailTemplates = {
             
             <div class="footer">
               <p>Arriendo Cajas - Más espacio, más orden</p>
-              <p>¿Necesitas ayuda? Escríbenos: info@arriendocajas.cl</p>
+              <p>¿Necesitas ayuda? Escríbenos: jalarcon@arriendocajas.cl</p>
+              <p><small>Recibiste este email porque tienes un arriendo activo con nosotros. Para darse de baja, responde con "STOP".</small></p>
             </div>
           </div>
         </body>
@@ -250,7 +252,7 @@ export const emailTemplates = {
             
             <div class="footer">
               <p>Arriendo Cajas - Siempre a tu servicio</p>
-              <p>¿Cómo fue tu experiencia? Cuéntanos: info@arriendocajas.cl</p>
+              <p>¿Cómo fue tu experiencia? Cuéntanos: jalarcon@arriendocajas.cl</p>
             </div>
           </div>
         </body>
@@ -304,7 +306,7 @@ export const emailTemplates = {
               <div class="rating">
                 <h3>⭐ ¿Cómo fue tu experiencia?</h3>
                 <p>Nos encantaría conocer tu opinión para seguir mejorando nuestro servicio.</p>
-                <p>Escríbenos a: <strong>info@arriendocajas.cl</strong></p>
+                <p>Escríbenos a: <strong>jalarcon@arriendocajas.cl</strong></p>
               </div>
               
               <h3>🔄 ¿Necesitas cajas otra vez?</h3>
@@ -381,7 +383,7 @@ export const emailTemplates = {
               
               <h3>📞 ¿Necesitas ayuda?</h3>
               <p>Si tienes alguna consulta o necesitas coordinar un horario específico, no dudes en contactarnos:</p>
-              <p><strong>Email:</strong> info@arriendocajas.cl</p>
+              <p><strong>Email:</strong> jalarcon@arriendocajas.cl</p>
               
               <p>¡Gracias por mantener todo en orden!</p>
             </div>
@@ -394,7 +396,7 @@ export const emailTemplates = {
         </body>
       </html>
     `,
-    text: `¡Hola ${data.customerName}! RECORDATORIO: En 2 días debes devolver tus ${data.totalBoxes} cajas. Prepáralas: límpia, revisa estado, apila ordenadamente. Dirección: ${data.deliveryAddress}. Garantía: $${data.guaranteeAmount.toLocaleString()} se devuelve al completar. Seguimiento: ${data.trackingUrl} (${data.trackingCode}). Consultas: info@arriendocajas.cl`
+    text: `¡Hola ${data.customerName}! RECORDATORIO: En 2 días debes devolver tus ${data.totalBoxes} cajas. Prepáralas: límpia, revisa estado, apila ordenadamente. Dirección: ${data.deliveryAddress}. Garantía: $${data.guaranteeAmount.toLocaleString()} se devuelve al completar. Seguimiento: ${data.trackingUrl} (${data.trackingCode}). Consultas: jalarcon@arriendocajas.cl`
   }),
 
   cancelada: (data: RentalEmailData): EmailTemplate => ({
@@ -441,7 +443,7 @@ export const emailTemplates = {
                 <h3>🤝 ¿Necesitas Ayuda?</h3>
                 <p>Si tienes preguntas sobre la cancelación o el reembolso, no dudes en contactarnos:</p>
                 <ul>
-                  <li>Email: <strong>info@arriendocajas.cl</strong></li>
+                  <li>Email: <strong>jalarcon@arriendocajas.cl</strong></li>
                   <li>Te responderemos a la brevedad</li>
                 </ul>
               </div>
@@ -454,13 +456,13 @@ export const emailTemplates = {
             
             <div class="footer">
               <p>Arriendo Cajas - Siempre buscando mejorar</p>
-              <p>Tu feedback es importante: info@arriendocajas.cl</p>
+              <p>Tu feedback es importante: jalarcon@arriendocajas.cl</p>
             </div>
           </div>
         </body>
       </html>
     `,
-    text: `Hola ${data.customerName}, tu arriendo ${data.trackingCode} ha sido cancelado. Reembolso de $${data.totalAmount.toLocaleString()} en proceso. Detalles: ${data.trackingUrl}. Consultas: info@arriendocajas.cl`
+    text: `Hola ${data.customerName}, tu arriendo ${data.trackingCode} ha sido cancelado. Reembolso de $${data.totalAmount.toLocaleString()} en proceso. Detalles: ${data.trackingUrl}. Consultas: jalarcon@arriendocajas.cl`
   })
 };
 

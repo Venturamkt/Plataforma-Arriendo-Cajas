@@ -70,6 +70,15 @@ export class EmailService {
         subject: emailContent.subject,
         text: emailContent.text,
         html: emailContent.html,
+        replyTo: process.env.EMAIL_USER,
+        headers: {
+          'X-Priority': '3',
+          'X-MSMail-Priority': 'Normal',
+          'Importance': 'Normal',
+          'X-Mailer': 'Arriendo Cajas System v1.0',
+          'List-Unsubscribe': `<mailto:${process.env.EMAIL_USER}?subject=STOP>`,
+          'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+        }
       };
 
       const result = await this.transporter.sendMail(mailOptions);
