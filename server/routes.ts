@@ -299,8 +299,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Send email if status changed and email service is configured
       if (rentalData.status && emailService.isEmailConfigured()) {
+        console.log(`Attempting to send email for status change to: ${rentalData.status}`);
         try {
           const customer = await storage.getCustomer(rental.customerId);
+          console.log(`Customer found: ${customer?.name}, email: ${customer?.email}`);
+          
           if (customer?.email && rental.trackingCode) {
             const rutDigits = customer.rut?.slice(-4) || "0000";
             const trackingUrl = generateTrackingUrl(rutDigits, rental.trackingCode);
@@ -321,13 +324,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
               guaranteeAmount: rental.totalBoxes * 2000,
             };
 
-            await emailService.sendRentalStatusEmail(customer.email, rentalData.status, emailData);
-            console.log(`Email sent for status change to ${rentalData.status} for customer ${customer.email}`);
+            console.log(`Sending email with data:`, JSON.stringify(emailData, null, 2));
+            const emailSent = await emailService.sendRentalStatusEmail(customer.email, rentalData.status, emailData);
+            
+            if (emailSent) {
+              console.log(`✅ Email sent successfully for status change to ${rentalData.status} for customer ${customer.email}`);
+            } else {
+              console.log(`❌ Email failed to send for status change to ${rentalData.status} for customer ${customer.email}`);
+            }
+          } else {
+            console.log(`Cannot send email - missing customer email or tracking code. Customer email: ${customer?.email}, tracking code: ${rental.trackingCode}`);
           }
         } catch (emailError) {
           console.error("Error sending status change email:", emailError);
           // Continue with response even if email fails
         }
+      } else {
+        console.log(`Email not sent - conditions not met. Status: ${rentalData.status}, Email configured: ${emailService.isEmailConfigured()}`);
       }
 
       res.json(rental);

@@ -50,6 +50,9 @@ export class EmailService {
     }
 
     try {
+      // Verify connection before sending
+      await this.transporter.verify();
+      
       const template = emailTemplates[status as keyof typeof emailTemplates];
       if (!template) {
         console.error(`No email template found for status: ${status}`);
@@ -71,6 +74,11 @@ export class EmailService {
       return true;
     } catch (error) {
       console.error(`Error sending email for status ${status}:`, error);
+      // Recreate transporter on auth failure
+      if (error.code === 'EAUTH') {
+        console.log('Recreating email transporter due to auth error...');
+        this.setupTransporter();
+      }
       return false;
     }
   }
