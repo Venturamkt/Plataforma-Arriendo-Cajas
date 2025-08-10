@@ -154,4 +154,11 @@ The architecture emphasizes type safety, scalability, and maintainability while 
 - ✓ **Customer self-service tracking**: Secure 8-character codes accessible via RUT digits + code
 - ✓ **Guarantee system**: $2,000 per box calculation with clear refundable indication
 - ✓ **Additional products system**: Predefined products (Carro plegable, Base Móvil, Kit 2 Bases móviles, Correa Ratchet) with manual pricing
+- ✓ **Smart action buttons**: Dynamic interface shows "Nuevo Arriendo" for customers without active rentals, "Modificar Arriendo" for those with active rentals
+- ✓ **Rental editing functionality**: Complete edit capability for existing rentals with pre-populated forms and proper update handling
 - ✓ Application fully functional with comprehensive rental management and customer tracking
+
+### January 30, 2025
+- ✓ **Rental creation bug resolved**: Fixed critical backend validation issues preventing rental submissions
+- ✓ **Rental editing implemented**: Full edit functionality with dynamic button text and pre-populated forms
+- ✓ **Interface logic optimized**: Smart buttons based on customer rental status - creates new rentals only when needed, otherwise allows modification of existing rentals

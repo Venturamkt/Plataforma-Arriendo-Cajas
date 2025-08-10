@@ -1236,18 +1236,8 @@ export default function AdminCustomers() {
                                         <SelectItem value="cancelada">🔴 Cancelada</SelectItem>
                                       </SelectContent>
                                     </Select>
-                                    <div className="flex items-center gap-1 text-xs">
-                                      {activeRentals.length > 1 && (
-                                        <span className="text-gray-500">+{activeRentals.length - 1} más</span>
-                                      )}
-                                      <Button 
-                                        size="sm" 
-                                        variant="outline" 
-                                        className="h-6 px-1 text-xs"
-                                        onClick={() => handleEditRental(mostRecentRental, customer)}
-                                      >
-                                        Modificar
-                                      </Button>
+                                    <div className="text-xs text-gray-500">
+                                      {activeRentals.length > 1 && `+${activeRentals.length - 1} más`}
                                     </div>
                                   </div>
                                 );
@@ -1258,13 +1248,32 @@ export default function AdminCustomers() {
                                 <Button size="sm" variant="outline">
                                   Historial
                                 </Button>
-                                <Button 
-                                  size="sm" 
-                                  className="bg-green-600 hover:bg-green-700 text-white"
-                                  onClick={() => handleCreateRental(customer)}
-                                >
-                                  + Nuevo Arriendo
-                                </Button>
+                                {(() => {
+                                  const activeRentals = getCustomerActiveRentals(customer.id);
+                                  if (activeRentals.length > 0) {
+                                    // Si tiene arriendos activos, mostrar botón de modificar
+                                    return (
+                                      <Button 
+                                        size="sm" 
+                                        className="bg-orange-600 hover:bg-orange-700 text-white"
+                                        onClick={() => handleEditRental(activeRentals[0], customer)}
+                                      >
+                                        Modificar Arriendo
+                                      </Button>
+                                    );
+                                  } else {
+                                    // Si no tiene arriendos activos, mostrar botón de crear nuevo
+                                    return (
+                                      <Button 
+                                        size="sm" 
+                                        className="bg-green-600 hover:bg-green-700 text-white"
+                                        onClick={() => handleCreateRental(customer)}
+                                      >
+                                        + Nuevo Arriendo
+                                      </Button>
+                                    );
+                                  }
+                                })()}
                                 <Button 
                                   size="sm" 
                                   className="bg-brand-blue hover:bg-brand-blue text-white"
