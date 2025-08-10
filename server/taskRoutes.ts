@@ -3,6 +3,36 @@ import { db } from "./db";
 
 export function setupTaskRoutes(app: Express) {
   
+  // Helper function to transform rental to driver task
+  const transformRentalToTask = async (rental: any, storage: any) => {
+    const customer = await storage.getCustomer(rental.customerId);
+    const rentalBoxes = await storage.getRentalBoxes(rental.id);
+    
+    // Determine task type based on rental status
+    let taskType = 'delivery';
+    if (rental.status === 'entregada') {
+      taskType = 'pickup'; // Time to pick up the boxes
+    }
+    
+    const isCompleted = ['retirada', 'finalizado'].includes(rental.status || '');
+    
+    return {
+      id: rental.id,
+      type: taskType,
+      status: isCompleted ? 'completed' : 'pending',
+      time: rental.deliveryDate ? new Date(rental.deliveryDate).toLocaleTimeString('es-CL', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      }) : '09:00',
+      date: rental.deliveryDate ? new Date(rental.deliveryDate).toLocaleDateString('es-CL') : '',
+      customer: customer?.name || 'Cliente',
+      phone: customer?.phone || '',
+      address: rental.deliveryAddress || 'Dirección no especificada',
+      boxes: rentalBoxes?.length || 0,
+      rentalStatus: rental.status
+    };
+  };
+
   // Get driver's tasks for today
   app.get('/api/tasks/today', async (req, res) => {
     try {
@@ -15,15 +45,13 @@ export function setupTaskRoutes(app: Express) {
       const driverId = session.driver.id;
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
       
-      // Get assigned rentals for today from the database using standard query
+      // Get assigned rentals for today from the database
       const { storage } = await import('./storage');
       const allRentals = await storage.getRentals();
       
       // Filter rentals assigned to this driver for today
-      const tasks = allRentals.filter(rental => {
+      const todayTasks = allRentals.filter(rental => {
         if (rental.assignedDriver !== driverId) return false;
         
         if (!rental.deliveryDate) return false;
@@ -35,37 +63,60 @@ export function setupTaskRoutes(app: Express) {
       });
       
       // Transform rentals into driver tasks
-      const driverTasks = await Promise.all(tasks.map(async rental => {
-        const customer = await storage.getCustomer(rental.customerId);
-        const rentalBoxes = await storage.getRentalBoxes(rental.id);
-        
-        // Determine task type based on rental status
-        let taskType = 'delivery';
-        if (rental.status === 'entregada') {
-          taskType = 'pickup'; // Time to pick up the boxes
-        }
-        
-        const isCompleted = ['retirada', 'finalizado'].includes(rental.status || '');
-        
-        return {
-          id: rental.id,
-          type: taskType,
-          status: isCompleted ? 'completed' : 'pending',
-          time: rental.deliveryDate ? new Date(rental.deliveryDate).toLocaleTimeString('es-CL', { 
-            hour: '2-digit', 
-            minute: '2-digit' 
-          }) : '09:00',
-          customer: customer?.name || 'Cliente',
-          phone: customer?.phone || '',
-          address: rental.deliveryAddress || 'Dirección no especificada',
-          boxes: rentalBoxes?.length || 0,
-          rentalStatus: rental.status
-        };
-      }));
+      const driverTasks = await Promise.all(todayTasks.map(rental => 
+        transformRentalToTask(rental, storage)
+      ));
       
       res.json(driverTasks);
     } catch (error) {
       console.error("Error fetching driver tasks:", error);
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  // Get driver's upcoming tasks (future dates)
+  app.get('/api/tasks/upcoming', async (req, res) => {
+    try {
+      // Validate session
+      const session = req.session as any;
+      if (!session.driver) {
+        return res.status(401).json({ message: "No autorizado" });
+      }
+      
+      const driverId = session.driver.id;
+      const today = new Date();
+      today.setHours(23, 59, 59, 999); // End of today
+      
+      // Get assigned rentals for future dates
+      const { storage } = await import('./storage');
+      const allRentals = await storage.getRentals();
+      
+      // Filter rentals assigned to this driver for future dates
+      const upcomingTasks = allRentals.filter(rental => {
+        if (rental.assignedDriver !== driverId) return false;
+        
+        if (!rental.deliveryDate) return false;
+        
+        const deliveryDate = new Date(rental.deliveryDate);
+        
+        return deliveryDate.getTime() > today.getTime();
+      });
+      
+      // Sort by delivery date
+      upcomingTasks.sort((a, b) => {
+        const dateA = new Date(a.deliveryDate!).getTime();
+        const dateB = new Date(b.deliveryDate!).getTime();
+        return dateA - dateB;
+      });
+      
+      // Transform rentals into driver tasks
+      const driverTasks = await Promise.all(upcomingTasks.map(rental => 
+        transformRentalToTask(rental, storage)
+      ));
+      
+      res.json(driverTasks);
+    } catch (error) {
+      console.error("Error fetching upcoming tasks:", error);
       res.status(500).json({ message: "Error interno del servidor" });
     }
   });

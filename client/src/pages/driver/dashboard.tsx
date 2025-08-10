@@ -31,6 +31,12 @@ export default function DriverDashboard() {
     refetchInterval: 30000, // Refetch every 30 seconds
   });
 
+  // Fetch driver's upcoming tasks
+  const { data: upcomingTasks = [], isLoading: upcomingLoading } = useQuery({
+    queryKey: ['/api/tasks/upcoming'],
+    refetchInterval: 60000, // Refetch every minute
+  });
+
   const logoutMutation = useMutation({
     mutationFn: async () => {
       const response = await fetch('/api/auth/logout', { method: 'POST' });
@@ -63,6 +69,7 @@ export default function DriverDashboard() {
       setTaskStatus('');
       // Refresh tasks data
       queryClient.invalidateQueries({ queryKey: ['/api/tasks/today'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/tasks/upcoming'] });
     },
     onError: () => {
       toast({
@@ -74,7 +81,7 @@ export default function DriverDashboard() {
   });
 
   const handleCompleteTask = (taskId: string, taskType: string) => {
-    const task = todayTasks.find(t => t.id === taskId);
+    const task = todayTasks.find((t: any) => t.id === taskId);
     setSelectedTask(task);
     setTaskStatus(taskType === 'delivery' ? 'entregada' : 'retirada');
     setIsDialogOpen(true);
@@ -218,7 +225,7 @@ export default function DriverDashboard() {
             <CardContent className="p-6 text-center">
               <Package className="w-8 h-8 text-green-600 mx-auto mb-2" />
               <div className="text-2xl font-bold text-gray-900">
-                {todayTasks.filter(t => t.type === 'delivery' && t.status === 'pending').length}
+                {todayTasks.filter((t: any) => t.type === 'delivery' && t.status === 'pending').length}
               </div>
               <div className="text-sm text-gray-600">Entregas Pendientes</div>
             </CardContent>
@@ -228,7 +235,7 @@ export default function DriverDashboard() {
             <CardContent className="p-6 text-center">
               <Truck className="w-8 h-8 text-blue-600 mx-auto mb-2" />
               <div className="text-2xl font-bold text-gray-900">
-                {todayTasks.filter(t => t.type === 'pickup' && t.status === 'pending').length}
+                {todayTasks.filter((t: any) => t.type === 'pickup' && t.status === 'pending').length}
               </div>
               <div className="text-sm text-gray-600">Retiros Pendientes</div>
             </CardContent>
@@ -238,7 +245,7 @@ export default function DriverDashboard() {
             <CardContent className="p-6 text-center">
               <CheckCircle className="w-8 h-8 text-orange-600 mx-auto mb-2" />
               <div className="text-2xl font-bold text-gray-900">
-                {todayTasks.filter(t => t.status === 'completed').length}
+                {todayTasks.filter((t: any) => t.status === 'completed').length}
               </div>
               <div className="text-sm text-gray-600">Completadas Hoy</div>
             </CardContent>
@@ -266,7 +273,7 @@ export default function DriverDashboard() {
                   <p className="text-gray-600">No hay tareas asignadas para hoy</p>
                 </div>
               ) : (
-                todayTasks.map((task) => (
+                todayTasks.map((task: any) => (
                 <div key={task.id} className="border rounded-lg p-4 bg-white">
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex items-center space-x-3">
@@ -349,6 +356,85 @@ export default function DriverDashboard() {
                     </div>
                   )}
                 </div>
+                ))
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Upcoming Tasks */}
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Package className="w-5 h-5 mr-2" />
+              Próximas Tareas
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {upcomingLoading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-300 mx-auto"></div>
+                  <p className="text-gray-600 mt-2">Cargando próximas tareas...</p>
+                </div>
+              ) : upcomingTasks.length === 0 ? (
+                <div className="text-center py-8">
+                  <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-600">No hay tareas próximas asignadas</p>
+                </div>
+              ) : (
+                upcomingTasks.map((task: any) => (
+                  <div key={task.id} className="border rounded-lg p-4 bg-gray-50 opacity-80">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex items-center space-x-3">
+                        <Clock className="w-5 h-5 text-gray-500" />
+                        <Badge variant="outline" className="bg-white">
+                          {getTaskIcon(task.type)}
+                          <span className="ml-1">
+                            {task.type === 'delivery' ? 'Entrega' : 'Retiro'}
+                          </span>
+                        </Badge>
+                        <span className="font-medium text-gray-700">{task.date} - {task.time}</span>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-bold text-gray-700">{task.boxes} cajas</div>
+                        <div className="text-sm text-gray-500">Programada</div>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          <span className="font-medium text-gray-700">{task.customer}</span>
+                          <span className="ml-2 text-sm text-blue-600">{task.phone}</span>
+                        </div>
+                      </div>
+                      
+                      {task.type === 'delivery' ? (
+                        <div className="space-y-1 text-sm">
+                          <div className="flex items-center text-gray-600">
+                            <span className="text-xs font-medium text-green-600 mr-2">DESDE:</span>
+                            <span>Sede Arriendo Cajas</span>
+                          </div>
+                          <div className="flex items-center text-gray-700">
+                            <MapPin className="w-4 h-4 mr-2 text-red-600" />
+                            <span className="font-medium">ENTREGAR EN: {task.address}</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-1 text-sm">
+                          <div className="flex items-center text-gray-700">
+                            <MapPin className="w-4 h-4 mr-2 text-blue-600" />
+                            <span className="font-medium">RETIRAR DE: {task.address}</span>
+                          </div>
+                          <div className="flex items-center text-gray-600">
+                            <span className="text-xs font-medium text-green-600 mr-2">LLEVAR A:</span>
+                            <span>Sede Arriendo Cajas</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 ))
               )}
             </div>
