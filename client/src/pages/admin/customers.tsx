@@ -1377,7 +1377,20 @@ export default function AdminCustomers() {
                                         <div className="flex items-center gap-1">
                                           🚛
                                           {mostRecentRental.assignedDriver ? (
-                                            <span className="text-green-600 font-medium">{mostRecentRental.assignedDriver}</span>
+                                            <div className="flex items-center gap-1">
+                                              <span className="text-green-600 font-medium">{mostRecentRental.assignedDriver}</span>
+                                              <Button 
+                                                size="sm" 
+                                                variant="outline" 
+                                                className="text-xs px-1 py-0 h-auto ml-1"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  handleAssignDriver(mostRecentRental);
+                                                }}
+                                              >
+                                                Cambiar
+                                              </Button>
+                                            </div>
                                           ) : (
                                             <Button 
                                               size="sm" 
