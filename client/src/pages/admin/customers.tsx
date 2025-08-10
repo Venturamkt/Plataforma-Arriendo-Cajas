@@ -31,6 +31,7 @@ export default function AdminCustomers() {
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('table');
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editingRental, setEditingRental] = useState<any | null>(null);
   const [newCustomer, setNewCustomer] = useState({
     name: "",
     email: "",
@@ -250,18 +251,55 @@ export default function AdminCustomers() {
 
   const handleCreateRental = (customer: Customer) => {
     setSelectedCustomerForRental(customer);
+    setEditingRental(null); // Clear editing state for new rental
     setNewRental({
       boxSize: "mediano",
-      boxQuantity: 1,
+      boxQuantity: 2,
       rentalDays: 7,
       deliveryDate: "",
       deliveryAddress: customer.address || "",
       pickupAddress: customer.address || "",
       notes: "",
-      customPrice: 2000,
+      customPrice: 2775,
       discount: 0,
       additionalProducts: []
     });
+    setAvailabilityCheck(null);
+    setShowRentalDialog(true);
+  };
+
+  const handleEditRental = (rental: any, customer: Customer) => {
+    setSelectedCustomerForRental(customer);
+    setEditingRental(rental);
+    
+    // Parse additional products if they exist
+    let additionalProducts = [];
+    try {
+      additionalProducts = rental.additionalProducts ? JSON.parse(rental.additionalProducts) : [];
+    } catch (e) {
+      additionalProducts = [];
+    }
+
+    // Calculate rental days from delivery and return dates
+    const deliveryDate = new Date(rental.deliveryDate);
+    const returnDate = new Date(rental.returnDate);
+    const diffTime = Math.abs(returnDate.getTime() - deliveryDate.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    // Populate form with existing rental data
+    setNewRental({
+      boxSize: "mediano",
+      boxQuantity: rental.totalBoxes,
+      rentalDays: diffDays,
+      deliveryDate: rental.deliveryDate ? new Date(rental.deliveryDate).toISOString().split('T')[0] : "",
+      deliveryAddress: rental.deliveryAddress || "",
+      pickupAddress: rental.pickupAddress || "",
+      notes: rental.notes || "",
+      customPrice: parseFloat(rental.dailyRate) || 2775,
+      discount: 0,
+      additionalProducts: additionalProducts
+    });
+    
     setShowRentalDialog(true);
   };
 
@@ -342,46 +380,59 @@ export default function AdminCustomers() {
 
   const createRentalMutation = useMutation({
     mutationFn: async (rentalData: any) => {
-      const response = await apiRequest("POST", "/api/rentals", rentalData);
+      const endpoint = editingRental ? `/api/rentals/${editingRental.id}` : "/api/rentals";
+      const method = editingRental ? "PUT" : "POST";
+      const response = await apiRequest(method, endpoint, rentalData);
       return await response.json();
     },
-    onSuccess: (createdRental) => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["/api/rentals"] });
       queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
       setShowRentalDialog(false);
+      setEditingRental(null);
       setNewRental({
-        boxQuantity: 1,
+        boxQuantity: 2,
         rentalDays: 7,
         deliveryDate: "",
         deliveryAddress: "",
         pickupAddress: "",
         notes: "",
         boxSize: "mediano",
-        customPrice: 2000,
+        customPrice: 2775,
         discount: 0,
         additionalProducts: []
       });
       
-      // Show tracking code to admin
-      const customer = selectedCustomerForRental;
-      const rutDigits = customer?.rut?.slice(-4) || "0000";
-      const trackingUrl = `${window.location.origin}/track`;
-      
-      toast({
-        title: "✅ Arriendo creado exitosamente",
-        description: (
-          <div className="space-y-2 text-sm">
-            <p><strong>Código de seguimiento:</strong> {createdRental.trackingCode}</p>
-            <p><strong>RUT (últimos 4 dígitos):</strong> {rutDigits}</p>
-            <p><strong>Enlace:</strong> <a href={trackingUrl} target="_blank" className="text-blue-600 underline">{trackingUrl}</a></p>
-          </div>
-        ),
-      });
+      if (editingRental) {
+        // For updates, show simple success message
+        toast({
+          title: "✅ Arriendo actualizado",
+          description: "Los cambios han sido guardados exitosamente",
+        });
+      } else {
+        // For new rentals, show tracking code to admin
+        const customer = selectedCustomerForRental;
+        const rutDigits = customer?.rut?.slice(-4) || "0000";
+        const trackingUrl = `${window.location.origin}/track`;
+        
+        toast({
+          title: "✅ Arriendo creado exitosamente",
+          description: (
+            <div className="space-y-2 text-sm">
+              <p><strong>Código de seguimiento:</strong> {result.trackingCode}</p>
+              <p><strong>RUT (últimos 4 dígitos):</strong> {rutDigits}</p>
+              <p><strong>Enlace:</strong> <a href={trackingUrl} target="_blank" className="text-blue-600 underline">{trackingUrl}</a></p>
+            </div>
+          ),
+        });
+      }
     },
     onError: () => {
       toast({
         title: "Error",
-        description: "No se pudo crear el arriendo",
+        description: editingRental 
+          ? "No se pudo actualizar el arriendo" 
+          : "No se pudo crear el arriendo",
         variant: "destructive",
       });
     },
@@ -1067,7 +1118,9 @@ export default function AdminCustomers() {
                     disabled={createRentalMutation.isPending || !availabilityCheck?.canRent}
                     className="flex-1 bg-green-600 hover:bg-green-700 text-white"
                   >
-                    {createRentalMutation.isPending ? "Creando..." : "Crear Arriendo"}
+                    {createRentalMutation.isPending 
+                      ? (editingRental ? "Actualizando..." : "Creando...") 
+                      : (editingRental ? "Actualizar Arriendo" : "Crear Arriendo")}
                   </Button>
                 </div>
               </form>
@@ -1176,8 +1229,18 @@ export default function AdminCustomers() {
                                         <SelectItem value="cancelada">🔴 Cancelada</SelectItem>
                                       </SelectContent>
                                     </Select>
-                                    <div className="text-xs text-gray-500">
-                                      {activeRentals.length > 1 && `+${activeRentals.length - 1} más`}
+                                    <div className="flex items-center gap-1 text-xs">
+                                      {activeRentals.length > 1 && (
+                                        <span className="text-gray-500">+{activeRentals.length - 1} más</span>
+                                      )}
+                                      <Button 
+                                        size="sm" 
+                                        variant="outline" 
+                                        className="h-6 px-2 text-xs"
+                                        onClick={() => handleEditRental(mostRecentRental, customer)}
+                                      >
+                                        Editar
+                                      </Button>
                                     </div>
                                   </div>
                                 );
