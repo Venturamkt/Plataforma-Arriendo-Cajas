@@ -67,16 +67,14 @@ export default function Sidebar({ role }: SidebarProps) {
             (item.href !== "/admin/dashboard" && item.href !== "/driver/dashboard" && item.href !== "/customer/dashboard" && location.startsWith(item.href));
           
           return (
-            <Link key={item.href} href={item.href}>
-              <a className={cn(
-                "flex items-center space-x-3 px-3 py-2 rounded-md font-medium transition-colors",
-                isActive 
-                  ? "text-white bg-white bg-opacity-20" 
-                  : "text-blue-100 hover:text-white hover:bg-white hover:bg-opacity-10"
-              )}>
-                <Icon className="w-5 h-5" />
-                <span>{item.label}</span>
-              </a>
+            <Link key={item.href} href={item.href} className={cn(
+              "flex items-center space-x-3 px-3 py-2 rounded-md font-medium transition-colors",
+              isActive 
+                ? "text-white bg-white bg-opacity-20" 
+                : "text-blue-100 hover:text-white hover:bg-white hover:bg-opacity-10"
+            )}>
+              <Icon className="w-5 h-5" />
+              <span>{item.label}</span>
             </Link>
           );
         })}
