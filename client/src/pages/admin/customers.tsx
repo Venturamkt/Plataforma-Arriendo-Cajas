@@ -177,7 +177,7 @@ export default function AdminCustomers() {
   const handleCreateRental = (customer: Customer) => {
     setSelectedCustomerForRental(customer);
     setNewRental({
-      boxSize: "standard",
+      boxSize: "mediano",
       boxQuantity: 1,
       rentalDays: 7,
       deliveryDate: "",
@@ -220,8 +220,15 @@ export default function AdminCustomers() {
     const returnDate = new Date(deliveryDate);
     returnDate.setDate(returnDate.getDate() + newRental.rentalDays);
 
-    // Get available boxes by size
-    const boxesBySize = boxes.filter(box => box.size === newRental.boxSize);
+    // Get available boxes by size (map frontend size names to database values)
+    const sizeMapping = {
+      'standard': 'medium',
+      'mediano': 'medium', 
+      'pequeño': 'small',
+      'grande': 'large'
+    };
+    const dbSize = sizeMapping[newRental.boxSize as keyof typeof sizeMapping] || newRental.boxSize;
+    const boxesBySize = boxes.filter(box => box.size === dbSize && box.status === 'available');
     
     // Check conflicts with existing rentals
     const conflicts = rentals?.filter(rental => {
