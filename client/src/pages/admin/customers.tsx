@@ -672,7 +672,15 @@ export default function AdminCustomers() {
                   </Button>
                 </div>
                 
-                <Dialog open={showNewCustomerDialog} onOpenChange={setShowNewCustomerDialog}>
+                <Dialog open={showNewCustomerDialog} onOpenChange={(open) => {
+                  setShowNewCustomerDialog(open);
+                  if (open) {
+                    // Limpiar formulario cuando se abre el diálogo
+                    setNewCustomer({ name: "", email: "", phone: "", rut: "" });
+                    setFormattedRut("");
+                    setIncludeRental(false);
+                  }
+                }}>
                   <DialogTrigger asChild>
                     <Button className="bg-brand-red hover:bg-brand-red text-white flex items-center gap-2">
                       <Plus className="h-4 w-4" />
@@ -745,7 +753,12 @@ export default function AdminCustomers() {
                         <Button
                           type="button"
                           variant="outline"
-                          onClick={() => setShowNewCustomerDialog(false)}
+                          onClick={() => {
+                            setShowNewCustomerDialog(false);
+                            setNewCustomer({ name: "", email: "", phone: "", rut: "" });
+                            setFormattedRut("");
+                            setIncludeRental(false);
+                          }}
                           className="flex-1"
                         >
                           Cancelar
