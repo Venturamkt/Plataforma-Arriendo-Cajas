@@ -696,9 +696,16 @@ export default function AdminCustomers() {
           <Dialog open={showRentalDialog} onOpenChange={setShowRentalDialog}>
             <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Crear Nuevo Arriendo</DialogTitle>
+                <DialogTitle>
+                  {editingRental ? "Modificar Arriendo" : "Crear Nuevo Arriendo"}
+                </DialogTitle>
                 <DialogDescription>
                   Cliente: {selectedCustomerForRental?.name}
+                  {editingRental && (
+                    <span className="block text-sm text-blue-600 mt-1">
+                      Código: {editingRental.trackingCode}
+                    </span>
+                  )}
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleCreateRentalSubmit} className="space-y-6">
@@ -1236,10 +1243,10 @@ export default function AdminCustomers() {
                                       <Button 
                                         size="sm" 
                                         variant="outline" 
-                                        className="h-6 px-2 text-xs"
+                                        className="h-6 px-1 text-xs"
                                         onClick={() => handleEditRental(mostRecentRental, customer)}
                                       >
-                                        Editar
+                                        Modificar
                                       </Button>
                                     </div>
                                   </div>
@@ -1256,14 +1263,14 @@ export default function AdminCustomers() {
                                   className="bg-green-600 hover:bg-green-700 text-white"
                                   onClick={() => handleCreateRental(customer)}
                                 >
-                                  Arriendo
+                                  + Nuevo Arriendo
                                 </Button>
                                 <Button 
                                   size="sm" 
                                   className="bg-brand-blue hover:bg-brand-blue text-white"
                                   onClick={() => handleEditCustomer(customer)}
                                 >
-                                  Editar
+                                  Editar Cliente
                                 </Button>
                               </div>
                             </TableCell>
