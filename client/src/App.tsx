@@ -17,6 +17,7 @@ import NewRental from "@/pages/admin/new-rental";
 import RentalStatus from "@/pages/admin/rental-status";
 import DriverDashboard from "@/pages/driver/dashboard";
 import CustomerDashboard from "@/pages/customer/dashboard";
+import TrackRental from "@/pages/track-rental";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -39,6 +40,9 @@ function Router() {
       <Route path="/admin/users" component={UserManagement} />
       <Route path="/admin/new-rental" component={NewRental} />
       <Route path="/admin/rental-status" component={RentalStatus} />
+      
+      {/* Public tracking route */}
+      <Route path="/track" component={TrackRental} />
       
       {/* Driver routes */}
       <Route path="/driver/dashboard" component={DriverDashboard} />

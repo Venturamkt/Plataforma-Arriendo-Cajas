@@ -242,6 +242,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Public tracking endpoint
+  app.get("/api/track/:rutDigits/:trackingCode", async (req, res) => {
+    try {
+      const { rutDigits, trackingCode } = req.params;
+      const rental = await storage.getRentalByTracking(rutDigits, trackingCode);
+      
+      if (!rental) {
+        return res.status(404).json({ message: "Rental not found" });
+      }
+
+      res.json(rental);
+    } catch (error) {
+      console.error("Error tracking rental:", error);
+      res.status(500).json({ message: "Failed to track rental" });
+    }
+  });
+
   app.put('/api/rentals/:id', requireAdminSession, async (req, res) => {
     try {
       const rentalData = insertRentalSchema.partial().parse(req.body);

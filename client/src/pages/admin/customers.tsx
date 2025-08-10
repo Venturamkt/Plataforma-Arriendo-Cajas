@@ -46,7 +46,9 @@ export default function AdminCustomers() {
     deliveryAddress: "",
     pickupAddress: "",
     notes: "",
-    boxSize: "mediano"
+    boxSize: "mediano",
+    customPrice: 2000,
+    discount: 0
   });
   const [availabilityCheck, setAvailabilityCheck] = useState<{
     available: number;
@@ -183,7 +185,9 @@ export default function AdminCustomers() {
       deliveryDate: "",
       deliveryAddress: customer.address || "",
       pickupAddress: customer.address || "",
-      notes: ""
+      notes: "",
+      customPrice: 2000,
+      discount: 0
     });
     setShowRentalDialog(true);
   };
@@ -268,7 +272,7 @@ export default function AdminCustomers() {
       const response = await apiRequest("POST", "/api/rentals", rentalData);
       return await response.json();
     },
-    onSuccess: () => {
+    onSuccess: (createdRental) => {
       queryClient.invalidateQueries({ queryKey: ["/api/rentals"] });
       queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
       setShowRentalDialog(false);
@@ -279,11 +283,25 @@ export default function AdminCustomers() {
         deliveryAddress: "",
         pickupAddress: "",
         notes: "",
-        boxSize: "mediano"
+        boxSize: "mediano",
+        customPrice: 2000,
+        discount: 0
       });
+      
+      // Show tracking code to admin
+      const customer = selectedCustomerForRental;
+      const rutDigits = customer?.rut?.slice(-4) || "0000";
+      const trackingUrl = `${window.location.origin}/track`;
+      
       toast({
-        title: "Arriendo creado",
-        description: "El arriendo ha sido creado exitosamente",
+        title: "✅ Arriendo creado exitosamente",
+        description: (
+          <div className="space-y-2 text-sm">
+            <p><strong>Código de seguimiento:</strong> {createdRental.trackingCode}</p>
+            <p><strong>RUT (últimos 4 dígitos):</strong> {rutDigits}</p>
+            <p><strong>Enlace:</strong> <a href={trackingUrl} target="_blank" className="text-blue-600 underline">{trackingUrl}</a></p>
+          </div>
+        ),
       });
     },
     onError: () => {
@@ -321,12 +339,13 @@ export default function AdminCustomers() {
 
     createRentalMutation.mutate({
       customerId: selectedCustomerForRental.id,
-      totalBoxes: newRental.boxQuantity,
-      dailyRate: 2000,
-      totalAmount: newRental.boxQuantity * newRental.rentalDays * 2000,
-      startDate: deliveryDate.toISOString(),
-      endDate: returnDate.toISOString(),
+      totalBoxes: newRental.boxQuantity.toString(),
+      dailyRate: (newRental.customPrice || 2000).toString(),
+      totalAmount: ((newRental.customPrice || 2000) * newRental.boxQuantity * newRental.rentalDays * (1 - (newRental.discount || 0) / 100)).toString(),
+      deliveryDate: deliveryDate,
+      returnDate: returnDate,
       deliveryAddress: newRental.deliveryAddress,
+      pickupAddress: newRental.pickupAddress || newRental.deliveryAddress,
       notes: newRental.notes || "",
       status: "pendiente"
     });
@@ -587,6 +606,32 @@ export default function AdminCustomers() {
                         placeholder="7"
                       />
                     </div>
+
+                    <div>
+                      <Label htmlFor="customPrice">Precio por día (CLP) *</Label>
+                      <Input
+                        id="customPrice"
+                        type="number"
+                        min="0"
+                        step="100"
+                        value={newRental.customPrice}
+                        onChange={(e) => setNewRental({ ...newRental, customPrice: parseInt(e.target.value) || 2000 })}
+                        placeholder="2000"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="discount">Descuento (%)</Label>
+                      <Input
+                        id="discount"
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={newRental.discount}
+                        onChange={(e) => setNewRental({ ...newRental, discount: parseInt(e.target.value) || 0 })}
+                        placeholder="0"
+                      />
+                    </div>
                   </div>
 
                   {/* Dates and Addresses */}
@@ -675,8 +720,14 @@ export default function AdminCustomers() {
                   <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
                     <h4 className="font-semibold mb-2">Resumen de Precio</h4>
                     <div className="text-sm space-y-1">
-                      <p>{newRental.boxQuantity} cajas × {newRental.rentalDays} días × $2.000 = ${(newRental.boxQuantity * newRental.rentalDays * 2000).toLocaleString()}</p>
-                      <p className="font-semibold text-lg">Total: ${(newRental.boxQuantity * newRental.rentalDays * 2000).toLocaleString()}</p>
+                      <p>{newRental.boxQuantity} cajas × {newRental.rentalDays} días × ${(newRental.customPrice || 2000).toLocaleString()} = ${((newRental.customPrice || 2000) * newRental.boxQuantity * newRental.rentalDays).toLocaleString()}</p>
+                      {newRental.discount > 0 && (
+                        <>
+                          <p className="text-orange-600">Descuento aplicado: {newRental.discount}%</p>
+                          <p className="line-through text-gray-500">Subtotal: ${((newRental.customPrice || 2000) * newRental.boxQuantity * newRental.rentalDays).toLocaleString()}</p>
+                        </>
+                      )}
+                      <p className="font-semibold text-lg">Total: ${Math.round((newRental.customPrice || 2000) * newRental.boxQuantity * newRental.rentalDays * (1 - (newRental.discount || 0) / 100)).toLocaleString()}</p>
                     </div>
                   </div>
                 )}

@@ -54,6 +54,7 @@ export interface IStorage {
   updateRental(id: string, rental: Partial<InsertRental>): Promise<Rental | undefined>;
   getRentalsByCustomer(customerId: string): Promise<Rental[]>;
   getRentalsByStatus(status: string): Promise<Rental[]>;
+  getRentalByTracking(rutDigits: string, trackingCode: string): Promise<Rental | undefined>;
   
   // Rental box operations
   getRentalBoxes(rentalId: string): Promise<RentalBox[]>;
@@ -190,8 +191,23 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createRental(rental: InsertRental): Promise<Rental> {
-    const [newRental] = await db.insert(rentals).values(rental).returning();
+    // Generate unique tracking code
+    const trackingCode = this.generateTrackingCode();
+    
+    const [newRental] = await db.insert(rentals).values({
+      ...rental,
+      trackingCode
+    }).returning();
     return newRental;
+  }
+
+  private generateTrackingCode(): string {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let result = '';
+    for (let i = 0; i < 8; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
   }
 
   async updateRental(id: string, rental: Partial<InsertRental>): Promise<Rental | undefined> {
@@ -209,6 +225,21 @@ export class DatabaseStorage implements IStorage {
 
   async getRentalsByStatus(status: string): Promise<Rental[]> {
     return await db.select().from(rentals).where(eq(rentals.status, status as any));
+  }
+
+  async getRentalByTracking(rutDigits: string, trackingCode: string): Promise<Rental | undefined> {
+    const [rental] = await db
+      .select()
+      .from(rentals)
+      .innerJoin(customers, eq(rentals.customerId, customers.id))
+      .where(
+        and(
+          eq(rentals.trackingCode, trackingCode.toUpperCase()),
+          sql`RIGHT(${customers.rut}, 4) = ${rutDigits}`
+        )
+      );
+    
+    return rental?.rentals;
   }
 
   // Rental box operations
