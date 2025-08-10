@@ -640,8 +640,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (existingTask) {
         // Update existing task with new driver
         await storage.updateDeliveryTask(existingTask.id, { 
-          driverId: driver.id,
-          updatedAt: new Date()
+          driverId: driver.id
         });
         console.log(`✅ Delivery task updated with new driver: ${driver.firstName} ${driver.lastName}`);
       } else {
@@ -670,15 +669,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const assignmentData = {
           driverName: `${driver.firstName} ${driver.lastName}`,
           customerName: customer.name,
+          customerAddress: rental.deliveryAddress || '',
           customerPhone: customer.phone || '',
-          deliveryAddress: rental.deliveryAddress || '',
+          trackingCode: rental.trackingCode || '',
+          totalBoxes: rental.totalBoxes,
           deliveryDate: rental.deliveryDate.toLocaleDateString('es-CL', { 
             year: 'numeric', 
             month: 'long', 
             day: 'numeric' 
           }),
-          totalBoxes: rental.totalBoxes,
-          rentalId: rental.id,
+          notes: `Entrega asignada manualmente - ${rental.totalBoxes} cajas`,
         };
         
         const emailSent = await emailService.sendDriverAssignmentEmail(driver.email, assignmentData);

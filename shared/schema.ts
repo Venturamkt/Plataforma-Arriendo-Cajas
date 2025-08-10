@@ -122,6 +122,7 @@ export const rentals = pgTable("rentals", {
   pickupAddress: text("pickup_address"),
   notes: text("notes"),
   trackingCode: varchar("tracking_code").unique(),
+  assignedDriver: varchar("assigned_driver"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
