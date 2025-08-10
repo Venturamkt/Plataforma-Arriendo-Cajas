@@ -371,6 +371,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   const createdTask = await storage.createDeliveryTask(deliveryTask);
                   console.log(`✅ Delivery task created and assigned to driver ${selectedDriver.firstName} ${selectedDriver.lastName}`);
                   
+                  // Update rental with assigned driver
+                  await storage.updateRental(rental.id, { 
+                    assignedDriver: `${selectedDriver.firstName} ${selectedDriver.lastName}`
+                  });
+                  console.log(`✅ Rental updated with assigned driver: ${selectedDriver.firstName} ${selectedDriver.lastName}`);
+                  
                   // Send assignment email to driver
                   if (selectedDriver.email) {
                     const assignmentData = {
@@ -601,6 +607,90 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error creating user:", error);
       res.status(400).json({ message: "Failed to create user" });
+    }
+  });
+
+  // Driver assignment route for admin
+  app.put('/api/rentals/:id/assign-driver', requireAdminSession, async (req, res) => {
+    try {
+      const { driverId } = req.body;
+      const rentalId = req.params.id;
+      
+      // Get driver information
+      const driver = await storage.getUser(driverId);
+      if (!driver || driver.role !== 'driver') {
+        return res.status(400).json({ message: "Invalid driver selected" });
+      }
+      
+      // Update rental with new driver
+      const rental = await storage.updateRental(rentalId, { 
+        assignedDriver: `${driver.firstName} ${driver.lastName}`
+      });
+      
+      if (!rental) {
+        return res.status(404).json({ message: "Rental not found" });
+      }
+      
+      // Create or update delivery task
+      const existingTasks = await storage.getDeliveryTasks();
+      const existingTask = existingTasks.find(task => task.rentalId === rentalId);
+      
+      const customer = await storage.getCustomer(rental.customerId);
+      
+      if (existingTask) {
+        // Update existing task with new driver
+        await storage.updateDeliveryTask(existingTask.id, { 
+          driverId: driver.id,
+          updatedAt: new Date()
+        });
+        console.log(`✅ Delivery task updated with new driver: ${driver.firstName} ${driver.lastName}`);
+      } else {
+        // Create new delivery task
+        const deliveryTask = {
+          id: `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          rentalId: rental.id,
+          driverId: driver.id,
+          type: 'delivery' as const,
+          status: 'assigned' as const,
+          scheduledDate: rental.deliveryDate,
+          customerName: customer?.name || '',
+          customerPhone: customer?.phone || '',
+          deliveryAddress: rental.deliveryAddress || '',
+          notes: `Entrega asignada manualmente - ${rental.totalBoxes} cajas`,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+        
+        await storage.createDeliveryTask(deliveryTask);
+        console.log(`✅ New delivery task created and assigned to driver: ${driver.firstName} ${driver.lastName}`);
+      }
+      
+      // Send assignment email to new driver
+      if (driver.email && customer && emailService.isEmailConfigured()) {
+        const assignmentData = {
+          driverName: `${driver.firstName} ${driver.lastName}`,
+          customerName: customer.name,
+          customerPhone: customer.phone || '',
+          deliveryAddress: rental.deliveryAddress || '',
+          deliveryDate: rental.deliveryDate.toLocaleDateString('es-CL', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+          }),
+          totalBoxes: rental.totalBoxes,
+          rentalId: rental.id,
+        };
+        
+        const emailSent = await emailService.sendDriverAssignmentEmail(driver.email, assignmentData);
+        if (emailSent) {
+          console.log(`✅ Assignment email sent to driver: ${driver.email}`);
+        }
+      }
+      
+      res.json(rental);
+    } catch (error) {
+      console.error("Error assigning driver:", error);
+      res.status(500).json({ message: "Failed to assign driver" });
     }
   });
 

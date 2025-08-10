@@ -77,6 +77,8 @@ export default function AdminCustomers() {
   });
   const [formattedRut, setFormattedRut] = useState("");
   const [includeRental, setIncludeRental] = useState(false);
+  const [showDriverDialog, setShowDriverDialog] = useState(false);
+  const [selectedRental, setSelectedRental] = useState<any>(null);
   // Precios basados en tu tabla
   const getPriceByPeriod = (boxes: number, days: number) => {
     const priceTable: Record<number, Record<number, number>> = {
@@ -195,6 +197,12 @@ export default function AdminCustomers() {
     enabled: !!user,
   });
 
+  const { data: drivers } = useQuery<any[]>({
+    queryKey: ["/api/auth/users"],
+    retry: false,
+    enabled: !!user,
+  });
+
   const createCustomerMutation = useMutation({
     mutationFn: async (customerData: InsertCustomer) => {
       const response = await apiRequest("POST", "/api/customers", customerData);
@@ -224,6 +232,29 @@ export default function AdminCustomers() {
       toast({
         title: "Error",
         description: "No se pudo crear el cliente",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const assignDriverMutation = useMutation({
+    mutationFn: async ({ rentalId, driverId }: { rentalId: string; driverId: string }) => {
+      const response = await apiRequest("PUT", `/api/rentals/${rentalId}/assign-driver`, { driverId });
+      return await response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/rentals"] });
+      setShowDriverDialog(false);
+      setSelectedRental(null);
+      toast({
+        title: "Repartidor asignado",
+        description: "El repartidor ha sido asignado exitosamente",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "No se pudo asignar el repartidor",
         variant: "destructive",
       });
     },
@@ -601,6 +632,17 @@ export default function AdminCustomers() {
 
   const handleStatusChange = (rentalId: string, newStatus: string) => {
     updateRentalStatusMutation.mutate({ rentalId, status: newStatus });
+  };
+
+  const handleAssignDriver = (rental: any) => {
+    setSelectedRental(rental);
+    setShowDriverDialog(true);
+  };
+
+  const handleDriverAssignment = (driverId: string) => {
+    if (selectedRental) {
+      assignDriverMutation.mutate({ rentalId: selectedRental.id, driverId });
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -1337,7 +1379,17 @@ export default function AdminCustomers() {
                                           {mostRecentRental.assignedDriver ? (
                                             <span className="text-green-600 font-medium">{mostRecentRental.assignedDriver}</span>
                                           ) : (
-                                            <span className="text-red-500">Sin asignar</span>
+                                            <Button 
+                                              size="sm" 
+                                              variant="outline" 
+                                              className="text-xs px-2 py-1 h-auto bg-orange-50 hover:bg-orange-100 text-orange-600 border-orange-200"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleAssignDriver(mostRecentRental);
+                                              }}
+                                            >
+                                              Asignar
+                                            </Button>
                                           )}
                                         </div>
                                       </div>
@@ -1593,9 +1645,32 @@ export default function AdminCustomers() {
                                     <div className="flex items-center gap-1">
                                       🚛
                                       {mostRecentRental.assignedDriver ? (
-                                        <span className="text-sm text-green-600 font-medium">{mostRecentRental.assignedDriver}</span>
+                                        <div className="flex items-center gap-2">
+                                          <span className="text-sm text-green-600 font-medium">{mostRecentRental.assignedDriver}</span>
+                                          <Button 
+                                            size="sm" 
+                                            variant="outline" 
+                                            className="text-xs px-2 py-1 h-auto"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleAssignDriver(mostRecentRental);
+                                            }}
+                                          >
+                                            Cambiar
+                                          </Button>
+                                        </div>
                                       ) : (
-                                        <span className="text-sm text-red-500">Sin asignar</span>
+                                        <Button 
+                                          size="sm" 
+                                          variant="outline" 
+                                          className="text-xs px-2 py-1 h-auto bg-orange-50 hover:bg-orange-100 text-orange-600 border-orange-200"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleAssignDriver(mostRecentRental);
+                                          }}
+                                        >
+                                          Asignar
+                                        </Button>
                                       )}
                                     </div>
                                   </div>
@@ -1722,6 +1797,44 @@ export default function AdminCustomers() {
       </div>
       
       <MobileNav role={'admin'} />
+      
+      {/* Driver Assignment Dialog */}
+      <Dialog open={showDriverDialog} onOpenChange={setShowDriverDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Asignar Repartidor</DialogTitle>
+            <DialogDescription>
+              Selecciona un repartidor para el arriendo {selectedRental?.id}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {drivers?.filter(user => user.role === 'driver').map((driver) => (
+              <div key={driver.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                <div>
+                  <p className="font-medium">{driver.firstName} {driver.lastName}</p>
+                  <p className="text-sm text-gray-600">{driver.email}</p>
+                </div>
+                <Button
+                  onClick={() => handleDriverAssignment(driver.id)}
+                  disabled={assignDriverMutation.isPending}
+                  className="bg-brand-red hover:bg-brand-red text-white"
+                >
+                  {assignDriverMutation.isPending ? "Asignando..." : "Asignar"}
+                </Button>
+              </div>
+            ))}
+            
+            {drivers?.filter(user => user.role === 'driver').length === 0 && (
+              <div className="text-center py-8">
+                <p className="text-gray-600">No hay repartidores disponibles</p>
+                <p className="text-sm text-gray-500 mt-2">
+                  Agrega usuarios con rol de repartidor para poder asignar entregas
+                </p>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
