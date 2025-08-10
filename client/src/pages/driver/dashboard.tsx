@@ -8,8 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Truck, MapPin, Clock, CheckCircle, XCircle, Package, LogOut, AlertTriangle } from "lucide-react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { queryClient } from "@/lib/queryClient";
 
 export default function DriverDashboard() {
   const { user } = useCurrentUser();
@@ -23,6 +24,12 @@ export default function DriverDashboard() {
   const [scannedCode, setScannedCode] = useState('');
   const [reportTitle, setReportTitle] = useState('');
   const [reportDescription, setReportDescription] = useState('');
+
+  // Fetch driver's tasks for today
+  const { data: todayTasks = [], isLoading: tasksLoading } = useQuery({
+    queryKey: ['/api/tasks/today'],
+    refetchInterval: 30000, // Refetch every 30 seconds
+  });
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
@@ -44,16 +51,18 @@ export default function DriverDashboard() {
       if (!response.ok) throw new Error('Error al completar tarea');
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast({
         title: "Tarea completada",
-        description: "La tarea se ha actualizado correctamente",
+        description: data.newStatus ? 
+          `La tarea se completó y el arriendo cambió a estado: ${data.newStatus}` :
+          "La tarea se ha registrado correctamente",
       });
       setIsDialogOpen(false);
       setObservations('');
       setTaskStatus('');
-      // Refresh page or update state here
-      window.location.reload();
+      // Refresh tasks data
+      queryClient.invalidateQueries({ queryKey: ['/api/tasks/today'] });
     },
     onError: () => {
       toast({
@@ -149,42 +158,7 @@ export default function DriverDashboard() {
     setIsReportOpen(false);
   };
 
-  // Mock data for demo
-  const todayTasks = [
-    {
-      id: '1',
-      type: 'delivery',
-      customer: 'María González',
-      address: 'Av. Providencia 1234, Providencia', // DESTINO: Dirección del cliente
-      origin: 'Bodega Central, Av. Industrial 1234, Quilicura', // ORIGEN: Desde donde se recogen las cajas
-      boxes: 5,
-      status: 'pending',
-      time: '09:00',
-      phone: '+56912345678'
-    },
-    {
-      id: '2',
-      type: 'pickup',
-      customer: 'Pedro Martínez',
-      address: 'Las Condes 567, Las Condes', // ORIGEN: Dirección del cliente (donde se retiran)
-      destination: 'Bodega Central, Av. Industrial 1234, Quilicura', // DESTINO: Donde se llevan las cajas
-      boxes: 3,
-      status: 'completed',
-      time: '11:30',
-      phone: '+56987654321'
-    },
-    {
-      id: '3',
-      type: 'delivery',
-      customer: 'Ana López',
-      address: 'San Miguel 890, San Miguel', // DESTINO: Dirección del cliente
-      origin: 'Bodega Central, Av. Industrial 1234, Quilicura', // ORIGEN: Desde donde se recogen las cajas
-      boxes: 8,
-      status: 'pending',
-      time: '14:00',
-      phone: '+56911223344'
-    }
-  ];
+
 
   const getTaskIcon = (type: string) => {
     return type === 'delivery' ? (
@@ -243,7 +217,9 @@ export default function DriverDashboard() {
           <Card>
             <CardContent className="p-6 text-center">
               <Package className="w-8 h-8 text-green-600 mx-auto mb-2" />
-              <div className="text-2xl font-bold text-gray-900">2</div>
+              <div className="text-2xl font-bold text-gray-900">
+                {todayTasks.filter(t => t.type === 'delivery' && t.status === 'pending').length}
+              </div>
               <div className="text-sm text-gray-600">Entregas Pendientes</div>
             </CardContent>
           </Card>
@@ -251,7 +227,9 @@ export default function DriverDashboard() {
           <Card>
             <CardContent className="p-6 text-center">
               <Truck className="w-8 h-8 text-blue-600 mx-auto mb-2" />
-              <div className="text-2xl font-bold text-gray-900">1</div>
+              <div className="text-2xl font-bold text-gray-900">
+                {todayTasks.filter(t => t.type === 'pickup' && t.status === 'pending').length}
+              </div>
               <div className="text-sm text-gray-600">Retiros Pendientes</div>
             </CardContent>
           </Card>
@@ -259,7 +237,9 @@ export default function DriverDashboard() {
           <Card>
             <CardContent className="p-6 text-center">
               <CheckCircle className="w-8 h-8 text-orange-600 mx-auto mb-2" />
-              <div className="text-2xl font-bold text-gray-900">1</div>
+              <div className="text-2xl font-bold text-gray-900">
+                {todayTasks.filter(t => t.status === 'completed').length}
+              </div>
               <div className="text-sm text-gray-600">Completadas Hoy</div>
             </CardContent>
           </Card>
@@ -275,7 +255,18 @@ export default function DriverDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {todayTasks.map((task) => (
+              {tasksLoading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-300 mx-auto"></div>
+                  <p className="text-gray-600 mt-2">Cargando tareas...</p>
+                </div>
+              ) : todayTasks.length === 0 ? (
+                <div className="text-center py-8">
+                  <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-600">No hay tareas asignadas para hoy</p>
+                </div>
+              ) : (
+                todayTasks.map((task) => (
                 <div key={task.id} className="border rounded-lg p-4 bg-white">
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex items-center space-x-3">
@@ -297,16 +288,26 @@ export default function DriverDashboard() {
                   </div>
                   
                   <div className="space-y-2">
-                    <div className="flex items-center">
-                      <span className="font-medium">{task.customer}</span>
-                      <span className="ml-2 text-sm text-blue-600">{task.phone}</span>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <span className="font-medium">{task.customer}</span>
+                        <span className="ml-2 text-sm text-blue-600">{task.phone}</span>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => window.open(`tel:${task.phone}`, '_self')}
+                        className="text-green-600 border-green-600 hover:bg-green-50"
+                      >
+                        📞 Llamar
+                      </Button>
                     </div>
                     
                     {task.type === 'delivery' ? (
                       <div className="space-y-1 text-sm">
                         <div className="flex items-center text-gray-600">
                           <span className="text-xs font-medium text-green-600 mr-2">DESDE:</span>
-                          <span>{task.origin}</span>
+                          <span>Sede Arriendo Cajas</span>
                         </div>
                         <div className="flex items-center text-gray-900">
                           <MapPin className="w-4 h-4 mr-2 text-red-600" />
@@ -321,7 +322,7 @@ export default function DriverDashboard() {
                         </div>
                         <div className="flex items-center text-gray-600">
                           <span className="text-xs font-medium text-green-600 mr-2">LLEVAR A:</span>
-                          <span>{task.destination}</span>
+                          <span>Sede Arriendo Cajas</span>
                         </div>
                       </div>
                     )}
@@ -348,7 +349,8 @@ export default function DriverDashboard() {
                     </div>
                   )}
                 </div>
-              ))}
+                ))
+              )}
             </div>
           </CardContent>
         </Card>
