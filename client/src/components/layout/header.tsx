@@ -1,13 +1,36 @@
 import { Button } from "@/components/ui/button";
 import { Package, Bell, LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useMutation } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
 import type { User } from "@shared/schema";
 
 export default function Header() {
   const { user } = useAuth();
 
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch("/api/logout", {
+        method: "GET",
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Logout failed');
+      return response.json();
+    },
+    onSuccess: () => {
+      // Clear all cached data
+      queryClient.clear();
+      // Redirect to home page
+      window.location.href = "/";
+    },
+    onError: () => {
+      // Even if logout fails, redirect to home
+      window.location.href = "/";
+    }
+  });
+
   const handleLogout = () => {
-    window.location.href = "/api/logout";
+    logoutMutation.mutate();
   };
 
   const getRoleLabel = (role: string) => {
