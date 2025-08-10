@@ -368,7 +368,7 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(rentals.trackingCode, trackingCode.toUpperCase()),
-          sql`SUBSTRING(${customers.rut} FROM LENGTH(${customers.rut}) - 4 FOR 4) = ${rutDigits}`
+          sql`RIGHT(LEFT(${customers.rut}, LENGTH(${customers.rut}) - 1), 4) = ${rutDigits}`
         )
       );
     
