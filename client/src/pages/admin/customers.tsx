@@ -441,7 +441,7 @@ export default function AdminCustomers() {
       } else {
         // For new rentals, show tracking code to admin
         const customer = selectedCustomerForRental;
-        const rutDigits = customer?.rut?.slice(-4) || "0000";
+        const rutDigits = customer?.rut ? customer.rut.slice(0, -1).slice(-4).padStart(4, '0') : "0000";
         const trackingUrl = `${window.location.origin}/track`;
         
         toast({
@@ -1276,7 +1276,7 @@ export default function AdminCustomers() {
                                 
                                 // Show tracking info for the most recent active rental
                                 const mostRecentRental = activeRentals[0];
-                                const rutDigits = customer.rut?.slice(-4) || "0000";
+                                const rutDigits = customer.rut ? customer.rut.slice(0, -1).slice(-4).padStart(4, '0') : "0000";
                                 const trackingUrl = `${window.location.origin}/track/${rutDigits}/${mostRecentRental.trackingCode}`;
                                 
                                 return (
@@ -1350,7 +1350,7 @@ export default function AdminCustomers() {
                                     const activeRentals = getCustomerActiveRentals(customer.id);
                                     if (activeRentals.length > 0) {
                                       const mostRecentRental = activeRentals[0];
-                                      const rutDigits = customer.rut?.slice(-4) || "0000";
+                                      const rutDigits = customer.rut ? customer.rut.slice(0, -1).slice(-4).padStart(4, '0') : "0000";
                                       const trackingUrl = `${window.location.origin}/track/${rutDigits}/${mostRecentRental.trackingCode}`;
                                       
                                       return (

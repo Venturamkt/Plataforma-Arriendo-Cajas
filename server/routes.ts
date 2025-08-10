@@ -298,7 +298,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log(`Customer found: ${customer?.name}, email: ${customer?.email}`);
           
           if (customer?.email && rental.trackingCode) {
-            const rutDigits = customer.rut?.slice(-4) || "0000";
+            const rutDigits = customer.rut ? customer.rut.slice(0, -1).slice(-4).padStart(4, '0') : "0000";
             const trackingUrl = generateTrackingUrl(rutDigits, rental.trackingCode);
             
             const emailData = {
