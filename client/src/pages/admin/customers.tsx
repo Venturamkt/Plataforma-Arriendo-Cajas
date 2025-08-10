@@ -20,6 +20,43 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Search, Plus, Mail, Phone, MapPin, User, Package, Calendar, AlertTriangle, CheckCircle, Grid3X3, Table } from "lucide-react";
 
+// Función para formatear RUT automáticamente
+function formatRut(rut: string): string {
+  // Remove all non-numeric characters
+  const cleanRut = rut.replace(/\D/g, '');
+  
+  if (cleanRut.length <= 1) return cleanRut;
+  
+  // Only format complete RUTs (8-9 digits)
+  if (cleanRut.length < 8) return cleanRut;
+  
+  // Separate the main number from the check digit
+  const mainNumber = cleanRut.slice(0, -1);
+  const checkDigit = cleanRut.slice(-1);
+  
+  // Format the main number with dots
+  let formatted = mainNumber.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  
+  // Add the check digit with hyphen
+  formatted += `-${checkDigit}`;
+  
+  return formatted;
+}
+
+// Función para formatear RUT en visualización (siempre con formato)
+function displayFormattedRut(rut: string): string {
+  if (!rut) return '';
+  
+  const cleanRut = rut.replace(/\D/g, '');
+  if (cleanRut.length < 8) return rut; // Return as-is if too short
+  
+  const mainNumber = cleanRut.slice(0, -1);
+  const checkDigit = cleanRut.slice(-1);
+  
+  const formatted = mainNumber.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return `${formatted}-${checkDigit}`;
+}
+
 export default function AdminCustomers() {
   const { toast } = useToast();
   const { user, isLoading } = useCurrentUser();
@@ -38,6 +75,7 @@ export default function AdminCustomers() {
     phone: "",
     rut: ""
   });
+  const [formattedRut, setFormattedRut] = useState("");
   const [includeRental, setIncludeRental] = useState(false);
   // Precios basados en tu tabla
   const getPriceByPeriod = (boxes: number, days: number) => {
@@ -175,6 +213,7 @@ export default function AdminCustomers() {
       }
       
       setNewCustomer({ name: "", email: "", phone: "", rut: "" });
+      setFormattedRut("");
       setIncludeRental(false);
       toast({
         title: "Cliente creado",
@@ -200,6 +239,7 @@ export default function AdminCustomers() {
       setShowEditDialog(false);
       setEditingCustomer(null);
       setNewCustomer({ name: "", email: "", phone: "", rut: "" });
+      setFormattedRut("");
       toast({
         title: "Cliente actualizado",
         description: "El cliente ha sido actualizado exitosamente",
@@ -329,13 +369,23 @@ export default function AdminCustomers() {
 
   const handleEditCustomer = (customer: Customer) => {
     setEditingCustomer(customer);
+    const rutValue = customer.rut || "";
     setNewCustomer({
       name: customer.name,
       email: customer.email,
       phone: customer.phone || "",
-      rut: customer.rut || ""
+      rut: rutValue
     });
+    setFormattedRut(formatRut(rutValue));
     setShowEditDialog(true);
+  };
+
+  const handleRutChange = (value: string) => {
+    const cleanValue = value.replace(/\D/g, '');
+    if (cleanValue.length <= 9) {
+      setNewCustomer({ ...newCustomer, rut: cleanValue });
+      setFormattedRut(formatRut(cleanValue));
+    }
   };
 
   const handleDeleteCustomer = (customer: any) => {
@@ -668,9 +718,11 @@ export default function AdminCustomers() {
                         <Label htmlFor="rut">RUT</Label>
                         <Input
                           id="rut"
-                          value={newCustomer.rut}
-                          onChange={(e) => setNewCustomer({ ...newCustomer, rut: e.target.value })}
+                          value={formattedRut}
+                          onChange={(e) => handleRutChange(e.target.value)}
                           placeholder="12.345.678-9"
+                          autoComplete="off"
+                          maxLength={12}
                         />
                       </div>
 
@@ -1210,7 +1262,7 @@ export default function AdminCustomers() {
                                 </Avatar>
                                 <div>
                                   <p className="font-medium">{customer.name}</p>
-                                  <p className="text-sm text-gray-600">{customer.rut}</p>
+                                  <p className="text-sm text-gray-600">{displayFormattedRut(customer.rut || '')}</p>
                                 </div>
                               </div>
                             </TableCell>
@@ -1567,9 +1619,11 @@ export default function AdminCustomers() {
                   <Label htmlFor="edit-rut">RUT</Label>
                   <Input
                     id="edit-rut"
-                    value={newCustomer.rut}
-                    onChange={(e) => setNewCustomer({ ...newCustomer, rut: e.target.value })}
+                    value={formattedRut}
+                    onChange={(e) => handleRutChange(e.target.value)}
                     placeholder="12.345.678-9"
+                    autoComplete="off"
+                    maxLength={12}
                   />
                 </div>
                 <div>
