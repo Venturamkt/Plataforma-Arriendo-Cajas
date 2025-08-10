@@ -215,3 +215,7 @@ The architecture emphasizes type safety, scalability, and maintainability while 
 - ✓ **Task filtering**: Driver portal shows only tasks assigned to logged-in driver for current date
 - ✓ **Password security fix**: Resolved bcrypt import issue in storage.ts for secure password hashing
 - ✓ **Complete workflow testing**: Verified end-to-end functionality from task assignment to completion
+- ✓ **Upcoming tasks feature**: Added separate section for future scheduled tasks in driver portal
+- ✓ **Visual task separation**: Today's tasks highlighted with white background, upcoming tasks with gray background for clear distinction
+- ✓ **Dual authentication fix**: Created admin account for jalarcon@arriendocajas.cl in admin_users table for panel access
+- ✓ **Universal credentials**: jalarcon@arriendocajas.cl / jose123 now works for both driver portal and admin panel
