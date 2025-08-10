@@ -6,6 +6,7 @@ import { setupAuthRoutes } from "./authRoutes";
 import { setupTaskRoutes } from "./taskRoutes";
 import { emailService } from "./emailService";
 import { generateTrackingUrl } from "./emailTemplates";
+import { reminderService } from "./reminderService";
 import { insertCustomerSchema, insertBoxSchema, insertRentalSchema, insertDeliveryTaskSchema, insertBoxMovementSchema } from "@shared/schema";
 import { z } from "zod";
 
@@ -460,6 +461,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error sending test email:", error);
       res.status(500).json({ message: "Failed to send test email" });
+    }
+  });
+
+  // Reminder routes
+  app.get('/api/reminders/upcoming', requireAdminSession, async (req, res) => {
+    try {
+      const days = parseInt(req.query.days as string) || 7;
+      const reminders = await reminderService.getUpcomingReminders(days);
+      res.json(reminders);
+    } catch (error) {
+      console.error("Error fetching upcoming reminders:", error);
+      res.status(500).json({ message: "Failed to fetch upcoming reminders" });
+    }
+  });
+
+  app.post('/api/reminders/check', requireAdminSession, async (req, res) => {
+    try {
+      await reminderService.checkAndSendReminders();
+      res.json({ message: "Reminder check completed" });
+    } catch (error) {
+      console.error("Error checking reminders:", error);
+      res.status(500).json({ message: "Failed to check reminders" });
+    }
+  });
+
+  app.post('/api/reminders/test/:rentalId', requireAdminSession, async (req, res) => {
+    try {
+      const success = await reminderService.sendTestReminder(req.params.rentalId);
+      if (success) {
+        res.json({ message: "Test reminder sent successfully" });
+      } else {
+        res.status(500).json({ message: "Failed to send test reminder" });
+      }
+    } catch (error) {
+      console.error("Error sending test reminder:", error);
+      res.status(500).json({ message: "Failed to send test reminder" });
     }
   });
 

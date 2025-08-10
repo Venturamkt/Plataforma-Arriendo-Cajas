@@ -8,7 +8,8 @@ import {
   QrCode,
   UserCog,
   ClipboardList,
-  Mail
+  Mail,
+  Clock
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 
@@ -26,6 +27,7 @@ export default function Sidebar({ role }: SidebarProps) {
     { href: "/admin/rental-status", icon: ClipboardList, label: "Estado Arriendos" },
     { href: "/admin/deliveries", icon: Truck, label: "Entregas" },
     { href: "/admin/emails", icon: Mail, label: "Emails" },
+    { href: "/admin/reminders", icon: Clock, label: "Recordatorios" },
     { href: "/admin/reports", icon: BarChart3, label: "Reportes" },
     { href: "/admin/users", icon: UserCog, label: "Usuarios" },
   ];

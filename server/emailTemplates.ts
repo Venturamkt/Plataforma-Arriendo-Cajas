@@ -270,6 +270,79 @@ export const emailTemplates = {
     text: `¡Hola ${data.customerName}! Tu arriendo ha sido completado. Garantía de $${data.guaranteeAmount.toLocaleString()} en proceso de devolución. Seguimiento: ${data.trackingUrl} (${data.trackingCode}). ¡Gracias por elegirnos!`
   }),
 
+  recordatorio: (data: RentalEmailData): EmailTemplate => ({
+    subject: `⏰ Recordatorio: Entrega de cajas en 2 días - ${data.trackingCode}`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            .container { max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif; }
+            .header { background: #ff9800; color: white; padding: 20px; text-align: center; }
+            .content { padding: 20px; }
+            .reminder-box { background: #fff3e0; border: 2px solid #ff9800; padding: 15px; margin: 20px 0; text-align: center; }
+            .tracking-link { background: #ff9800; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 0; }
+            .checklist { background: #f8f9fa; padding: 15px; margin: 15px 0; border-left: 4px solid #ff9800; }
+            .important { background: #ffebee; padding: 15px; margin: 15px 0; border-left: 4px solid #f44336; }
+            .footer { background: #2E5CA6; color: white; padding: 15px; text-align: center; font-size: 12px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>⏰ ¡Recordatorio Importante!</h1>
+              <h2>Hola ${data.customerName}</h2>
+            </div>
+            
+            <div class="content">
+              <p>Te recordamos que <strong>en 2 días debes devolver tus cajas de arriendo</strong>.</p>
+              
+              <div class="reminder-box">
+                <h3>📅 Fecha límite de devolución</h3>
+                <p><strong>Faltan solo 2 días</strong></p>
+                <a href="${data.trackingUrl}" class="tracking-link">Ver Estado del Arriendo</a>
+                <p style="font-size: 12px; color: #666;">Código: ${data.trackingCode}</p>
+              </div>
+              
+              <div class="checklist">
+                <h3>✅ Lista de preparación para la devolución:</h3>
+                <ul>
+                  <li><strong>Limpia las cajas:</strong> Retira todo el contenido y limpia el interior</li>
+                  <li><strong>Revisa el estado:</strong> Asegúrate de que no tengan daños</li>
+                  <li><strong>Apila ordenadamente:</strong> Colócalas en un lugar accesible</li>
+                  <li><strong>Confirma la dirección:</strong> ${data.deliveryAddress}</li>
+                </ul>
+              </div>
+              
+              <div class="important">
+                <h3>🚨 Información importante:</h3>
+                <ul>
+                  <li>Nos contactaremos contigo para coordinar el retiro</li>
+                  <li>Las cajas deben estar limpias y vacías</li>
+                  <li>Tu garantía de $${data.guaranteeAmount.toLocaleString()} se devuelve al completar la devolución</li>
+                  <li>Si necesitas más tiempo, contáctanos lo antes posible</li>
+                </ul>
+              </div>
+              
+              <h3>📞 ¿Necesitas ayuda?</h3>
+              <p>Si tienes alguna consulta o necesitas coordinar un horario específico, no dudes en contactarnos:</p>
+              <p><strong>Email:</strong> info@arriendocajas.cl</p>
+              
+              <p>¡Gracias por mantener todo en orden!</p>
+            </div>
+            
+            <div class="footer">
+              <p>Arriendo Cajas - Tu tiempo es valioso</p>
+              <p>Recordatorio automático - No responder a este email</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `,
+    text: `¡Hola ${data.customerName}! RECORDATORIO: En 2 días debes devolver tus ${data.totalBoxes} cajas. Prepáralas: límpia, revisa estado, apila ordenadamente. Dirección: ${data.deliveryAddress}. Garantía: $${data.guaranteeAmount.toLocaleString()} se devuelve al completar. Seguimiento: ${data.trackingUrl} (${data.trackingCode}). Consultas: info@arriendocajas.cl`
+  }),
+
   cancelada: (data: RentalEmailData): EmailTemplate => ({
     subject: `Arriendo cancelado - Reembolso en proceso - ${data.trackingCode}`,
     html: `

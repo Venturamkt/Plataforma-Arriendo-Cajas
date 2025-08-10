@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 const statusOptions = [
   { value: "pagada", label: "📝 Pagada", color: "bg-blue-500" },
   { value: "entregada", label: "📦 Entregada", color: "bg-green-500" },
+  { value: "recordatorio", label: "⏰ Recordatorio", color: "bg-orange-500" },
   { value: "retirada", label: "📤 Retirada", color: "bg-yellow-500" },
   { value: "finalizado", label: "✅ Finalizado", color: "bg-purple-500" },
   { value: "cancelada", label: "❌ Cancelada", color: "bg-red-500" }
@@ -301,6 +302,7 @@ export default function EmailPreview() {
                 <div className="text-sm text-gray-600">
                   {status.value === "pagada" && "Confirmación de pago con link de seguimiento"}
                   {status.value === "entregada" && "Notificación de entrega exitosa"}
+                  {status.value === "recordatorio" && "Recordatorio 2 días antes de vencimiento"}
                   {status.value === "retirada" && "Confirmación de retiro de cajas"}
                   {status.value === "finalizado" && "Arriendo completado y devolución de garantía"}
                   {status.value === "cancelada" && "Cancelación y proceso de reembolso"}
