@@ -84,6 +84,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update user information
+  app.put('/api/users/:id', requireAdminSession, async (req: any, res) => {
+    try {
+      const { firstName, lastName, email, phone } = req.body;
+      const updatedUser = await storage.updateUser(req.params.id, {
+        firstName,
+        lastName,
+        email,
+        phone
+      });
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating user:", error);
+      res.status(500).json({ message: "Failed to update user" });
+    }
+  });
+
+  // Delete user
+  app.delete('/api/users/:id', requireAdminSession, async (req: any, res) => {
+    try {
+      const success = await storage.deleteUser(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      res.json({ message: "User deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({ message: "Failed to delete user" });
+    }
+  });
+
+  // Reset user password
+  app.put('/api/users/:id/password', requireAdminSession, async (req: any, res) => {
+    try {
+      const { password } = req.body;
+      if (!password || password.length < 6) {
+        return res.status(400).json({ message: "Password must be at least 6 characters" });
+      }
+      const success = await storage.updateUserPassword(req.params.id, password);
+      if (!success) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      res.json({ message: "Password updated successfully" });
+    } catch (error) {
+      console.error("Error updating password:", error);
+      res.status(500).json({ message: "Failed to update password" });
+    }
+  });
+
   // Dashboard metrics
   app.get('/api/dashboard/metrics', requireAdminSession, async (req, res) => {
     try {

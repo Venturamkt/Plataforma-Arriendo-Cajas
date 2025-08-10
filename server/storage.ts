@@ -31,6 +31,9 @@ export interface IStorage {
   getUsers(): Promise<User[]>;
   upsertUser(user: UpsertUser): Promise<User>;
   updateUserRole(id: string, role: string): Promise<User | undefined>;
+  updateUser(id: string, data: Partial<User>): Promise<User | undefined>;
+  deleteUser(id: string): Promise<boolean>;
+  updateUserPassword(id: string, password: string): Promise<boolean>;
   
   // Customer operations
   getCustomers(): Promise<Customer[]>;
@@ -123,6 +126,41 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, id))
       .returning();
     return user;
+  }
+
+  async updateUser(id: string, data: Partial<User>): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return user || undefined;
+  }
+
+  async deleteUser(id: string): Promise<boolean> {
+    try {
+      const result = await db
+        .delete(users)
+        .where(eq(users.id, id));
+      return true;
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      return false;
+    }
+  }
+
+  async updateUserPassword(id: string, password: string): Promise<boolean> {
+    try {
+      const [user] = await db
+        .update(users)
+        .set({ password, updatedAt: new Date() })
+        .where(eq(users.id, id))
+        .returning();
+      return !!user;
+    } catch (error) {
+      console.error("Error updating password:", error);
+      return false;
+    }
   }
 
   // Customer operations

@@ -13,13 +13,23 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Users, Mail, UserCheck, Crown, Truck, UserPlus } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Search, Users, Mail, UserCheck, Crown, Truck, UserPlus, Edit2, Trash2, Key } from "lucide-react";
 import { Link } from "wouter";
 
 export default function UserManagement() {
   const { toast } = useToast();
   const { user, isLoading } = useCurrentUser();
   const [searchQuery, setSearchQuery] = useState("");
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [showPasswordResetDialog, setShowPasswordResetDialog] = useState(false);
+  const [userForPasswordReset, setUserForPasswordReset] = useState<User | null>(null);
+  const [newPassword, setNewPassword] = useState("");
 
   // Redirect to home if not authenticated or not admin
   useEffect(() => {
@@ -57,6 +67,88 @@ export default function UserManagement() {
       toast({
         title: "Error",
         description: "No se pudo actualizar el rol del usuario",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateUserMutation = useMutation({
+    mutationFn: async (userData: any) => {
+      const response = await fetch(`/api/users/${userData.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userData),
+      });
+      if (!response.ok) throw new Error('Failed to update user');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      setShowEditDialog(false);
+      setEditingUser(null);
+      toast({
+        title: "Usuario actualizado",
+        description: "Los datos del usuario han sido actualizados exitosamente",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar el usuario",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      const response = await fetch(`/api/users/${userId}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) throw new Error('Failed to delete user');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      setShowDeleteDialog(false);
+      setUserToDelete(null);
+      toast({
+        title: "Usuario eliminado",
+        description: "El usuario ha sido eliminado exitosamente",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "No se pudo eliminar el usuario",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const resetPasswordMutation = useMutation({
+    mutationFn: async ({ userId, password }: { userId: string; password: string }) => {
+      const response = await fetch(`/api/users/${userId}/password`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      });
+      if (!response.ok) throw new Error('Failed to reset password');
+      return response.json();
+    },
+    onSuccess: () => {
+      setShowPasswordResetDialog(false);
+      setUserForPasswordReset(null);
+      setNewPassword("");
+      toast({
+        title: "Contraseña actualizada",
+        description: "La contraseña ha sido actualizada exitosamente",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar la contraseña",
         variant: "destructive",
       });
     },
@@ -187,82 +279,258 @@ export default function UserManagement() {
                 </Card>
               </div>
             ) : (
-              filteredUsers.map((u) => (
-                <Card key={u.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center space-x-3">
-                        <Avatar>
-                          <AvatarFallback>
-                            {u.firstName?.charAt(0)}{u.lastName?.charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <h3 className="font-semibold text-gray-900">
-                            {u.firstName} {u.lastName}
-                          </h3>
-                          <div className="flex items-center text-sm text-gray-600">
-                            <Mail className="h-3 w-3 mr-1" />
-                            {u.email}
+              filteredUsers.map((u) => {
+                const initials = `${u.firstName?.charAt(0) || ''}${u.lastName?.charAt(0) || ''}`.toUpperCase() || u.email?.charAt(0).toUpperCase() || '?';
+                
+                return (
+                  <Card key={u.id} className="hover:shadow-md transition-shadow">
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center space-x-3">
+                          <Avatar className="h-10 w-10">
+                            <AvatarFallback className="bg-brand-blue text-white">
+                              {initials}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <h3 className="font-semibold text-gray-900">
+                              {u.firstName && u.lastName ? `${u.firstName} ${u.lastName}` : u.email}
+                            </h3>
+                            <p className="text-sm text-gray-600">{u.email}</p>
                           </div>
                         </div>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600">Rol actual:</span>
-                        <Badge className={`${getRoleBadgeColor(u.role || 'customer')} flex items-center gap-1`}>
-                          {getRoleIcon(u.role || 'customer')}
-                          {getRoleLabel(u.role || 'customer')}
+                        <Badge className={getRoleBadgeColor(u.role || 'customer')}>
+                          <div className="flex items-center space-x-1">
+                            {getRoleIcon(u.role || 'customer')}
+                            <span>{getRoleLabel(u.role || 'customer')}</span>
+                          </div>
                         </Badge>
                       </div>
-                      
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-700">
-                          Cambiar rol:
-                        </label>
-                        <Select 
-                          value={u.role || 'customer'} 
-                          onValueChange={(newRole) => {
-                            updateUserRoleMutation.mutate({ 
-                              userId: u.id, 
-                              role: newRole 
-                            });
-                          }}
+
+                      {u.phone && (
+                        <div className="flex items-center text-sm text-gray-600 mb-3">
+                          <Mail className="h-4 w-4 mr-2" />
+                          {u.phone}
+                        </div>
+                      )}
+
+                      <div className="mb-4">
+                        <Label className="text-xs text-gray-500">Cambiar Rol</Label>
+                        <Select
+                          value={u.role || 'customer'}
+                          onValueChange={(newRole) => updateUserRoleMutation.mutate({ userId: u.id, role: newRole })}
                           disabled={updateUserRoleMutation.isPending}
                         >
-                          <SelectTrigger>
+                          <SelectTrigger className="w-full mt-1">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="customer">Cliente</SelectItem>
-                            <SelectItem value="driver">Repartidor</SelectItem>
-                            <SelectItem value="admin">Administrador</SelectItem>
+                            <SelectItem value="admin">👑 Administrador</SelectItem>
+                            <SelectItem value="driver">🚛 Repartidor</SelectItem>
+                            <SelectItem value="customer">👤 Cliente</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
+
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setEditingUser(u);
+                            setShowEditDialog(true);
+                          }}
+                          className="flex-1"
+                        >
+                          <Edit2 className="h-4 w-4 mr-1" />
+                          Editar
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setUserForPasswordReset(u);
+                            setShowPasswordResetDialog(true);
+                          }}
+                          className="flex-1"
+                        >
+                          <Key className="h-4 w-4 mr-1" />
+                          Contraseña
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => {
+                            setUserToDelete(u);
+                            setShowDeleteDialog(true);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })
             )}
           </div>
-
-          {/* Summary */}
-          {!usersLoading && filteredUsers.length > 0 && (
-            <Card className="mt-6">
-              <CardContent className="p-4">
-                <p className="text-sm text-gray-600">
-                  Mostrando {filteredUsers.length} de {users?.length || 0} usuarios
-                </p>
-              </CardContent>
-            </Card>
-          )}
         </main>
       </div>
       
       <MobileNav role={'admin'} />
+
+      {/* Edit User Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Editar Usuario</DialogTitle>
+            <DialogDescription>
+              Actualiza la información del usuario
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            if (editingUser) {
+              updateUserMutation.mutate(editingUser);
+            }
+          }} className="space-y-4">
+            <div>
+              <Label htmlFor="firstName">Nombre</Label>
+              <Input
+                id="firstName"
+                value={editingUser?.firstName || ''}
+                onChange={(e) => setEditingUser(prev => prev ? {...prev, firstName: e.target.value} : null)}
+                placeholder="Nombre"
+              />
+            </div>
+            <div>
+              <Label htmlFor="lastName">Apellido</Label>
+              <Input
+                id="lastName"
+                value={editingUser?.lastName || ''}
+                onChange={(e) => setEditingUser(prev => prev ? {...prev, lastName: e.target.value} : null)}
+                placeholder="Apellido"
+              />
+            </div>
+            <div>
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={editingUser?.email || ''}
+                onChange={(e) => setEditingUser(prev => prev ? {...prev, email: e.target.value} : null)}
+                placeholder="correo@ejemplo.com"
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="phone">Teléfono</Label>
+              <Input
+                id="phone"
+                value={editingUser?.phone || ''}
+                onChange={(e) => setEditingUser(prev => prev ? {...prev, phone: e.target.value} : null)}
+                placeholder="+56 9 1234 5678"
+              />
+            </div>
+
+            <div className="flex gap-2 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowEditDialog(false)}
+                className="flex-1"
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                disabled={updateUserMutation.isPending}
+                className="flex-1 bg-brand-blue hover:bg-brand-blue text-white"
+              >
+                {updateUserMutation.isPending ? "Actualizando..." : "Actualizar"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Password Reset Dialog */}
+      <Dialog open={showPasswordResetDialog} onOpenChange={setShowPasswordResetDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Cambiar Contraseña</DialogTitle>
+            <DialogDescription>
+              Establece una nueva contraseña para {userForPasswordReset?.firstName} {userForPasswordReset?.lastName}
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            if (userForPasswordReset && newPassword.length >= 6) {
+              resetPasswordMutation.mutate({ userId: userForPasswordReset.id, password: newPassword });
+            }
+          }} className="space-y-4">
+            <div>
+              <Label htmlFor="newPassword">Nueva Contraseña</Label>
+              <Input
+                id="newPassword"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Mínimo 6 caracteres"
+                minLength={6}
+                required
+              />
+            </div>
+
+            <div className="flex gap-2 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setShowPasswordResetDialog(false);
+                  setNewPassword("");
+                }}
+                className="flex-1"
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                disabled={resetPasswordMutation.isPending || newPassword.length < 6}
+                className="flex-1 bg-brand-red hover:bg-brand-red text-white"
+              >
+                {resetPasswordMutation.isPending ? "Cambiando..." : "Cambiar Contraseña"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete User Confirmation */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar usuario?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. El usuario {userToDelete?.firstName} {userToDelete?.lastName} será eliminado permanentemente del sistema.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (userToDelete) {
+                  deleteUserMutation.mutate(userToDelete.id);
+                }
+              }}
+              className="bg-red-600 hover:bg-red-700"
+              disabled={deleteUserMutation.isPending}
+            >
+              {deleteUserMutation.isPending ? "Eliminando..." : "Eliminar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

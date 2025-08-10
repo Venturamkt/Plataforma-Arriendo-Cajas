@@ -198,7 +198,7 @@ export default function AdminCustomers() {
   });
 
   const { data: drivers } = useQuery<any[]>({
-    queryKey: ["/api/auth/users"],
+    queryKey: ["/api/users"],
     retry: false,
     enabled: !!user,
   });
