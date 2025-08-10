@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useParams } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -27,9 +28,19 @@ interface Rental {
 }
 
 export default function TrackRental() {
+  const params = useParams();
   const [rutDigits, setRutDigits] = useState("");
   const [trackingCode, setTrackingCode] = useState("");
   const [isSearching, setIsSearching] = useState(false);
+
+  // Auto-populate from URL parameters if present
+  useEffect(() => {
+    if (params.rut && params.code) {
+      setRutDigits(params.rut);
+      setTrackingCode(params.code);
+      setIsSearching(true);
+    }
+  }, [params.rut, params.code]);
 
   const { data: rental, error, isLoading } = useQuery<Rental>({
     queryKey: ["/api/track", rutDigits, trackingCode],
@@ -104,15 +115,16 @@ export default function TrackRental() {
         </div>
 
         {/* Search Form */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5 text-brand-blue" />
-              Buscar mi Arriendo
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
+        {!params.rut && !params.code && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Package className="h-5 w-5 text-brand-blue" />
+                Buscar mi Arriendo
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <Label htmlFor="rutDigits">Últimos 4 dígitos de tu RUT</Label>
                 <Input
@@ -155,6 +167,18 @@ export default function TrackRental() {
             </form>
           </CardContent>
         </Card>
+        )}
+
+        {/* Auto-search message for direct links */}
+        {params.rut && params.code && (
+          <div className="text-center mb-6">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="text-blue-800">
+                Buscando arriendo con RUT terminado en <strong>{params.rut}</strong> y código <strong>{params.code}</strong>
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Error Message */}
         {error && (

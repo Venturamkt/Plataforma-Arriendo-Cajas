@@ -41,8 +41,9 @@ function Router() {
       <Route path="/admin/new-rental" component={NewRental} />
       <Route path="/admin/rental-status" component={RentalStatus} />
       
-      {/* Public tracking route */}
+      {/* Public tracking routes */}
       <Route path="/track" component={TrackRental} />
+      <Route path="/track/:rut/:code" component={TrackRental} />
       
       {/* Driver routes */}
       <Route path="/driver/dashboard" component={DriverDashboard} />

@@ -1258,7 +1258,7 @@ export default function AdminCustomers() {
                                 // Show tracking info for the most recent active rental
                                 const mostRecentRental = activeRentals[0];
                                 const rutDigits = customer.rut?.slice(-4) || "0000";
-                                const trackingUrl = `${window.location.origin}/track`;
+                                const trackingUrl = `${window.location.origin}/track/${rutDigits}/${mostRecentRental.trackingCode}`;
                                 
                                 return (
                                   <div className="bg-blue-50 p-2 rounded border text-left text-xs space-y-1">
