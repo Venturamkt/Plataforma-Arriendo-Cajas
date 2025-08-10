@@ -414,7 +414,7 @@ export default function AdminCustomers() {
     const guaranteeAmount = newRental.boxQuantity * 2000; // $2,000 por caja
     const additionalTotal = newRental.additionalProducts.reduce((sum, product) => 
       sum + (product.price * product.quantity), 0);
-    const rentalTotal = (newRental.customPrice || 2000) * newRental.boxQuantity * newRental.rentalDays * (1 - (newRental.discount || 0) / 100);
+    const rentalTotal = (newRental.customPrice || 2775) * (1 - (newRental.discount || 0) / 100);
     
     createRentalMutation.mutate({
       customerId: selectedCustomerForRental.id,
@@ -740,16 +740,20 @@ export default function AdminCustomers() {
                     </div>
 
                     <div>
-                      <Label htmlFor="customPrice">Precio por día (CLP) *</Label>
+                      <Label htmlFor="customPrice">Precio Total del Arriendo (CLP) *</Label>
                       <Input
                         id="customPrice"
                         type="number"
                         min="0"
-                        step="100"
+                        step="1"
                         value={newRental.customPrice}
-                        onChange={(e) => setNewRental({ ...newRental, customPrice: parseInt(e.target.value) || 2000 })}
-                        placeholder="2000"
+                        onChange={(e) => setNewRental({ ...newRental, customPrice: parseInt(e.target.value) || 2775 })}
+                        placeholder="2775"
+                        className="font-medium text-lg"
                       />
+                      <p className="text-xs text-gray-600 mt-1">
+                        Precio total según tabla: {newRental.boxQuantity} cajas × {newRental.rentalDays} días
+                      </p>
                     </div>
 
                     <div>
@@ -980,14 +984,14 @@ export default function AdminCustomers() {
                       {/* Rental calculation */}
                       <div className="border-b pb-2">
                         <p className="font-medium text-blue-800">Arriendo de Cajas:</p>
-                        <p>{newRental.boxQuantity} cajas × {newRental.rentalDays} días × ${(newRental.customPrice || 2000).toLocaleString()} = ${((newRental.customPrice || 2000) * newRental.boxQuantity * newRental.rentalDays).toLocaleString()}</p>
+                        <p>{newRental.boxQuantity} cajas por {newRental.rentalDays} días = ${(newRental.customPrice || 2775).toLocaleString()}</p>
                         {newRental.discount > 0 && (
                           <>
                             <p className="text-orange-600">Descuento aplicado: {newRental.discount}%</p>
-                            <p className="line-through text-gray-500">Subtotal: ${((newRental.customPrice || 2000) * newRental.boxQuantity * newRental.rentalDays).toLocaleString()}</p>
+                            <p className="line-through text-gray-500">Subtotal: ${(newRental.customPrice || 2775).toLocaleString()}</p>
                           </>
                         )}
-                        <p className="font-medium">Subtotal Arriendo: ${Math.round((newRental.customPrice || 2000) * newRental.boxQuantity * newRental.rentalDays * (1 - (newRental.discount || 0) / 100)).toLocaleString()}</p>
+                        <p className="font-medium">Subtotal Arriendo: ${Math.round((newRental.customPrice || 2775) * (1 - (newRental.discount || 0) / 100)).toLocaleString()}</p>
                       </div>
 
                       {/* Additional products */}
@@ -1014,7 +1018,7 @@ export default function AdminCustomers() {
                       <div className="pt-2">
                         <p className="font-bold text-lg text-blue-900">
                           Total a Pagar: ${(
-                            Math.round((newRental.customPrice || 2000) * newRental.boxQuantity * newRental.rentalDays * (1 - (newRental.discount || 0) / 100)) +
+                            Math.round((newRental.customPrice || 2775) * (1 - (newRental.discount || 0) / 100)) +
                             newRental.additionalProducts.reduce((sum, p) => sum + (p.price * p.quantity), 0) +
                             (newRental.boxQuantity * 2000)
                           ).toLocaleString()}
