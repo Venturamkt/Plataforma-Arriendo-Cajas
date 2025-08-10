@@ -127,8 +127,8 @@ export class EmailService {
     const previewData: RentalEmailData = {
       customerName: sampleData?.customerName || 'María González',
       rentalId: sampleData?.rentalId || 'sample-rental-id',
-      trackingCode: sampleData?.trackingCode || 'ABC12345',
-      trackingUrl: sampleData?.trackingUrl || generateTrackingUrl('1234', 'ABC12345'),
+      trackingCode: sampleData?.trackingCode || 'L0ZPGZ63',
+      trackingUrl: sampleData?.trackingUrl || generateTrackingUrl('0939', 'L0ZPGZ63'),
       totalBoxes: sampleData?.totalBoxes || 5,
       deliveryDate: sampleData?.deliveryDate || '15 de Enero, 2025',
       deliveryAddress: sampleData?.deliveryAddress || 'Av. Providencia 1234, Providencia, Santiago',

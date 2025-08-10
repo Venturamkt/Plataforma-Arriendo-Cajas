@@ -394,6 +394,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             };
 
             console.log(`Sending email with data:`, JSON.stringify(emailData, null, 2));
+            console.log(`Generated tracking URL: ${trackingUrl} (RUT digits: ${rutDigits}, Tracking code: ${rental.trackingCode})`);
             const emailSent = await emailService.sendRentalStatusEmail(customer.email, rentalData.status, emailData);
             
             if (emailSent) {
