@@ -17,22 +17,22 @@ export default function HomePage() {
         {/* Dark overlay for better text readability */}
         <div className="absolute inset-0 bg-blue-900/30"></div>
         
-        <div className="relative z-10 container mx-auto px-4 py-16 text-center text-white">
-          <div className="mb-12">
+        <div className="relative z-10 container mx-auto px-4 py-8 lg:py-16 text-center text-white">
+          <div className="mb-8 lg:mb-12">
             <img 
               src="/logo.png" 
               alt="Arriendo Cajas" 
-              className="h-20 w-auto mx-auto mb-8"
+              className="h-16 lg:h-20 w-auto mx-auto mb-6 lg:mb-8"
             />
-            <h1 className="text-6xl md:text-8xl font-bold mb-6 text-white drop-shadow-lg">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl font-bold mb-4 lg:mb-6 text-white drop-shadow-lg">
               Arriendo Cajas
             </h1>
-            <p className="text-xl md:text-2xl mb-12 max-w-3xl mx-auto text-white/90">
+            <p className="text-lg sm:text-xl lg:text-2xl mb-8 lg:mb-12 max-w-3xl mx-auto text-white/90">
               Sistema de gestión integral para arriendo de cajas plásticas
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto mb-16">
+          <div className="grid md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl mx-auto mb-12 lg:mb-16">
             <Card className="bg-white/95 backdrop-blur-sm text-gray-900 border-0 shadow-2xl">
               <CardHeader className="text-center pb-4">
                 <Users className="h-16 w-16 text-green-600 mx-auto mb-4" />
@@ -90,17 +90,17 @@ export default function HomePage() {
       </div>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-8">
+      <footer className="bg-gray-900 text-white py-6 lg:py-8">
         <div className="container mx-auto px-4 text-center">
           <div className="mb-4">
             <img 
               src="/logo.png" 
               alt="Arriendo Cajas" 
-              className="h-12 w-auto mx-auto mb-4 opacity-80"
+              className="h-10 lg:h-12 w-auto mx-auto mb-4 opacity-80"
             />
           </div>
-          <p className="mb-2">Arriendo Cajas - Tu solución de almacenamiento temporal</p>
-          <p className="text-gray-400">¿Preguntas? Contáctanos: jalarcon@arriendocajas.cl</p>
+          <p className="mb-2 text-sm lg:text-base">Arriendo Cajas - Tu solución de almacenamiento temporal</p>
+          <p className="text-gray-400 text-sm lg:text-base">¿Preguntas? Contáctanos: jalarcon@arriendocajas.cl</p>
         </div>
       </footer>
     </div>

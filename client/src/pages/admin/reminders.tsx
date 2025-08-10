@@ -82,18 +82,19 @@ export default function Reminders() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-20 lg:pb-0">
       <Header />
       <div className="flex">
         <Sidebar role="admin" />
-        <div className="flex-1 p-6 space-y-6">
-      <div className="flex items-center gap-3">
-        <Clock className="h-8 w-8 text-orange-600" />
-        <div>
-          <h1 className="text-3xl font-bold">Recordatorios de Devolución</h1>
-          <p className="text-gray-600">Gestión automática de recordatorios 2 días antes del vencimiento</p>
-        </div>
-      </div>
+        <main className="flex-1 p-4 lg:p-8 pb-20 lg:pb-8">
+            <div className="space-y-6">
+              <div className="flex items-center gap-3">
+                <Clock className="h-8 w-8 text-orange-600" />
+                <div>
+                  <h1 className="text-2xl lg:text-3xl font-bold">Recordatorios de Devolución</h1>
+                  <p className="text-gray-600">Gestión automática de recordatorios 2 días antes del vencimiento</p>
+                </div>
+              </div>
 
       {/* Controls */}
       <Card>
@@ -273,8 +274,10 @@ export default function Reminders() {
           </div>
         </CardContent>
       </Card>
-        </div>
+            </div>
+        </main>
       </div>
+      <MobileNav role={'admin'} />
     </div>
   );
 }

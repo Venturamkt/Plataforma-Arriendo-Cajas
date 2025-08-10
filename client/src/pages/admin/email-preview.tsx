@@ -84,18 +84,19 @@ export default function EmailPreview() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-20 lg:pb-0">
       <Header />
       <div className="flex">
         <Sidebar role="admin" />
-        <div className="flex-1 p-6 space-y-6">
-      <div className="flex items-center gap-3">
-        <Mail className="h-8 w-8 text-blue-600" />
-        <div>
-          <h1 className="text-3xl font-bold">Plantillas de Email</h1>
-          <p className="text-gray-600">Previsualiza y prueba los emails automáticos</p>
-        </div>
-      </div>
+        <main className="flex-1 p-4 lg:p-8 pb-20 lg:pb-8">
+            <div className="space-y-6">
+              <div className="flex items-center gap-3">
+                <Mail className="h-8 w-8 text-blue-600" />
+                <div>
+                  <h1 className="text-2xl lg:text-3xl font-bold">Plantillas de Email</h1>
+                  <p className="text-gray-600">Previsualiza y prueba los emails automáticos</p>
+                </div>
+              </div>
 
       {/* Email Configuration Status */}
       <Card>
@@ -318,8 +319,10 @@ export default function EmailPreview() {
           </div>
         </CardContent>
       </Card>
-        </div>
+            </div>
+        </main>
       </div>
+      <MobileNav role={'admin'} />
     </div>
   );
 }

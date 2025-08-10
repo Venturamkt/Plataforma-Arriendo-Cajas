@@ -1291,14 +1291,14 @@ export default function AdminCustomers() {
                     <TableComponent>
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="w-48">Cliente</TableHead>
-                          <TableHead className="w-40 hidden md:table-cell">Contacto</TableHead>
-                          <TableHead className="w-32 hidden lg:table-cell">Dirección</TableHead>
-                          <TableHead className="text-center w-20">Activos</TableHead>
-                          <TableHead className="text-center w-20">Total</TableHead>
-                          <TableHead className="text-center w-36">Estado</TableHead>
-                          <TableHead className="text-center w-40 hidden xl:table-cell">Seguimiento</TableHead>
-                          <TableHead className="text-center w-48">Acciones</TableHead>
+                          <TableHead className="w-32 sm:w-48">Cliente</TableHead>
+                          <TableHead className="w-32 hidden md:table-cell">Contacto</TableHead>
+                          <TableHead className="w-24 hidden lg:table-cell">Dirección</TableHead>
+                          <TableHead className="text-center w-16 sm:w-20">Activos</TableHead>
+                          <TableHead className="text-center w-16 sm:w-20">Total</TableHead>
+                          <TableHead className="text-center w-24 sm:w-36">Estado</TableHead>
+                          <TableHead className="text-center w-32 hidden xl:table-cell">Seguimiento</TableHead>
+                          <TableHead className="text-center w-32 sm:w-48">Acciones</TableHead>
                         </TableRow>
                       </TableHeader>
                     <TableBody>
@@ -1548,7 +1548,7 @@ export default function AdminCustomers() {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6">
             {customersLoading ? (
               Array.from({ length: 6 }).map((_, i) => (
                 <Card key={i} className="animate-pulse">
