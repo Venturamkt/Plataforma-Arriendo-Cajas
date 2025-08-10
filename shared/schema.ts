@@ -230,8 +230,12 @@ export const insertBoxSchema = createInsertSchema(boxes).omit({
 
 export const insertRentalSchema = createInsertSchema(rentals).omit({
   id: true,
+  trackingCode: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  deliveryDate: z.coerce.date(),
+  returnDate: z.coerce.date().optional(),
 });
 
 export const insertRentalBoxSchema = createInsertSchema(rentalBoxes).omit({
