@@ -418,14 +418,14 @@ export default function AdminCustomers() {
     
     createRentalMutation.mutate({
       customerId: selectedCustomerForRental.id,
-      totalBoxes: newRental.boxQuantity.toString(),
-      dailyRate: (newRental.customPrice || 2000).toString(),
+      totalBoxes: newRental.boxQuantity,
+      dailyRate: (newRental.customPrice || 2775).toString(),
       totalAmount: (rentalTotal + additionalTotal).toString(),
       guaranteeAmount: guaranteeAmount.toString(),
       additionalProducts: JSON.stringify(newRental.additionalProducts),
       additionalProductsTotal: additionalTotal.toString(),
-      deliveryDate: deliveryDate,
-      returnDate: returnDate,
+      deliveryDate: deliveryDate.toISOString(),
+      returnDate: returnDate.toISOString(),
       deliveryAddress: newRental.deliveryAddress,
       pickupAddress: newRental.pickupAddress || newRental.deliveryAddress,
       notes: newRental.notes || "",
