@@ -87,7 +87,7 @@ export class EmailService {
     } catch (error) {
       console.error(`Error sending email for status ${status}:`, error);
       // Recreate transporter on auth failure
-      if (error.code === 'EAUTH') {
+      if ((error as any).code === 'EAUTH') {
         console.log('Recreating email transporter due to auth error...');
         this.setupTransporter();
       }
