@@ -740,16 +740,17 @@ export default function AdminCustomers() {
                     </div>
 
                     <div>
-                      <Label htmlFor="customPrice">Precio Total del Arriendo (CLP) *</Label>
+                      <Label htmlFor="customPrice" className="text-sm font-medium">Precio Total del Arriendo (CLP) *</Label>
                       <Input
                         id="customPrice"
-                        type="number"
-                        min="0"
-                        step="1"
+                        type="text"
                         value={newRental.customPrice}
-                        onChange={(e) => setNewRental({ ...newRental, customPrice: parseInt(e.target.value) || 2775 })}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/[^0-9]/g, '');
+                          setNewRental({ ...newRental, customPrice: parseInt(value) || 0 });
+                        }}
                         placeholder="2775"
-                        className="font-medium text-lg"
+                        className="font-medium text-lg h-12 text-center"
                       />
                       <p className="text-xs text-gray-600 mt-1">
                         Precio total según tabla: {newRental.boxQuantity} cajas × {newRental.rentalDays} días
@@ -821,9 +822,9 @@ export default function AdminCustomers() {
                       </div>
                       
                       {newRental.additionalProducts.map((product, index) => (
-                        <div key={index} className="grid grid-cols-12 gap-2 mb-2 items-end">
-                          <div className="col-span-6">
-                            <Label className="text-xs">Producto</Label>
+                        <div key={index} className="grid grid-cols-12 gap-3 mb-3 items-end">
+                          <div className="col-span-5">
+                            <Label className="text-sm font-medium">Producto</Label>
                             <Input
                               placeholder="Ej: Candados, Etiquetas, etc."
                               value={product.name}
@@ -832,10 +833,11 @@ export default function AdminCustomers() {
                                 updated[index].name = e.target.value;
                                 setNewRental({ ...newRental, additionalProducts: updated });
                               }}
+                              className="w-full"
                             />
                           </div>
                           <div className="col-span-2">
-                            <Label className="text-xs">Cant.</Label>
+                            <Label className="text-sm font-medium">Cant.</Label>
                             <Input
                               type="number"
                               min="1"
@@ -845,20 +847,23 @@ export default function AdminCustomers() {
                                 updated[index].quantity = parseInt(e.target.value) || 1;
                                 setNewRental({ ...newRental, additionalProducts: updated });
                               }}
+                              className="w-full"
                             />
                           </div>
-                          <div className="col-span-3">
-                            <Label className="text-xs">Precio c/u</Label>
+                          <div className="col-span-4">
+                            <Label className="text-sm font-medium">Precio c/u</Label>
                             <Input
                               type="number"
                               min="0"
-                              step="100"
+                              step="1"
                               value={product.price}
                               onChange={(e) => {
                                 const updated = [...newRental.additionalProducts];
                                 updated[index].price = parseInt(e.target.value) || 0;
                                 setNewRental({ ...newRental, additionalProducts: updated });
                               }}
+                              className="w-full font-medium"
+                              placeholder="0"
                             />
                           </div>
                           <div className="col-span-1">
