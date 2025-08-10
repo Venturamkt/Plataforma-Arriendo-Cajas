@@ -39,15 +39,86 @@ export default function AdminCustomers() {
     rut: ""
   });
   const [includeRental, setIncludeRental] = useState(false);
+  // Precios basados en tu tabla
+  const getPriceByPeriod = (boxes: number, days: number) => {
+    const priceTable: Record<number, Record<number, number>> = {
+      7: {
+        2: 2775,
+        5: 6938,
+        10: 13876,
+        15: 20815
+      },
+      14: {
+        2: 5551,
+        5: 13876,
+        10: 27753,
+        15: 41629
+      },
+      30: {
+        2: 11894,
+        5: 29735,
+        10: 59470,
+        15: 89205
+      }
+    };
+    
+    // Si hay precio exacto, usarlo
+    if (priceTable[days] && priceTable[days][boxes]) {
+      return priceTable[days][boxes];
+    }
+    
+    // Calcular precio proporcional basado en 7 días
+    const basePrice7Days = priceTable[7];
+    let baseBoxPrice = 0;
+    
+    if (boxes <= 2) baseBoxPrice = basePrice7Days[2] / 2;
+    else if (boxes <= 5) baseBoxPrice = basePrice7Days[5] / 5;
+    else if (boxes <= 10) baseBoxPrice = basePrice7Days[10] / 10;
+    else baseBoxPrice = basePrice7Days[15] / 15;
+    
+    return Math.round(baseBoxPrice * boxes * (days / 7));
+  };
+
+  const getProductPriceByPeriod = (productName: string, days: number) => {
+    const productPrices: Record<number, Record<string, number>> = {
+      7: {
+        "Carro plegable": 4165,
+        "Base Móvil": 2083,
+        "Kit 2 Bases móviles": 3124,
+        "Correa Ratchet": 1041
+      },
+      14: {
+        "Carro plegable": 8330,
+        "Base Móvil": 4165,
+        "Kit 2 Bases móviles": 6248,
+        "Correa Ratchet": 2083
+      },
+      30: {
+        "Carro plegable": 17850,
+        "Base Móvil": 8925,
+        "Kit 2 Bases móviles": 13388,
+        "Correa Ratchet": 4463
+      }
+    };
+    
+    if (productPrices[days] && productPrices[days][productName]) {
+      return productPrices[days][productName];
+    }
+    
+    // Precio proporcional basado en 7 días
+    const basePrice = productPrices[7][productName] || 0;
+    return Math.round(basePrice * (days / 7));
+  };
+
   const [newRental, setNewRental] = useState({
-    boxQuantity: 1,
+    boxQuantity: 2,
     rentalDays: 7,
     deliveryDate: "",
     deliveryAddress: "",
     pickupAddress: "",
     notes: "",
     boxSize: "mediano",
-    customPrice: 2000,
+    customPrice: 2775, // Precio por defecto para 2 cajas por 7 días
     discount: 0,
     additionalProducts: [] as Array<{name: string, price: number, quantity: number}>
   });
@@ -582,6 +653,56 @@ export default function AdminCustomers() {
                       <Package className="h-5 w-5" />
                       Configuración de Cajas
                     </h3>
+
+                    <div>
+                      <Label htmlFor="boxQuantity">Cantidad de Cajas</Label>
+                      <Input
+                        id="boxQuantity"
+                        type="number"
+                        min="1"
+                        max="50"
+                        value={newRental.boxQuantity}
+                        onChange={(e) => {
+                          const newQuantity = parseInt(e.target.value) || 1;
+                          const newPrice = getPriceByPeriod(newQuantity, newRental.rentalDays);
+                          setNewRental({ 
+                            ...newRental, 
+                            boxQuantity: newQuantity,
+                            customPrice: newPrice
+                          });
+                        }}
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="rentalDays">Días de Arriendo</Label>
+                      <select
+                        id="rentalDays"
+                        value={newRental.rentalDays}
+                        onChange={(e) => {
+                          const newDays = parseInt(e.target.value);
+                          const newPrice = getPriceByPeriod(newRental.boxQuantity, newDays);
+                          // Actualizar precios de productos adicionales también
+                          const updatedProducts = newRental.additionalProducts.map(product => ({
+                            ...product,
+                            price: getProductPriceByPeriod(product.name, newDays)
+                          }));
+                          setNewRental({ 
+                            ...newRental, 
+                            rentalDays: newDays,
+                            customPrice: newPrice,
+                            additionalProducts: updatedProducts
+                          });
+                        }}
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        required
+                      >
+                        <option value={7}>7 días</option>
+                        <option value={14}>14 días</option>
+                        <option value={30}>30 días</option>
+                      </select>
+                    </div>
                     
                     <div>
                       <Label htmlFor="boxSize">Tamaño de Caja *</Label>
@@ -656,22 +777,23 @@ export default function AdminCustomers() {
                         <p className="text-sm text-gray-600 mb-2">Productos disponibles (clic para agregar):</p>
                         <div className="flex flex-wrap gap-2">
                           {[
-                            { name: "Carro plegable", defaultPrice: 5000 },
-                            { name: "Base Móvil", defaultPrice: 3000 },
-                            { name: "Kit 2 Bases móviles", defaultPrice: 5500 },
-                            { name: "Correa Ratchet", defaultPrice: 2000 }
-                          ].map((product) => (
+                            "Carro plegable",
+                            "Base Móvil", 
+                            "Kit 2 Bases móviles",
+                            "Correa Ratchet"
+                          ].map((productName) => (
                             <Button
-                              key={product.name}
+                              key={productName}
                               type="button"
                               variant="outline"
                               size="sm"
                               onClick={() => {
-                                const existing = newRental.additionalProducts.find(p => p.name === product.name);
+                                const productPrice = getProductPriceByPeriod(productName, newRental.rentalDays);
+                                const existing = newRental.additionalProducts.find(p => p.name === productName);
                                 if (existing) {
                                   // Increase quantity if already exists
                                   const updated = newRental.additionalProducts.map(p => 
-                                    p.name === product.name ? { ...p, quantity: p.quantity + 1 } : p
+                                    p.name === productName ? { ...p, quantity: p.quantity + 1 } : p
                                   );
                                   setNewRental({ ...newRental, additionalProducts: updated });
                                 } else {
@@ -679,8 +801,8 @@ export default function AdminCustomers() {
                                   setNewRental({
                                     ...newRental,
                                     additionalProducts: [...newRental.additionalProducts, { 
-                                      name: product.name, 
-                                      price: product.defaultPrice, 
+                                      name: productName, 
+                                      price: productPrice, 
                                       quantity: 1 
                                     }]
                                   });
@@ -688,15 +810,15 @@ export default function AdminCustomers() {
                               }}
                               className="text-xs hover:bg-blue-50 hover:text-blue-700"
                             >
-                              + {product.name}
+                              + {productName}
                             </Button>
                           ))}
                         </div>
                       </div>
                       
                       {newRental.additionalProducts.map((product, index) => (
-                        <div key={index} className="flex gap-2 mb-2 items-end">
-                          <div className="flex-1">
+                        <div key={index} className="grid grid-cols-12 gap-2 mb-2 items-end">
+                          <div className="col-span-6">
                             <Label className="text-xs">Producto</Label>
                             <Input
                               placeholder="Ej: Candados, Etiquetas, etc."
@@ -708,7 +830,7 @@ export default function AdminCustomers() {
                               }}
                             />
                           </div>
-                          <div className="w-20">
+                          <div className="col-span-2">
                             <Label className="text-xs">Cant.</Label>
                             <Input
                               type="number"
@@ -721,7 +843,7 @@ export default function AdminCustomers() {
                               }}
                             />
                           </div>
-                          <div className="w-28">
+                          <div className="col-span-3">
                             <Label className="text-xs">Precio c/u</Label>
                             <Input
                               type="number"
@@ -735,18 +857,20 @@ export default function AdminCustomers() {
                               }}
                             />
                           </div>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              const updated = newRental.additionalProducts.filter((_, i) => i !== index);
-                              setNewRental({ ...newRental, additionalProducts: updated });
-                            }}
-                            className="text-red-600 hover:text-red-700"
-                          >
-                            ✕
-                          </Button>
+                          <div className="col-span-1">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const updated = newRental.additionalProducts.filter((_, i) => i !== index);
+                                setNewRental({ ...newRental, additionalProducts: updated });
+                              }}
+                              className="text-red-600 hover:text-red-700 w-full"
+                            >
+                              ✕
+                            </Button>
+                          </div>
                         </div>
                       ))}
                       
