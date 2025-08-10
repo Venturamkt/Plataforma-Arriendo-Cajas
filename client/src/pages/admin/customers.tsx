@@ -1165,14 +1165,14 @@ export default function AdminCustomers() {
                     <TableComponent>
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="min-w-[200px]">Cliente</TableHead>
-                          <TableHead className="min-w-[180px]">Contacto</TableHead>
-                          <TableHead className="min-w-[150px]">Dirección</TableHead>
-                          <TableHead className="text-center min-w-[100px]">Arriendos Activos</TableHead>
-                          <TableHead className="text-center min-w-[100px]">Total Arriendos</TableHead>
-                          <TableHead className="text-center min-w-[180px]">Estado del Último Arriendo</TableHead>
-                          <TableHead className="text-center min-w-[200px]">Información de Seguimiento</TableHead>
-                          <TableHead className="text-center min-w-[280px]">Acciones</TableHead>
+                          <TableHead className="w-48">Cliente</TableHead>
+                          <TableHead className="w-40 hidden md:table-cell">Contacto</TableHead>
+                          <TableHead className="w-32 hidden lg:table-cell">Dirección</TableHead>
+                          <TableHead className="text-center w-20">Activos</TableHead>
+                          <TableHead className="text-center w-20">Total</TableHead>
+                          <TableHead className="text-center w-32">Estado</TableHead>
+                          <TableHead className="text-center w-40 hidden xl:table-cell">Seguimiento</TableHead>
+                          <TableHead className="text-center w-48">Acciones</TableHead>
                         </TableRow>
                       </TableHeader>
                     <TableBody>
@@ -1195,7 +1195,7 @@ export default function AdminCustomers() {
                                 </div>
                               </div>
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="hidden md:table-cell">
                               <div className="space-y-1">
                                 <p className="text-sm">{customer.email}</p>
                                 {customer.phone && (
@@ -1203,14 +1203,14 @@ export default function AdminCustomers() {
                                 )}
                               </div>
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="hidden lg:table-cell">
                               <p className="text-sm">{customer.address || "No especificada"}</p>
                             </TableCell>
                             <TableCell className="text-center">
-                              <span className="text-lg font-bold text-brand-blue">{stats.active}</span>
+                              <span className="text-sm font-bold text-brand-blue">{stats.active}</span>
                             </TableCell>
                             <TableCell className="text-center">
-                              <span className="text-lg font-bold">{stats.total}</span>
+                              <span className="text-sm font-bold">{stats.total}</span>
                             </TableCell>
                             <TableCell className="text-center">
                               {(() => {
@@ -1229,7 +1229,7 @@ export default function AdminCustomers() {
                                       onValueChange={(newStatus) => handleStatusChange(mostRecentRental.id, newStatus)}
                                       disabled={updateRentalStatusMutation.isPending}
                                     >
-                                      <SelectTrigger className="w-32 h-7 text-xs">
+                                      <SelectTrigger className="w-28 h-8 text-xs">
                                         <SelectValue />
                                       </SelectTrigger>
                                       <SelectContent>
@@ -1248,7 +1248,7 @@ export default function AdminCustomers() {
                                 );
                               })()}
                             </TableCell>
-                            <TableCell className="text-center">
+                            <TableCell className="text-center hidden xl:table-cell">
                               {(() => {
                                 const activeRentals = getCustomerActiveRentals(customer.id);
                                 if (activeRentals.length === 0) {
@@ -1262,15 +1262,17 @@ export default function AdminCustomers() {
                                 
                                 return (
                                   <div className="bg-blue-50 p-2 rounded border text-left text-xs space-y-1">
-                                    <div className="flex flex-col sm:flex-row sm:items-center sm:gap-1">
-                                      <span className="text-gray-600 font-medium">Código:</span>
-                                      <span className="font-mono text-blue-800 font-semibold">
-                                        {mostRecentRental.trackingCode}
-                                      </span>
-                                    </div>
-                                    <div className="flex flex-col sm:flex-row sm:items-center sm:gap-1">
-                                      <span className="text-gray-600 font-medium">RUT:</span>
-                                      <span className="font-mono text-gray-800">{rutDigits}</span>
+                                    <div className="flex flex-col gap-1">
+                                      <div>
+                                        <span className="text-gray-600">Código:</span>
+                                        <span className="font-mono text-blue-800 font-semibold ml-1">
+                                          {mostRecentRental.trackingCode}
+                                        </span>
+                                      </div>
+                                      <div>
+                                        <span className="text-gray-600">RUT:</span>
+                                        <span className="font-mono text-gray-800 ml-1">{rutDigits}</span>
+                                      </div>
                                     </div>
                                     <button
                                       onClick={(e) => {
@@ -1292,43 +1294,75 @@ export default function AdminCustomers() {
                                 );
                               })()}
                             </TableCell>
-                            <TableCell>
-                              <div className="flex items-center justify-center gap-2">
-                                <Button size="sm" variant="outline">
-                                  Historial
-                                </Button>
+                            <TableCell className="text-center">
+                              <div className="flex flex-col xl:flex-row gap-1 xl:gap-2">
                                 {(() => {
                                   const activeRentals = getCustomerActiveRentals(customer.id);
-                                  if (activeRentals.length > 0) {
-                                    // Si tiene arriendos activos, mostrar botón de modificar
+                                  
+                                  if (activeRentals.length === 0) {
+                                    // Customer has no active rentals - show "New Rental" button
                                     return (
                                       <Button 
                                         size="sm" 
-                                        className="bg-orange-600 hover:bg-orange-700 text-white"
-                                        onClick={() => handleEditRental(activeRentals[0], customer)}
+                                        className="bg-green-600 hover:bg-green-700 text-white text-xs px-2 py-1"
+                                        onClick={() => handleCreateRental(customer)}
                                       >
-                                        Modificar Arriendo
+                                        + Nuevo
                                       </Button>
                                     );
                                   } else {
-                                    // Si no tiene arriendos activos, mostrar botón de crear nuevo
+                                    // Customer has active rentals - show "Modify Rental" button
+                                    const mostRecentRental = activeRentals[0];
                                     return (
                                       <Button 
                                         size="sm" 
-                                        className="bg-green-600 hover:bg-green-700 text-white"
-                                        onClick={() => handleCreateRental(customer)}
+                                        className="bg-orange-600 hover:bg-orange-700 text-white text-xs px-2 py-1"
+                                        onClick={() => handleEditRental(mostRecentRental, customer)}
                                       >
-                                        + Nuevo Arriendo
+                                        Modificar
                                       </Button>
                                     );
                                   }
                                 })()}
+                                
+                                {/* Show tracking info in actions for small screens */}
+                                <div className="xl:hidden">
+                                  {(() => {
+                                    const activeRentals = getCustomerActiveRentals(customer.id);
+                                    if (activeRentals.length > 0) {
+                                      const mostRecentRental = activeRentals[0];
+                                      const rutDigits = customer.rut?.slice(-4) || "0000";
+                                      const trackingUrl = `${window.location.origin}/track/${rutDigits}/${mostRecentRental.trackingCode}`;
+                                      
+                                      return (
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            navigator.clipboard.writeText(trackingUrl);
+                                            // Simple feedback
+                                            const btn = e.target as HTMLButtonElement;
+                                            const originalText = btn.textContent;
+                                            btn.textContent = "¡Copiado!";
+                                            setTimeout(() => {
+                                              btn.textContent = originalText;
+                                            }, 1500);
+                                          }}
+                                          className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs font-medium transition-colors"
+                                        >
+                                          📋 Link
+                                        </button>
+                                      );
+                                    }
+                                    return null;
+                                  })()}
+                                </div>
+
                                 <Button 
                                   size="sm" 
-                                  className="bg-brand-blue hover:bg-brand-blue text-white"
+                                  className="bg-gray-500 hover:bg-gray-600 text-white text-xs px-2 py-1"
                                   onClick={() => handleEditCustomer(customer)}
                                 >
-                                  Editar Cliente
+                                  Editar
                                 </Button>
                               </div>
                             </TableCell>
