@@ -151,7 +151,7 @@ export const emailTemplates = {
             .header { background: #28a745; color: white; padding: 20px; text-align: center; }
             .content { padding: 20px; }
             .tracking-box { background: #f8f9fa; border: 2px dashed #28a745; padding: 15px; margin: 20px 0; text-align: center; }
-            .tracking-link { background: #28a745; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 0; }
+            .tracking-link { background: #C8201D !important; color: white !important; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 0; }
             .tips { background: #e8f5e8; padding: 15px; margin: 15px 0; border-left: 4px solid #28a745; }
             .footer { background: #2E5CA6; color: white; padding: 15px; text-align: center; font-size: 12px; }
           </style>
@@ -168,7 +168,7 @@ export const emailTemplates = {
               
               <div class="tracking-box">
                 <h3>📱 Sigue tu Arriendo</h3>
-                <a href="${data.trackingUrl}" class="tracking-link">Ver Estado Actualizado</a>
+                <a href="${data.trackingUrl}" class="tracking-link" style="background: #C8201D !important; color: white !important; text-decoration: none;">Ver Estado Actualizado</a>
                 <p style="font-size: 12px; color: #666;">Código: ${data.trackingCode}</p>
               </div>
               
@@ -211,7 +211,7 @@ export const emailTemplates = {
             .header { background: #ffc107; color: #212529; padding: 20px; text-align: center; }
             .content { padding: 20px; }
             .success-box { background: #f8f9fa; border: 2px solid #ffc107; padding: 15px; margin: 20px 0; text-align: center; }
-            .tracking-link { background: #ffc107; color: #212529; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 0; }
+            .tracking-link { background: #C8201D !important; color: white !important; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 0; }
             .next-steps { background: #fff3cd; padding: 15px; margin: 15px 0; border-left: 4px solid #ffc107; }
             .footer { background: #2E5CA6; color: white; padding: 15px; text-align: center; font-size: 12px; }
           </style>
@@ -229,7 +229,7 @@ export const emailTemplates = {
               <div class="success-box">
                 <h3>✅ Estado Actual</h3>
                 <p><strong>Cajas retiradas:</strong> ${data.totalBoxes}</p>
-                <a href="${data.trackingUrl}" class="tracking-link">Ver Detalles Finales</a>
+                <a href="${data.trackingUrl}" class="tracking-link" style="background: #C8201D !important; color: white !important; text-decoration: none;">Ver Detalles Finales</a>
                 <p style="font-size: 12px; color: #666;">Código: ${data.trackingCode}</p>
               </div>
               
@@ -291,7 +291,7 @@ export const emailTemplates = {
                 <h3>✨ Resumen Final</h3>
                 <p><strong>Cajas utilizadas:</strong> ${data.totalBoxes}</p>
                 <p><strong>Estado:</strong> Completado</p>
-                <a href="${data.trackingUrl}" class="tracking-link">Ver Resumen Completo</a>
+                <a href="${data.trackingUrl}" class="tracking-link" style="background: #C8201D !important; color: white !important; text-decoration: none;">Ver Resumen Completo</a>
                 <p style="font-size: 12px; color: #666;">Código: ${data.trackingCode}</p>
               </div>
               
@@ -336,7 +336,7 @@ export const emailTemplates = {
             .header { background: #ff9800; color: white; padding: 20px; text-align: center; }
             .content { padding: 20px; }
             .reminder-box { background: #fff3e0; border: 2px solid #ff9800; padding: 15px; margin: 20px 0; text-align: center; }
-            .tracking-link { background: #ff9800; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 0; }
+            .tracking-link { background: #C8201D !important; color: white !important; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 0; }
             .checklist { background: #f8f9fa; padding: 15px; margin: 15px 0; border-left: 4px solid #ff9800; }
             .important { background: #ffebee; padding: 15px; margin: 15px 0; border-left: 4px solid #f44336; }
             .footer { background: #2E5CA6; color: white; padding: 15px; text-align: center; font-size: 12px; }
@@ -355,7 +355,7 @@ export const emailTemplates = {
               <div class="reminder-box">
                 <h3>📅 Fecha límite de devolución</h3>
                 <p><strong>Faltan solo 2 días</strong></p>
-                <a href="${data.trackingUrl}" class="tracking-link">Ver Estado del Arriendo</a>
+                <a href="${data.trackingUrl}" class="tracking-link" style="background: #C8201D !important; color: white !important; text-decoration: none;">Ver Estado del Arriendo</a>
                 <p style="font-size: 12px; color: #666;">Código: ${data.trackingCode}</p>
               </div>
               
@@ -409,7 +409,7 @@ export const emailTemplates = {
             .header { background: #dc3545; color: white; padding: 20px; text-align: center; }
             .content { padding: 20px; }
             .cancellation-box { background: #f8f9fa; border: 2px solid #dc3545; padding: 15px; margin: 20px 0; text-align: center; }
-            .tracking-link { background: #dc3545; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 0; }
+            .tracking-link { background: #C8201D !important; color: white !important; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 0; }
             .refund-info { background: #fff3cd; padding: 15px; margin: 15px 0; border-left: 4px solid #ffc107; }
             .support { background: #e7f3ff; padding: 15px; margin: 15px 0; border-left: 4px solid #007bff; }
             .footer { background: #2E5CA6; color: white; padding: 15px; text-align: center; font-size: 12px; }
@@ -428,7 +428,7 @@ export const emailTemplates = {
               <div class="cancellation-box">
                 <h3>❌ Estado de Cancelación</h3>
                 <p><strong>Código de referencia:</strong> ${data.trackingCode}</p>
-                <a href="${data.trackingUrl}" class="tracking-link">Ver Detalles</a>
+                <a href="${data.trackingUrl}" class="tracking-link" style="background: #C8201D !important; color: white !important; text-decoration: none;">Ver Detalles</a>
               </div>
               
               <div class="refund-info">
@@ -466,8 +466,7 @@ export const emailTemplates = {
 
 // Function to generate tracking URL
 export function generateTrackingUrl(rutDigits: string, trackingCode: string): string {
-  const baseUrl = process.env.REPL_SLUG ? 
-    `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co` : 
-    'http://localhost:5000';
+  // Use the current Replit domain for tracking links
+  const baseUrl = 'https://441204b6-ae40-4994-b677-be11a32eb976-00-1rsmov5q0kvpq.janeway.replit.dev';
   return `${baseUrl}/track/${rutDigits}/${trackingCode}`;
 }
