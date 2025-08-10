@@ -222,6 +222,8 @@ export default function AdminCustomers() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/rentals"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/metrics"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/boxes"] });
       toast({
         title: "Estado actualizado",
         description: "El estado del arriendo ha sido actualizado",
@@ -1159,19 +1161,20 @@ export default function AdminCustomers() {
                     </p>
                   </div>
                 ) : (
-                  <TableComponent>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Cliente</TableHead>
-                        <TableHead>Contacto</TableHead>
-                        <TableHead>Dirección</TableHead>
-                        <TableHead className="text-center">Arriendos Activos</TableHead>
-                        <TableHead className="text-center">Total Arriendos</TableHead>
-                        <TableHead className="text-center">Estado del Último Arriendo</TableHead>
-                        <TableHead className="text-center">Información de Seguimiento</TableHead>
-                        <TableHead className="text-center">Acciones</TableHead>
-                      </TableRow>
-                    </TableHeader>
+                  <div className="overflow-x-auto">
+                    <TableComponent>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="min-w-[200px]">Cliente</TableHead>
+                          <TableHead className="min-w-[180px]">Contacto</TableHead>
+                          <TableHead className="min-w-[150px]">Dirección</TableHead>
+                          <TableHead className="text-center min-w-[100px]">Arriendos Activos</TableHead>
+                          <TableHead className="text-center min-w-[100px]">Total Arriendos</TableHead>
+                          <TableHead className="text-center min-w-[180px]">Estado del Último Arriendo</TableHead>
+                          <TableHead className="text-center min-w-[200px]">Información de Seguimiento</TableHead>
+                          <TableHead className="text-center min-w-[280px]">Acciones</TableHead>
+                        </TableRow>
+                      </TableHeader>
                     <TableBody>
                       {filteredCustomers.map((customer: any) => {
                         const stats = getCustomerStats(customer.id);
@@ -1258,36 +1261,33 @@ export default function AdminCustomers() {
                                 const trackingUrl = `${window.location.origin}/track`;
                                 
                                 return (
-                                  <div className="bg-blue-50 p-2 rounded border max-w-40">
-                                    <div className="flex items-center gap-1 mb-1">
-                                      <span className="text-gray-600 text-xs">Código:</span>
-                                      <span className="font-mono text-blue-800 font-semibold text-xs">
+                                  <div className="bg-blue-50 p-2 rounded border text-left text-xs space-y-1">
+                                    <div className="flex flex-col sm:flex-row sm:items-center sm:gap-1">
+                                      <span className="text-gray-600 font-medium">Código:</span>
+                                      <span className="font-mono text-blue-800 font-semibold">
                                         {mostRecentRental.trackingCode}
                                       </span>
                                     </div>
-                                    <div className="flex items-center gap-1 mb-1">
-                                      <span className="text-gray-600 text-xs">RUT:</span>
-                                      <span className="font-mono text-gray-800 text-xs">{rutDigits}</span>
+                                    <div className="flex flex-col sm:flex-row sm:items-center sm:gap-1">
+                                      <span className="text-gray-600 font-medium">RUT:</span>
+                                      <span className="font-mono text-gray-800">{rutDigits}</span>
                                     </div>
-                                    <div className="flex items-center gap-1">
-                                      <span className="text-gray-600 text-xs">Link:</span>
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          navigator.clipboard.writeText(trackingUrl);
-                                          // Simple feedback
-                                          const btn = e.target as HTMLButtonElement;
-                                          const originalText = btn.textContent;
-                                          btn.textContent = "¡Copiado!";
-                                          setTimeout(() => {
-                                            btn.textContent = originalText;
-                                          }, 1500);
-                                        }}
-                                        className="text-blue-600 hover:text-blue-800 underline text-xs truncate max-w-20"
-                                      >
-                                        Ver link
-                                      </button>
-                                    </div>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        navigator.clipboard.writeText(trackingUrl);
+                                        // Simple feedback
+                                        const btn = e.target as HTMLButtonElement;
+                                        const originalText = btn.textContent;
+                                        btn.textContent = "¡Copiado!";
+                                        setTimeout(() => {
+                                          btn.textContent = originalText;
+                                        }, 1500);
+                                      }}
+                                      className="w-full bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs font-medium transition-colors"
+                                    >
+                                      Copiar Link
+                                    </button>
                                   </div>
                                 );
                               })()}
@@ -1336,7 +1336,8 @@ export default function AdminCustomers() {
                         );
                       })}
                     </TableBody>
-                  </TableComponent>
+                    </TableComponent>
+                  </div>
                 )}
               </CardContent>
             </Card>
