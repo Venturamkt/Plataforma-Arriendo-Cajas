@@ -233,7 +233,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/rentals', requireAdminSession, async (req, res) => {
     try {
-      const rentalData = insertRentalSchema.parse(req.body);
+      // Convert date strings to Date objects before validation
+      const processedBody = {
+        ...req.body,
+        deliveryDate: new Date(req.body.deliveryDate),
+        returnDate: req.body.returnDate ? new Date(req.body.returnDate) : undefined
+      };
+      
+      const rentalData = insertRentalSchema.parse(processedBody);
       const rental = await storage.createRental(rentalData);
       res.status(201).json(rental);
     } catch (error) {
