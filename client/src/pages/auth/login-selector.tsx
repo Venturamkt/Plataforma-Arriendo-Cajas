@@ -5,8 +5,20 @@ import { Link } from "wouter";
 
 export default function LoginSelector() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-brand-blue to-brand-red flex items-center justify-center p-4">
-      <div className="w-full max-w-4xl">
+    <div 
+      className="min-h-screen flex items-center justify-center p-4 relative"
+      style={{
+        backgroundImage: 'url(/abstract-blue-bg.jpg)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}
+    >
+      {/* Overlay negro con 20% de opacidad */}
+      <div className="absolute inset-0 bg-black/20"></div>
+      
+      {/* Contenido principal */}
+      <div className="relative z-10 w-full max-w-4xl">
         {/* Header */}
         <div className="text-center mb-12">
           <img 
@@ -89,13 +101,6 @@ export default function LoginSelector() {
               </Link>
             </CardContent>
           </Card>
-        </div>
-
-        {/* Footer */}
-        <div className="text-center mt-12">
-          <p className="text-blue-100 text-sm">
-            Sistema de gestión integral para negocios de arriendo de cajas plásticas
-          </p>
         </div>
       </div>
     </div>
