@@ -1,232 +1,54 @@
 # Arriendo Cajas - Box Rental Management Platform
 
 ## Overview
-
-This is a comprehensive web platform for managing a box rental business called "Arriendo Cajas". The system provides role-based access for administrators, drivers, and customers to handle the complete rental lifecycle from reservation to return. The platform uses a modern tech stack with React frontend, Express backend, PostgreSQL database, and implements a robust authentication system.
+Arriendo Cajas is a web platform for managing a box rental business. It facilitates the entire rental lifecycle from reservation to return, offering role-based access for administrators, drivers, and customers. The platform aims to streamline operations, enhance customer experience, and provide robust management tools for inventory, deliveries, and financial reporting.
 
 ## User Preferences
-
 Preferred communication style: Simple, everyday language.
 
 ## System Architecture
 
-### Frontend Architecture
+### Frontend
 - **Framework**: React 18 with TypeScript
-- **Build Tool**: Vite for fast development and optimized builds
-- **UI Library**: Shadcn/ui components built on Radix UI primitives
-- **Styling**: Tailwind CSS with custom brand colors (red #C8201D, blue #2E5CA6)
-- **State Management**: TanStack Query for server state management
-- **Routing**: Wouter for lightweight client-side routing
-- **Mobile Support**: Responsive design with mobile-first approach
+- **Build Tool**: Vite
+- **UI Library**: Shadcn/ui (built on Radix UI)
+- **Styling**: Tailwind CSS (custom colors: red #C8201D, blue #2E5CA6)
+- **State Management**: TanStack Query
+- **Routing**: Wouter
+- **Responsiveness**: Mobile-first design
 
-### Backend Architecture
+### Backend
 - **Runtime**: Node.js with Express.js
 - **Language**: TypeScript with ES modules
 - **API Design**: RESTful API with role-based endpoints
 - **Session Management**: Express sessions with PostgreSQL storage
-- **Build Process**: ESBuild for production bundling
+- **Build Process**: ESBuild
 
-### Database Architecture
-- **Database**: PostgreSQL with Neon serverless driver
-- **ORM**: Drizzle ORM for type-safe database operations
-- **Schema**: Shared schema between frontend and backend
-- **Migrations**: Drizzle Kit for database migrations
+### Database
+- **Database**: PostgreSQL (Neon serverless driver)
+- **ORM**: Drizzle ORM
+- **Schema**: Shared between frontend and backend
+- **Migrations**: Drizzle Kit
 
-## Key Components
-
-### Authentication System
-- **Provider**: Replit Auth with OpenID Connect
-- **Session Storage**: PostgreSQL-backed sessions using connect-pg-simple
-- **User Roles**: Admin, Driver, Customer with role-based access control
-- **Security**: HTTP-only cookies, CSRF protection, secure session management
-
-### Role-Based Modules
-
-#### Admin Panel (Backoffice)
-- Dashboard with key metrics and status charts
-- Complete inventory management with box status tracking
-- Customer database with rental history
-- Delivery task management and assignment
-- Financial reporting and revenue tracking
-- Box movement history and audit trails
-
-#### Driver Panel
-- Daily task lists for deliveries and pickups
-- Barcode scanning functionality using device camera
-- Real-time status updates (delivered, not delivered, retrieved)
-- Incident reporting with comments
-- Mobile-optimized interface
-
-#### Customer Panel
-- Personal rental history and active rentals
-- Real-time status tracking of rented boxes
-- Days remaining notifications
-- Delivery and pickup scheduling
-- Account management
-
-### Business Logic
-The system implements a comprehensive rental workflow:
-1. **Reservation** → Pendiente (Pending)
-2. **Payment** → Pagada (Paid)
-3. **Delivery** → Entregada (Delivered)
-4. **Usage Period** → Entregada (Active)
-5. **Pickup** → Retirada (Retrieved)
-6. **Processing** → Finalizado (Completed)
-7. **Cancellation** → Cancelada (Cancelled - at any point before delivery)
-
-## Data Flow
-
-### Database Schema
-- **Users**: Authentication and role management
-- **Customers**: Extended customer information and contact details
-- **Boxes**: Inventory with barcode tracking and status
-- **Rentals**: Rental agreements and pricing
-- **Rental Boxes**: Many-to-many relationship between rentals and boxes
-- **Box Movements**: Complete audit trail of box history
-- **Delivery Tasks**: Driver assignments and task tracking
-- **Sessions**: Secure session storage for authentication
-
-### API Structure
-- **Authentication Routes**: `/api/auth/*` for user management
-- **Dashboard Routes**: `/api/dashboard/*` for metrics and analytics
-- **Customer Routes**: `/api/customers/*` for customer management
-- **Box Routes**: `/api/boxes/*` for inventory management
-- **Rental Routes**: `/api/rentals/*` for rental operations
-- **Task Routes**: `/api/tasks/*` for delivery management
+### Key Features
+- **Authentication**: Replit Auth (OpenID Connect), PostgreSQL-backed sessions, role-based access control (Admin, Driver, Customer), HTTP-only cookies, CSRF protection.
+- **Admin Panel**: Dashboard, inventory management (box status, barcode generation), customer database, delivery task management, financial reporting, box movement audit.
+- **Driver Panel**: Daily task lists, barcode scanning, real-time status updates, incident reporting, mobile optimized.
+- **Customer Panel**: Rental history, real-time box tracking, notifications, delivery/pickup scheduling, account management.
+- **Business Logic**: Comprehensive rental workflow (Pending → Paid → Delivered → Retrieved → Completed / Cancelled).
+- **Email System**: Automated email notifications for status changes and reminders, customizable templates, admin preview panel.
+- **Driver Assignment**: Automatic and manual driver assignment with notifications.
+- **Barcode System**: Standardized 13-character format (AC + YYMMDD + sequence).
+- **Pricing**: Flexible pricing per day, percentage discounts, additional products.
+- **Guarantee System**: Calculated refundable guarantee per box.
+- **Customer Self-Service**: Secure tracking codes for customers.
 
 ## External Dependencies
 
-### Core Dependencies
-- **UI Components**: Radix UI primitives for accessible components
-- **Database**: Neon PostgreSQL serverless with connection pooling
-- **Authentication**: Replit Auth for secure user management
-- **Validation**: Zod for runtime type validation and schema validation
-- **Date Handling**: date-fns for date manipulation and formatting
-
-### Development Dependencies
-- **TypeScript**: Full type safety across the stack
-- **Vite**: Fast development server and build tool
-- **Tailwind CSS**: Utility-first styling with custom design system
-- **ESBuild**: Fast JavaScript bundler for production
-
-## Deployment Strategy
-
-### Development Environment
-- **Hot Module Replacement**: Vite provides fast refresh during development
-- **Type Checking**: Continuous TypeScript checking across client and server
-- **Database**: Local PostgreSQL or Neon development database
-- **Authentication**: Replit Auth integration for seamless development
-
-### Production Build
-- **Frontend**: Vite builds optimized static assets to `dist/public`
-- **Backend**: ESBuild bundles server code to `dist/index.js`
-- **Database**: Production PostgreSQL database with migrations
-- **Environment**: Node.js production server with environment variables
-
-### Deployment Requirements
-- **Environment Variables**: 
-  - `DATABASE_URL` for PostgreSQL connection
-  - `SESSION_SECRET` for session security
-  - `REPL_ID` and `ISSUER_URL` for Replit Auth
-- **Database Setup**: Automated migrations using Drizzle Kit
-- **Static Assets**: Served by Express in production
-- **Session Storage**: PostgreSQL-backed sessions for scalability
-
-The architecture emphasizes type safety, scalability, and maintainability while providing a seamless user experience across different roles and devices.
-
-## Recent Changes
-
-### January 29, 2025
-- ✓ Fixed authentication system to properly return user data from database
-- ✓ Resolved database duplicate key constraint errors in user upsert operation
-- ✓ Added proper TypeScript types across all frontend components
-- ✓ Implemented user role management system with admin controls
-- ✓ Added custom logo integration throughout the application
-- ✓ Created comprehensive user management panel for administrators
-- ✓ Fixed role-based routing to display appropriate dashboards for each user type
-- ✓ **Dashboard now displays real data**: Removed all mock percentages and fake activity
-- ✓ **Estado de Arriendos has proper sidebar navigation**: Fixed missing layout components
-- ✓ **Nuevo Arriendo form includes customer creation**: Can create customers directly when needed
-- ✓ **Database completely clean**: Disabled automatic test data generation for production use
-- ✓ **Nueva Caja functionality**: Implemented complete box creation with barcode generation
-- ✓ **Barcode system**: Standardized format AC + YYMMDD + sequence (13 characters total)
-- ✓ **Pricing flexibility**: Custom prices per day, percentage discounts, and additional products
-- ✓ **Customer self-service tracking**: Secure 8-character codes accessible via RUT digits + code
-- ✓ **Guarantee system**: $2,000 per box calculation with clear refundable indication
-- ✓ **Additional products system**: Predefined products (Carro plegable, Base Móvil, Kit 2 Bases móviles, Correa Ratchet) with manual pricing
-- ✓ **Smart action buttons**: Dynamic interface shows "Nuevo Arriendo" for customers without active rentals, "Modificar Arriendo" for those with active rentals
-- ✓ **Rental editing functionality**: Complete edit capability for existing rentals with pre-populated forms and proper update handling
-- ✓ Application fully functional with comprehensive rental management and customer tracking
-
-### January 30, 2025
-- ✓ **Rental creation bug resolved**: Fixed critical backend validation issues preventing rental submissions
-- ✓ **Rental editing implemented**: Full edit functionality with dynamic button text and pre-populated forms
-- ✓ **Interface logic optimized**: Smart buttons based on customer rental status - creates new rentals only when needed, otherwise allows modification of existing rentals
-- ✓ **Email notification system implemented**: Complete automated email system for all status changes (pagada, entregada, retirada, finalizado, cancelada)
-- ✓ **Email templates created**: Professional, friendly templates with tracking links, customer data, and business branding
-- ✓ **Admin email preview panel**: New admin section to preview all email templates and send test emails
-- ✓ **Automatic email triggers**: Status changes in customer management automatically send appropriate emails
-- ✓ **Email configuration support**: SMTP configuration for Gmail with environment variables (EMAIL_USER, EMAIL_PASS)
-- ✓ **Customer deletion functionality**: Enhanced testing capabilities with complete customer and rental removal
-- ✓ **Reminder system implemented**: Complete automated reminder system that sends emails 2 days before rental expiration
-- ✓ **Reminder email template**: Professional reminder email with cleaning instructions and guarantee information
-- ✓ **Admin reminder panel**: New admin section to view upcoming reminders and manually trigger reminder checks
-- ✓ **Smart date calculation**: Automatic calculation of return dates based on delivery date + rental period (7/14/30 days)
-- ✓ **Reminder tracking**: Dashboard shows upcoming reminders with days remaining and automatic email scheduling
-
-### January 30, 2025 (Continued)
-- ✓ **Email system fully configured**: Google Workspace integration with jalarcon@arriendocajas.cl
-- ✓ **Email templates completed**: All status templates including missing "pendiente" template
-- ✓ **Sidebar layout fixed**: Email preview and reminders pages now include proper admin navigation
-- ✓ **Email styling corrected**: Links display correctly in both preview and actual emails
-- ✓ **Email sending functional**: Test emails successfully sent through Google Workspace SMTP
-- ✓ **System ready for production**: Automated emails for status changes and reminders operational
-
-### January 30, 2025 (Final Updates)
-- ✓ **Email system fully operational**: Automatic emails working correctly when changing rental status
-- ✓ **Email styling fixed**: All tracking links now display in brand red color (#C8201D) instead of blue
-- ✓ **URL correction**: Fixed tracking links to use correct Replit domain for functional access
-- ✓ **Google Workspace integration**: Successfully configured with jalarcon@arriendocajas.cl and app password
-- ✓ **Complete email automation**: Status changes in customer management trigger immediate emails
-- ✓ **Production ready**: System fully functional for live business operations
-- ✓ **Home page design restored**: Returned original beautiful blue abstract background design with proper branding
-- ✓ **Visual consistency**: Maintained brand colors and professional appearance across platform
-
-### January 30, 2025 (Evening - Critical Fixes)
-- ✓ **Driver assignment system fixed**: Automatic assignment now properly updates rental.assignedDriver field
-- ✓ **Manual driver assignment**: Administrators can now assign/change drivers through intuitive UI buttons
-- ✓ **Driver assignment UI**: Added "Asignar"/"Cambiar" buttons in both table and card views for non-pending rentals
-- ✓ **Driver selection dialog**: Interactive dialog with list of available drivers and assignment confirmation
-- ✓ **API endpoint**: New PUT /api/rentals/:id/assign-driver endpoint for manual driver assignment
-- ✓ **Email notifications**: Driver assignment emails sent automatically to newly assigned drivers
-- ✓ **Status translation**: Fixed "rented" to display as "Arrendadas" in Spanish dashboard
-- ✓ **Compact inventory**: Redesigned inventory grid to be more space-efficient with 6 columns instead of 4
-- ✓ **User creation fixed**: Resolved backend validation errors preventing new user creation
-- ✓ **Complete driver workflow**: Full lifecycle from automatic assignment to manual reassignment operational
-
-### August 10, 2025 (Driver Portal Enhancement)
-- ✓ **Driver portal improvements**: Enhanced user experience with phone call functionality and real-time synchronization
-- ✓ **Phone call integration**: Added "📞 Llamar" buttons with `tel:` links for direct customer contact
-- ✓ **Sede Arriendo Cajas**: Updated origin/destination text to show proper company location
-- ✓ **Real-time data integration**: Driver portal now reads actual assigned tasks from database
-- ✓ **Automatic status synchronization**: Task completion by drivers immediately updates rental status in admin system
-- ✓ **Email automation**: Status changes trigger automatic email notifications to customers
-- ✓ **Driver credentials updated**: Login credentials changed to jalarcon@arriendocajas.cl / jose123
-- ✓ **Task filtering**: Driver portal shows only tasks assigned to logged-in driver for current date
-- ✓ **Password security fix**: Resolved bcrypt import issue in storage.ts for secure password hashing
-- ✓ **Complete workflow testing**: Verified end-to-end functionality from task assignment to completion
-- ✓ **Upcoming tasks feature**: Added separate section for future scheduled tasks in driver portal
-- ✓ **Visual task separation**: Today's tasks highlighted with white background, upcoming tasks with gray background for clear distinction
-- ✓ **Dual authentication fix**: Created admin account for jalarcon@arriendocajas.cl in admin_users table for panel access
-- ✓ **Universal credentials**: jalarcon@arriendocajas.cl / jose123 now works for both driver portal and admin panel
-
-### August 10, 2025 (User Management System Fix)
-- ✓ **User role management fixed**: Resolved critical bug preventing role changes due to undefined req.user.claims.sub
-- ✓ **Authentication middleware corrected**: Updated to use session-based authentication instead of deprecated Replit Auth
-- ✓ **TypeScript compilation errors fixed**: Corrected all storage.ts type errors and schema inconsistencies
-- ✓ **Complete CRUD operations**: All user management functions now working (create, read, update, delete, password reset)
-- ✓ **API endpoints completed**: Added POST /api/users for user creation and PUT /api/users/:id/password for password reset
-- ✓ **Frontend responsiveness improved**: Enhanced mobile responsiveness across admin pages (customers, reminders, email-preview)
-- ✓ **Email tracking links corrected**: Fixed email templates to use real tracking codes instead of sample data
-- ✓ **User interface polish**: Removed non-existent phone field references and corrected JSX structure
-- ✓ **Comprehensive testing completed**: Verified all user management operations work correctly via API and frontend
+- **UI Components**: Radix UI
+- **Database**: Neon PostgreSQL
+- **Authentication**: Replit Auth
+- **Validation**: Zod
+- **Date Handling**: date-fns
+- **Styling**: Tailwind CSS
+- **Email Service**: Google Workspace SMTP (e.g., jalarcon@arriendocajas.cl)
