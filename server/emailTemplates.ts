@@ -48,7 +48,7 @@ export const emailTemplates = {
               <div class="tracking-box">
                 <h3>🔍 Tu Código de Seguimiento</h3>
                 <p><strong>Código:</strong> ${data.trackingCode}</p>
-                <a href="${data.trackingUrl}" style="background: #C8201D; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 0;">Ver Estado</a>
+                <a href="${data.trackingUrl}" style="background: #C8201D !important; color: white !important; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 0;">Ver Estado</a>
               </div>
               
               <div class="details">
@@ -85,7 +85,7 @@ export const emailTemplates = {
             .header { background: #C8201D; color: white; padding: 20px; text-align: center; }
             .content { padding: 20px; }
             .tracking-box { background: #f8f9fa; border: 2px dashed #C8201D; padding: 15px; margin: 20px 0; text-align: center; }
-            .tracking-link { background: #C8201D; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 0; }
+            .tracking-link { background: #C8201D !important; color: white !important; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 0; }
             .details { background: #f8f9fa; padding: 15px; margin: 15px 0; }
             .footer { background: #2E5CA6; color: white; padding: 15px; text-align: center; font-size: 12px; }
           </style>
@@ -103,7 +103,7 @@ export const emailTemplates = {
               <div class="tracking-box">
                 <h3>🔍 Seguimiento de tu Arriendo</h3>
                 <p><strong>Código de seguimiento:</strong> ${data.trackingCode}</p>
-                <a href="${data.trackingUrl}" class="tracking-link">Ver Estado en Tiempo Real</a>
+                <a href="${data.trackingUrl}" class="tracking-link" style="background: #C8201D !important; color: white !important; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 0;">Ver Estado en Tiempo Real</a>
                 <p style="margin-top: 10px; font-size: 12px; color: #666;">
                   Guarda este enlace para seguir tu arriendo 24/7
                 </p>
