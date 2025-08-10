@@ -16,7 +16,9 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useToast } from "@/hooks/use-toast"
 import { Switch } from "@/components/ui/switch"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { apiRequest, queryClient } from "@/lib/queryClient"
+import { useLocation } from "wouter"
 
 // Utility functions
 const formatRut = (rut: string) => {
@@ -41,7 +43,9 @@ const Customers = () => {
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('table')
   const [showNewCustomerDialog, setShowNewCustomerDialog] = useState(false)
   const [showEditDialog, setShowEditDialog] = useState(false)
+  const [showRentalDialog, setShowRentalDialog] = useState(false)
   const [editingCustomer, setEditingCustomer] = useState<any>(null)
+  const [selectedCustomerForRental, setSelectedCustomerForRental] = useState<any>(null)
   const [newCustomer, setNewCustomer] = useState({
     name: "",
     email: "",
@@ -49,7 +53,33 @@ const Customers = () => {
     rut: ""
   })
   const [formattedRut, setFormattedRut] = useState("")
+  const [includeRental, setIncludeRental] = useState(false)
+  const [newRental, setNewRental] = useState({
+    boxQuantity: 2,
+    rentalDays: 7,
+    deliveryDate: "",
+    deliveryAddress: "",
+    pickupAddress: "",
+    notes: "",
+    boxSize: "mediano",
+    customPrice: 2775,
+    discount: 0,
+    additionalProducts: [] as Array<{name: string, price: number, quantity: number}>
+  })
   const { toast } = useToast()
+  const [, setLocation] = useLocation()
+
+  // Check authentication
+  const { data: user, isLoading: userLoading } = useQuery({
+    queryKey: ["/api/auth/user"],
+    retry: false
+  })
+
+  useEffect(() => {
+    if (!userLoading && !user) {
+      setLocation("/auth")
+    }
+  }, [user, userLoading, setLocation])
 
   // Fetch customers
   const { data: customers = [], isLoading: customersLoading } = useQuery({
@@ -134,8 +164,75 @@ const Customers = () => {
 
   const handleCreateCustomer = async (e: React.FormEvent) => {
     e.preventDefault()
-    await createCustomerMutation.mutateAsync(newCustomer)
+    try {
+      const customer = await createCustomerMutation.mutateAsync(newCustomer)
+      
+      if (includeRental && customer) {
+        // Create rental for the new customer
+        const rentalData = {
+          ...newRental,
+          customerId: customer.id,
+          totalPrice: newRental.customPrice - (newRental.customPrice * newRental.discount / 100)
+        }
+        
+        await createRentalMutation.mutateAsync(rentalData)
+      }
+    } catch (error) {
+      console.error("Error creating customer:", error)
+    }
   }
+
+  // Create rental mutation
+  const createRentalMutation = useMutation({
+    mutationFn: async (rental: any) => {
+      const res = await apiRequest("POST", "/api/rentals", rental)
+      return res.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/rentals"] })
+      toast({
+        title: "Arriendo creado",
+        description: "El arriendo ha sido programado exitosamente"
+      })
+      setShowRentalDialog(false)
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Error al crear el arriendo",
+        variant: "destructive"
+      })
+    }
+  })
+
+  // Pricing logic
+  const getPriceByPeriod = (boxes: number, days: number) => {
+    const priceTable: Record<number, Record<number, number>> = {
+      7: { 2: 2775, 5: 6938, 10: 13876, 15: 20815 },
+      14: { 2: 5551, 5: 13876, 10: 27753, 15: 41629 },
+      30: { 2: 11894, 5: 29735, 10: 59470, 15: 89205 }
+    }
+    
+    if (priceTable[days] && priceTable[days][boxes]) {
+      return priceTable[days][boxes]
+    }
+    
+    const basePrice7Days = priceTable[7]
+    let baseBoxPrice = 0
+    
+    if (boxes <= 2) baseBoxPrice = basePrice7Days[2] / 2
+    else if (boxes <= 5) baseBoxPrice = basePrice7Days[5] / 5
+    else if (boxes <= 10) baseBoxPrice = basePrice7Days[10] / 10
+    else baseBoxPrice = basePrice7Days[15] / 15
+    
+    return Math.round(baseBoxPrice * boxes * (days / 7))
+  }
+
+  // Update rental price when quantity or days change
+  useEffect(() => {
+    const newPrice = getPriceByPeriod(newRental.boxQuantity, newRental.rentalDays)
+    setNewRental(prev => ({ ...prev, customPrice: newPrice }))
+  }, [newRental.boxQuantity, newRental.rentalDays])
 
   const handleEditCustomer = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -261,21 +358,117 @@ const Customers = () => {
                         placeholder="12345678-9"
                       />
                     </div>
+
+                    {/* Toggle for rental scheduling */}
+                    <div className="border-t pt-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Label htmlFor="include-rental">¿Agendar cajas ahora?</Label>
+                          <p className="text-sm text-muted-foreground">Programa el arriendo al crear el cliente</p>
+                        </div>
+                        <Switch
+                          id="include-rental"
+                          checked={includeRental}
+                          onCheckedChange={setIncludeRental}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Rental details (when enabled) */}
+                    {includeRental && (
+                      <div className="space-y-4 border-t pt-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor="box-quantity">Cantidad de cajas</Label>
+                            <Select
+                              value={newRental.boxQuantity.toString()}
+                              onValueChange={(value) => setNewRental(prev => ({ ...prev, boxQuantity: parseInt(value) }))}
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="2">2 cajas</SelectItem>
+                                <SelectItem value="5">5 cajas</SelectItem>
+                                <SelectItem value="10">10 cajas</SelectItem>
+                                <SelectItem value="15">15 cajas</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <Label htmlFor="rental-days">Días de arriendo</Label>
+                            <Select
+                              value={newRental.rentalDays.toString()}
+                              onValueChange={(value) => setNewRental(prev => ({ ...prev, rentalDays: parseInt(value) }))}
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="7">7 días</SelectItem>
+                                <SelectItem value="14">14 días</SelectItem>
+                                <SelectItem value="30">30 días</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="delivery-date">Fecha de entrega</Label>
+                          <Input
+                            id="delivery-date"
+                            type="date"
+                            value={newRental.deliveryDate}
+                            onChange={(e) => setNewRental(prev => ({ ...prev, deliveryDate: e.target.value }))}
+                          />
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="delivery-address">Dirección de entrega</Label>
+                          <Textarea
+                            id="delivery-address"
+                            value={newRental.deliveryAddress}
+                            onChange={(e) => setNewRental(prev => ({ ...prev, deliveryAddress: e.target.value }))}
+                            placeholder="Dirección completa de entrega..."
+                            rows={2}
+                          />
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="pickup-address">Dirección de retiro</Label>
+                          <Textarea
+                            id="pickup-address"
+                            value={newRental.pickupAddress}
+                            onChange={(e) => setNewRental(prev => ({ ...prev, pickupAddress: e.target.value }))}
+                            placeholder="Dirección completa de retiro (opcional si es la misma)..."
+                            rows={2}
+                          />
+                        </div>
+
+                        <div className="bg-gray-50 p-3 rounded-lg">
+                          <Label className="text-lg font-semibold">Precio calculado: ${newRental.customPrice.toLocaleString('es-CL')}</Label>
+                        </div>
+                      </div>
+                    )}
                     
                     <div className="flex gap-2 pt-4">
                       <Button
                         type="button"
                         variant="outline"
-                        onClick={() => setShowNewCustomerDialog(false)}
+                        onClick={() => {
+                          setShowNewCustomerDialog(false)
+                          setIncludeRental(false)
+                        }}
                         className="flex-1"
                       >
                         Cancelar
                       </Button>
                       <Button
                         type="submit"
+                        disabled={createCustomerMutation.isPending}
                         className="flex-1 bg-brand-red hover:bg-red-700 text-white"
                       >
-                        Crear Cliente
+                        {createCustomerMutation.isPending ? "Creando..." : (includeRental ? "Crear y Agendar" : "Crear Cliente")}
                       </Button>
                     </div>
                   </form>
