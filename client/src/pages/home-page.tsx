@@ -28,40 +28,23 @@ export default function HomePage() {
               Arriendo Cajas
             </h1>
             <p className="text-xl md:text-2xl mb-12 max-w-3xl mx-auto text-white/90">
-              Tu solución de almacenamiento temporal. Más espacio, más orden.
+              Sistema de gestión integral para arriendo de cajas plásticas
             </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto mb-16">
             <Card className="bg-white/95 backdrop-blur-sm text-gray-900 border-0 shadow-2xl">
               <CardHeader className="text-center pb-4">
-                <Search className="h-16 w-16 text-blue-600 mx-auto mb-4" />
-                <CardTitle className="text-xl font-bold">Rastrea tu Arriendo</CardTitle>
+                <Users className="h-16 w-16 text-green-600 mx-auto mb-4" />
+                <CardTitle className="text-xl font-bold">Acceso Cliente</CardTitle>
                 <CardDescription className="text-gray-600">
-                  Consulta el estado de tus cajas en tiempo real
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Link href="/track">
-                  <Button className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3">
-                    Rastrear Cajas
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-white/95 backdrop-blur-sm text-gray-900 border-0 shadow-2xl">
-              <CardHeader className="text-center pb-4">
-                <Users className="h-16 w-16 text-red-600 mx-auto mb-4" />
-                <CardTitle className="text-xl font-bold">Portal de Clientes</CardTitle>
-                <CardDescription className="text-gray-600">
-                  Accede a tu cuenta y gestiona tus arriendos
+                  Consulta tus arriendos con RUT o correo electrónico
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <Link href="/auth/customer">
-                  <Button variant="outline" className="w-full border-2 border-red-600 text-red-600 hover:bg-red-50 font-semibold py-3">
-                    Iniciar Sesión
+                  <Button className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3">
+                    Ingresar como Cliente
                   </Button>
                 </Link>
               </CardContent>
@@ -69,47 +52,40 @@ export default function HomePage() {
 
             <Card className="bg-white/95 backdrop-blur-sm text-gray-900 border-0 shadow-2xl">
               <CardHeader className="text-center pb-4">
-                <ShieldCheck className="h-16 w-16 text-blue-600 mx-auto mb-4" />
-                <CardTitle className="text-xl font-bold">Administración</CardTitle>
+                <Search className="h-16 w-16 text-blue-600 mx-auto mb-4" />
+                <CardTitle className="text-xl font-bold">Portal Repartidor</CardTitle>
                 <CardDescription className="text-gray-600">
-                  Panel de control para administradores
+                  Gestiona entregas y tareas diarias
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Link href="/auth/driver">
+                  <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3">
+                    Ingresar como Repartidor
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-white/95 backdrop-blur-sm text-gray-900 border-0 shadow-2xl">
+              <CardHeader className="text-center pb-4">
+                <ShieldCheck className="h-16 w-16 text-red-600 mx-auto mb-4" />
+                <CardTitle className="text-xl font-bold">Panel Administrador</CardTitle>
+                <CardDescription className="text-gray-600">
+                  Control total del sistema y reportes
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <Link href="/auth/admin">
-                  <Button variant="outline" className="w-full border-2 border-blue-600 text-blue-600 hover:bg-blue-50 font-semibold py-3">
-                    Admin Panel
+                  <Button className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3">
+                    Ingresar como Admin
                   </Button>
                 </Link>
               </CardContent>
             </Card>
           </div>
 
-          <div className="text-center">
-            <h2 className="text-4xl font-bold mb-12 text-white drop-shadow-lg">¿Por qué elegir Arriendo Cajas?</h2>
-            <div className="grid md:grid-cols-4 gap-8 max-w-6xl mx-auto text-center">
-              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 border border-white/20">
-                <Clock className="h-12 w-12 mx-auto mb-4 text-red-400" />
-                <h3 className="font-bold mb-3 text-white text-lg">Entrega Rápida</h3>
-                <p className="text-white/90">Recibe tus cajas en 24-48 horas</p>
-              </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 border border-white/20">
-                <Search className="h-12 w-12 mx-auto mb-4 text-red-400" />
-                <h3 className="font-bold mb-3 text-white text-lg">Seguimiento Online</h3>
-                <p className="text-white/90">Rastrea tus cajas en tiempo real</p>
-              </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 border border-white/20">
-                <ShieldCheck className="h-12 w-12 mx-auto mb-4 text-red-400" />
-                <h3 className="font-bold mb-3 text-white text-lg">Seguro y Confiable</h3>
-                <p className="text-white/90">Garantía de $2,000 por caja</p>
-              </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 border border-white/20">
-                <Users className="h-12 w-12 mx-auto mb-4 text-red-400" />
-                <h3 className="font-bold mb-3 text-white text-lg">Soporte 24/7</h3>
-                <p className="text-white/90">Atención al cliente siempre disponible</p>
-              </div>
-            </div>
-          </div>
+
         </div>
       </div>
 
