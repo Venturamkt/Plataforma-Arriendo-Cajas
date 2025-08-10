@@ -27,6 +27,9 @@ export class EmailService {
             user: emailUser,
             pass: emailPass, // Use app password for Gmail
           },
+          tls: {
+            rejectUnauthorized: false
+          }
         });
         
         this.isConfigured = true;
