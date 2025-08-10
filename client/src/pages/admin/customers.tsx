@@ -651,6 +651,49 @@ export default function AdminCustomers() {
                         Productos Adicionales
                       </h4>
                       
+                      {/* Quick Add Buttons */}
+                      <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                        <p className="text-sm text-gray-600 mb-2">Productos disponibles (clic para agregar):</p>
+                        <div className="flex flex-wrap gap-2">
+                          {[
+                            { name: "Carro plegable", defaultPrice: 5000 },
+                            { name: "Base Móvil", defaultPrice: 3000 },
+                            { name: "Kit 2 Bases móviles", defaultPrice: 5500 },
+                            { name: "Correa Ratchet", defaultPrice: 2000 }
+                          ].map((product) => (
+                            <Button
+                              key={product.name}
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const existing = newRental.additionalProducts.find(p => p.name === product.name);
+                                if (existing) {
+                                  // Increase quantity if already exists
+                                  const updated = newRental.additionalProducts.map(p => 
+                                    p.name === product.name ? { ...p, quantity: p.quantity + 1 } : p
+                                  );
+                                  setNewRental({ ...newRental, additionalProducts: updated });
+                                } else {
+                                  // Add new product
+                                  setNewRental({
+                                    ...newRental,
+                                    additionalProducts: [...newRental.additionalProducts, { 
+                                      name: product.name, 
+                                      price: product.defaultPrice, 
+                                      quantity: 1 
+                                    }]
+                                  });
+                                }
+                              }}
+                              className="text-xs hover:bg-blue-50 hover:text-blue-700"
+                            >
+                              + {product.name}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                      
                       {newRental.additionalProducts.map((product, index) => (
                         <div key={index} className="flex gap-2 mb-2 items-end">
                           <div className="flex-1">
@@ -719,7 +762,7 @@ export default function AdminCustomers() {
                         }}
                         className="text-blue-600 hover:text-blue-700"
                       >
-                        + Agregar Producto
+                        + Producto Personalizado
                       </Button>
                     </div>
                   </div>

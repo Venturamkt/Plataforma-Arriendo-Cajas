@@ -150,4 +150,8 @@ The architecture emphasizes type safety, scalability, and maintainability while 
 - ✓ **Database completely clean**: Disabled automatic test data generation for production use
 - ✓ **Nueva Caja functionality**: Implemented complete box creation with barcode generation
 - ✓ **Barcode system**: Standardized format AC + YYMMDD + sequence (13 characters total)
-- ✓ Application fully functional with proper authentication flow and clean real data display
+- ✓ **Pricing flexibility**: Custom prices per day, percentage discounts, and additional products
+- ✓ **Customer self-service tracking**: Secure 8-character codes accessible via RUT digits + code
+- ✓ **Guarantee system**: $2,000 per box calculation with clear refundable indication
+- ✓ **Additional products system**: Predefined products (Carro plegable, Base Móvil, Kit 2 Bases móviles, Correa Ratchet) with manual pricing
+- ✓ Application fully functional with comprehensive rental management and customer tracking
