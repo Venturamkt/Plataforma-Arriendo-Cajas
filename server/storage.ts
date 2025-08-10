@@ -221,15 +221,21 @@ export class DatabaseStorage implements IStorage {
 
   async deleteCustomer(id: string): Promise<boolean> {
     try {
-      // First, delete all rental boxes associated with rentals of this customer
+      // First, get all rentals for this customer
       const customerRentals = await db
         .select({ id: rentals.id })
         .from(rentals)
         .where(eq(rentals.customerId, id));
 
       for (const rental of customerRentals) {
-        // Delete rental boxes
-        await db.delete(rentalBoxes).where(eq(rentalBoxes.rentalId, rental.id));
+        // Delete delivery tasks associated with this rental
+        await db.delete(deliveryTasks).where(eq(deliveryTasks.rentalId, rental.id));
+        
+        // Delete box movements associated with this rental
+        await db.delete(boxMovements).where(eq(boxMovements.rentalId, rental.id));
+        
+        // Free up boxes and delete rental box relationships
+        await this.freeBoxesFromRental(rental.id);
       }
 
       // Delete all rentals for this customer
