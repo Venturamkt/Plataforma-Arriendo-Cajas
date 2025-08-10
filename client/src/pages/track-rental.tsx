@@ -78,7 +78,13 @@ export default function TrackRental() {
     if (cleanValue.length <= 9) {
       setRawRut(cleanValue);
       setFormattedRut(formatRut(cleanValue));
-      setRutDigits(extractRutDigits(cleanValue));
+      
+      // If user enters exactly 4 digits, use them directly as rutDigits
+      if (cleanValue.length === 4) {
+        setRutDigits(cleanValue);
+      } else {
+        setRutDigits(extractRutDigits(cleanValue));
+      }
     }
   };
 
@@ -103,8 +109,8 @@ export default function TrackRental() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (rawRut.length < 8) {
-      alert("Ingresa un RUT válido");
+    if (rawRut.length < 4 && rutDigits.length < 4) {
+      alert("Ingresa al menos los últimos 4 dígitos de tu RUT");
       return;
     }
     if (trackingCode.length < 6) {
@@ -189,7 +195,7 @@ export default function TrackRental() {
                   spellCheck="false"
                 />
                 <p className="text-sm text-gray-500 mt-1">
-                  Ingresa tu RUT completo, se formateará automáticamente
+                  Ingresa tu RUT completo o solo los últimos 4 dígitos antes del guión
                 </p>
               </div>
 
@@ -211,7 +217,7 @@ export default function TrackRental() {
               <Button 
                 type="submit" 
                 className="w-full bg-brand-blue hover:bg-brand-blue/90"
-                disabled={isLoading || rawRut.length < 8 || trackingCode.length < 6}
+                disabled={isLoading || (rawRut.length < 4 && rutDigits.length < 4) || trackingCode.length < 6}
               >
                 {isLoading ? "Buscando..." : "Buscar Arriendo"}
               </Button>
