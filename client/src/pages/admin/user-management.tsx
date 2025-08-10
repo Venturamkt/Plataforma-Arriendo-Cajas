@@ -13,7 +13,8 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Users, Mail, UserCheck, Crown, Truck } from "lucide-react";
+import { Search, Users, Mail, UserCheck, Crown, Truck, UserPlus } from "lucide-react";
+import { Link } from "wouter";
 
 export default function UserManagement() {
   const { toast } = useToast();
@@ -146,6 +147,12 @@ export default function UserManagement() {
                     className="pl-10"
                   />
                 </div>
+                <Button className="bg-blue-600 hover:bg-blue-700" asChild>
+                  <Link href="/admin/users/create">
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Crear Usuario
+                  </Link>
+                </Button>
               </div>
             </CardHeader>
           </Card>

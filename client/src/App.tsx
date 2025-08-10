@@ -14,6 +14,7 @@ import AdminCustomers from "@/pages/admin/customers";
 import AdminDeliveries from "@/pages/admin/deliveries";
 import AdminReports from "@/pages/admin/reports";
 import UserManagement from "@/pages/admin/user-management";
+import CreateUser from "@/pages/admin/create-user";
 import NewRental from "@/pages/admin/new-rental";
 import RentalStatus from "@/pages/admin/rental-status";
 import EmailPreview from "@/pages/admin/email-preview";
@@ -44,6 +45,7 @@ function Router() {
       <Route path="/admin/deliveries" component={AdminDeliveries} />
       <Route path="/admin/reports" component={AdminReports} />
       <Route path="/admin/users" component={UserManagement} />
+      <Route path="/admin/users/create" component={CreateUser} />
       <Route path="/admin/new-rental" component={NewRental} />
       <Route path="/admin/rental-status" component={RentalStatus} />
       <Route path="/admin/emails" component={EmailPreview} />

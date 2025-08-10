@@ -67,6 +67,7 @@ export class EmailService {
       const mailOptions = {
         from: `"Arriendo Cajas" <${process.env.EMAIL_USER}>`,
         to: customerEmail,
+        cc: 'arriendo@arriendocajas.cl', // Copy to arriendo@arriendocajas.cl for all status change emails
         subject: emailContent.subject,
         text: emailContent.text,
         html: emailContent.html,
@@ -136,6 +137,143 @@ export class EmailService {
     };
 
     return template(previewData).html;
+  }
+
+  // Send driver assignment email
+  async sendDriverAssignmentEmail(
+    driverEmail: string,
+    assignmentData: {
+      driverName: string;
+      customerName: string;
+      customerAddress: string;
+      customerPhone: string;
+      trackingCode: string;
+      totalBoxes: number;
+      deliveryDate: string;
+      notes?: string;
+    }
+  ): Promise<boolean> {
+    if (!this.isConfigured || !this.transporter) {
+      console.log(`Driver assignment email not sent - service not configured. Driver: ${driverEmail}`);
+      return false;
+    }
+
+    try {
+      const mailOptions = {
+        from: `"Arriendo Cajas" <${process.env.EMAIL_USER}>`,
+        to: driverEmail,
+        cc: 'asignaciones@arriendocajas.cl', // Copy to asignaciones@arriendocajas.cl for driver assignments
+        subject: `Nueva Entrega Asignada - Código ${assignmentData.trackingCode}`,
+        html: this.getDriverAssignmentEmailTemplate(assignmentData),
+        text: `Nueva entrega asignada para ${assignmentData.customerName}. Código: ${assignmentData.trackingCode}. Dirección: ${assignmentData.customerAddress}. Teléfono: ${assignmentData.customerPhone}. Cajas: ${assignmentData.totalBoxes}. Fecha: ${assignmentData.deliveryDate}.`,
+        replyTo: process.env.EMAIL_USER,
+      };
+
+      const result = await this.transporter.sendMail(mailOptions);
+      console.log(`Driver assignment email sent successfully to ${driverEmail}:`, result.messageId);
+      return true;
+    } catch (error) {
+      console.error('Error sending driver assignment email:', error);
+      return false;
+    }
+  }
+
+  private getDriverAssignmentEmailTemplate(data: any): string {
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            .container { max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif; }
+            .header { background: #2E5CA6; color: white; padding: 20px; text-align: center; }
+            .content { padding: 20px; }
+            .delivery-info { background: #f8f9fa; border-left: 4px solid #2E5CA6; padding: 15px; margin: 20px 0; }
+            .customer-info { background: #fff8dc; border-left: 4px solid #ffa500; padding: 15px; margin: 15px 0; }
+            .footer { background: #C8201D; color: white; padding: 15px; text-align: center; font-size: 12px; }
+            .highlight { color: #C8201D; font-weight: bold; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>🚚 Nueva Entrega Asignada</h1>
+              <h2>¡Hola ${data.driverName}!</h2>
+            </div>
+            
+            <div class="content">
+              <p>Se te ha asignado una nueva entrega de cajas. Por favor revisa los detalles:</p>
+              
+              <div class="delivery-info">
+                <h3>📦 Información de Entrega</h3>
+                <p><strong>Código de Seguimiento:</strong> <span class="highlight">${data.trackingCode}</span></p>
+                <p><strong>Cantidad de Cajas:</strong> ${data.totalBoxes}</p>
+                <p><strong>Fecha de Entrega:</strong> ${data.deliveryDate}</p>
+                ${data.notes ? `<p><strong>Notas Especiales:</strong> ${data.notes}</p>` : ''}
+              </div>
+              
+              <div class="customer-info">
+                <h3>👤 Información del Cliente</h3>
+                <p><strong>Nombre:</strong> ${data.customerName}</p>
+                <p><strong>Dirección:</strong> ${data.customerAddress}</p>
+                <p><strong>Teléfono:</strong> ${data.customerPhone}</p>
+              </div>
+              
+              <div style="background: #e8f5e8; border-left: 4px solid #28a745; padding: 15px; margin: 20px 0;">
+                <h3>✅ Instrucciones Importantes</h3>
+                <ul>
+                  <li>Confirma la entrega antes de salir</li>
+                  <li>Solicita identificación del cliente</li>
+                  <li>Toma foto de confirmación de entrega</li>
+                  <li>Actualiza el estado en el sistema móvil</li>
+                  <li>En caso de problemas, contacta inmediatamente</li>
+                </ul>
+              </div>
+              
+              <p style="text-align: center; margin-top: 30px;">
+                <strong>¡Gracias por tu trabajo!</strong><br>
+                Equipo Arriendo Cajas
+              </p>
+            </div>
+            
+            <div class="footer">
+              <p>📞 +56 9 1234 5678 | 📧 jalarcon@arriendocajas.cl</p>
+              <p>Arriendo Cajas - Entrega confiable, siempre a tiempo</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+  }
+
+  // Send reminder email with CC
+  async sendReminderEmail(customerEmail: string, rentalData: RentalEmailData): Promise<boolean> {
+    if (!this.isConfigured || !this.transporter) {
+      console.log(`Reminder email not sent - service not configured. Customer: ${customerEmail}`);
+      return false;
+    }
+
+    try {
+      const template = emailTemplates.recordatorio;
+      const emailContent = template(rentalData);
+
+      const mailOptions = {
+        from: `"Arriendo Cajas" <${process.env.EMAIL_USER}>`,
+        to: customerEmail,
+        cc: 'arriendo@arriendocajas.cl', // Copy to arriendo@arriendocajas.cl for reminders
+        subject: emailContent.subject,
+        text: emailContent.text,
+        html: emailContent.html,
+        replyTo: process.env.EMAIL_USER,
+      };
+
+      const result = await this.transporter.sendMail(mailOptions);
+      console.log(`Reminder email sent successfully to ${customerEmail}:`, result.messageId);
+      return true;
+    } catch (error) {
+      console.error('Error sending reminder email:', error);
+      return false;
+    }
   }
 }
 

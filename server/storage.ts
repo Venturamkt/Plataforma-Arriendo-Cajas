@@ -91,7 +91,13 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async getUsers(): Promise<User[]> {
+  async getUsers(filters?: { role?: string }): Promise<User[]> {
+    if (filters?.role) {
+      return await db.select().from(users)
+        .where(eq(users.role, filters.role))
+        .orderBy(desc(users.createdAt));
+    }
+    
     return await db.select().from(users).orderBy(desc(users.createdAt));
   }
 

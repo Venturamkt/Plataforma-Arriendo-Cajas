@@ -7,6 +7,7 @@ import { Clock, Mail, Send, Calendar, AlertTriangle, CheckCircle } from "lucide-
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import Header from "@/components/layout/header";
 import Sidebar from "@/components/layout/sidebar";
 
 export default function Reminders() {
@@ -81,9 +82,11 @@ export default function Reminders() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <Sidebar role="admin" />
-      <div className="flex-1 p-6 space-y-6">
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+      <div className="flex">
+        <Sidebar role="admin" />
+        <div className="flex-1 p-6 space-y-6">
       <div className="flex items-center gap-3">
         <Clock className="h-8 w-8 text-orange-600" />
         <div>
@@ -270,6 +273,7 @@ export default function Reminders() {
           </div>
         </CardContent>
       </Card>
+        </div>
       </div>
     </div>
   );

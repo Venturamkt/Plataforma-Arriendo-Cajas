@@ -325,6 +325,85 @@ export async function registerRoutes(app: Express): Promise<Server> {
             } else {
               console.log(`❌ Email failed to send for status change to ${rentalData.status} for customer ${customer.email}`);
             }
+
+            // Auto-assign driver when status changes to "pagada"
+            if (rentalData.status === 'pagada') {
+              console.log('Status changed to "pagada" - attempting automatic driver assignment');
+              try {
+                // Get available drivers
+                const drivers = await storage.getUsers();
+                const availableDrivers = drivers.filter(user => user.role === 'driver');
+                console.log(`Found ${availableDrivers.length} drivers available for assignment`);
+                
+                if (availableDrivers.length > 0) {
+                  // Simple round-robin assignment - get driver with least active tasks
+                  let selectedDriver = availableDrivers[0];
+                  let minTasks = Infinity;
+                  
+                  for (const driver of availableDrivers) {
+                    const activeTasks = await storage.getDeliveryTasks(driver.id);
+                    const pendingTasks = activeTasks.filter(task => 
+                      task.status === 'assigned'
+                    ).length;
+                    
+                    if (pendingTasks < minTasks) {
+                      minTasks = pendingTasks;
+                      selectedDriver = driver;
+                    }
+                  }
+                  
+                  // Create delivery task
+                  const deliveryTask = {
+                    id: `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                    rentalId: rental.id,
+                    driverId: selectedDriver.id,
+                    type: 'delivery' as const,
+                    status: 'assigned' as const,
+                    scheduledDate: rental.deliveryDate,
+                    customerName: customer.name,
+                    customerPhone: customer.phone || '',
+                    deliveryAddress: rental.deliveryAddress || '',
+                    notes: `Entrega automática - ${rental.totalBoxes} cajas`,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                  };
+                  
+                  const createdTask = await storage.createDeliveryTask(deliveryTask);
+                  console.log(`✅ Delivery task created and assigned to driver ${selectedDriver.firstName} ${selectedDriver.lastName}`);
+                  
+                  // Send assignment email to driver
+                  if (selectedDriver.email) {
+                    const assignmentData = {
+                      driverName: `${selectedDriver.firstName} ${selectedDriver.lastName}`,
+                      customerName: customer.name,
+                      customerAddress: rental.deliveryAddress || '',
+                      customerPhone: customer.phone || '',
+                      trackingCode: rental.trackingCode,
+                      totalBoxes: rental.totalBoxes,
+                      deliveryDate: rental.deliveryDate.toLocaleDateString('es-CL', { 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                      }),
+                      notes: `Entrega automática - ${rental.totalBoxes} cajas`,
+                    };
+                    
+                    const driverEmailSent = await emailService.sendDriverAssignmentEmail(selectedDriver.email, assignmentData);
+                    
+                    if (driverEmailSent) {
+                      console.log(`✅ Driver assignment email sent to ${selectedDriver.email}`);
+                    } else {
+                      console.log(`❌ Failed to send assignment email to driver ${selectedDriver.email}`);
+                    }
+                  }
+                } else {
+                  console.log('❌ No drivers available for automatic assignment');
+                }
+              } catch (assignmentError) {
+                console.error('Error during automatic driver assignment:', assignmentError);
+                // Continue even if assignment fails
+              }
+            }
           } else {
             console.log(`Cannot send email - missing customer email or tracking code. Customer email: ${customer?.email}, tracking code: ${rental.trackingCode}`);
           }
