@@ -199,8 +199,13 @@ export class DatabaseStorage implements IStorage {
       trackingCode
     }).returning();
 
-    // Assign available boxes to this rental and mark them as rented
+    // Assign available boxes to this rental 
     await this.assignBoxesToRental(newRental.id, rental.totalBoxes);
+    
+    // Update box status only if rental is "pagada" or "entregada"
+    if (rental.status === 'pagada' || rental.status === 'entregada') {
+      await this.updateBoxStatusForRental(newRental.id, rental.status);
+    }
     
     return newRental;
   }
@@ -226,9 +231,9 @@ export class DatabaseStorage implements IStorage {
       await this.reassignBoxesToRental(id, rental.totalBoxes);
     }
 
-    // If status changed to finalizado or cancelada, free up the boxes
-    if (rental.status && (rental.status === 'finalizado' || rental.status === 'cancelada')) {
-      await this.freeBoxesFromRental(id);
+    // Update box status based on rental status
+    if (rental.status && updatedRental) {
+      await this.updateBoxStatusForRental(id, rental.status);
     }
     
     return updatedRental;
@@ -242,18 +247,36 @@ export class DatabaseStorage implements IStorage {
       .where(eq(boxes.status, "available"))
       .limit(totalBoxes);
 
-    // Create rental_boxes relationships and update box status
+    // Create rental_boxes relationships (but don't change box status yet)
     for (const box of availableBoxes) {
       await db.insert(rentalBoxes).values({
         rentalId,
         boxId: box.id,
         status: "assigned"
       });
+    }
+  }
 
+  private async updateBoxStatusForRental(rentalId: string, rentalStatus: string): Promise<void> {
+    // Get all boxes assigned to this rental
+    const assignments = await db
+      .select()
+      .from(rentalBoxes)
+      .where(eq(rentalBoxes.rentalId, rentalId));
+
+    for (const assignment of assignments) {
+      let newBoxStatus: "available" | "rented" | "maintenance" | "damaged" = "available";
+      
+      // Only mark as rented if rental is "pagada" or "entregada"
+      if (rentalStatus === 'pagada' || rentalStatus === 'entregada') {
+        newBoxStatus = "rented";
+      }
+      // For "finalizado", "cancelada", "pendiente", "retirada" - boxes go back to available
+      
       await db
         .update(boxes)
-        .set({ status: "rented" })
-        .where(eq(boxes.id, box.id));
+        .set({ status: newBoxStatus })
+        .where(eq(boxes.id, assignment.boxId));
     }
   }
 

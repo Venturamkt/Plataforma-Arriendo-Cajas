@@ -1168,6 +1168,7 @@ export default function AdminCustomers() {
                         <TableHead className="text-center">Arriendos Activos</TableHead>
                         <TableHead className="text-center">Total Arriendos</TableHead>
                         <TableHead className="text-center">Estado del Último Arriendo</TableHead>
+                        <TableHead className="text-center">Información de Seguimiento</TableHead>
                         <TableHead className="text-center">Acciones</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -1217,8 +1218,6 @@ export default function AdminCustomers() {
                                 
                                 // Show the most recent active rental
                                 const mostRecentRental = activeRentals[0];
-                                const rutDigits = customer.rut?.slice(-4) || "0000";
-                                const trackingUrl = `${window.location.origin}/track`;
                                 
                                 return (
                                   <div className="space-y-1">
@@ -1239,41 +1238,55 @@ export default function AdminCustomers() {
                                         <SelectItem value="cancelada">🔴 Cancelada</SelectItem>
                                       </SelectContent>
                                     </Select>
-                                    <div className="text-xs space-y-1">
-                                      {activeRentals.length > 1 && (
-                                        <div className="text-gray-500">+{activeRentals.length - 1} más</div>
-                                      )}
-                                      <div className="bg-blue-50 p-2 rounded border">
-                                        <div className="flex items-center gap-1 mb-1">
-                                          <span className="text-gray-600">Código:</span>
-                                          <span className="font-mono text-blue-800 font-semibold">
-                                            {mostRecentRental.trackingCode}
-                                          </span>
-                                        </div>
-                                        <div className="flex items-center gap-1 mb-1">
-                                          <span className="text-gray-600">RUT:</span>
-                                          <span className="font-mono text-gray-800">{rutDigits}</span>
-                                        </div>
-                                        <div className="flex items-center gap-1">
-                                          <span className="text-gray-600">Link:</span>
-                                          <button
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              navigator.clipboard.writeText(trackingUrl);
-                                              // Simple feedback
-                                              const btn = e.target as HTMLButtonElement;
-                                              const originalText = btn.textContent;
-                                              btn.textContent = "¡Copiado!";
-                                              setTimeout(() => {
-                                                btn.textContent = originalText;
-                                              }, 1500);
-                                            }}
-                                            className="text-blue-600 hover:text-blue-800 underline text-left truncate max-w-24"
-                                          >
-                                            {trackingUrl}
-                                          </button>
-                                        </div>
-                                      </div>
+                                    {activeRentals.length > 1 && (
+                                      <div className="text-xs text-gray-500">+{activeRentals.length - 1} más</div>
+                                    )}
+                                  </div>
+                                );
+                              })()}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              {(() => {
+                                const activeRentals = getCustomerActiveRentals(customer.id);
+                                if (activeRentals.length === 0) {
+                                  return <span className="text-gray-400">-</span>;
+                                }
+                                
+                                // Show tracking info for the most recent active rental
+                                const mostRecentRental = activeRentals[0];
+                                const rutDigits = customer.rut?.slice(-4) || "0000";
+                                const trackingUrl = `${window.location.origin}/track`;
+                                
+                                return (
+                                  <div className="bg-blue-50 p-2 rounded border max-w-40">
+                                    <div className="flex items-center gap-1 mb-1">
+                                      <span className="text-gray-600 text-xs">Código:</span>
+                                      <span className="font-mono text-blue-800 font-semibold text-xs">
+                                        {mostRecentRental.trackingCode}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-1 mb-1">
+                                      <span className="text-gray-600 text-xs">RUT:</span>
+                                      <span className="font-mono text-gray-800 text-xs">{rutDigits}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                      <span className="text-gray-600 text-xs">Link:</span>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          navigator.clipboard.writeText(trackingUrl);
+                                          // Simple feedback
+                                          const btn = e.target as HTMLButtonElement;
+                                          const originalText = btn.textContent;
+                                          btn.textContent = "¡Copiado!";
+                                          setTimeout(() => {
+                                            btn.textContent = originalText;
+                                          }, 1500);
+                                        }}
+                                        className="text-blue-600 hover:text-blue-800 underline text-xs truncate max-w-20"
+                                      >
+                                        Ver link
+                                      </button>
                                     </div>
                                   </div>
                                 );
