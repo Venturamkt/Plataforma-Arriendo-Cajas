@@ -74,18 +74,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch('/api/users/:id/role', requireAdminSession, async (req: any, res) => {
     try {
-      const currentUser = await storage.getUser(req.user.claims.sub);
-      if (currentUser?.role !== 'admin') {
-        return res.status(403).json({ message: "Admin access required" });
-      }
       const { role } = req.body;
       if (!['admin', 'driver', 'customer'].includes(role)) {
         return res.status(400).json({ message: "Invalid role" });
       }
+      
+      console.log(`Updating user ${req.params.id} to role ${role}`);
       const updatedUser = await storage.updateUserRole(req.params.id, role);
       if (!updatedUser) {
         return res.status(404).json({ message: "User not found" });
       }
+      
+      console.log(`Successfully updated user role:`, updatedUser);
       res.json(updatedUser);
     } catch (error) {
       console.error("Error updating user role:", error);
@@ -109,6 +109,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating user:", error);
       res.status(500).json({ message: "Failed to update user" });
+    }
+  });
+
+  // Reset user password
+  app.put('/api/users/:id/password', requireAdminSession, async (req: any, res) => {
+    try {
+      const { password } = req.body;
+      if (!password || password.length < 6) {
+        return res.status(400).json({ message: "Password must be at least 6 characters long" });
+      }
+      
+      const success = await storage.updateUserPassword(req.params.id, password);
+      if (!success) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.json({ message: "Password updated successfully" });
+    } catch (error) {
+      console.error("Error updating password:", error);
+      res.status(500).json({ message: "Failed to update password" });
+    }
+  });
+
+  // Create new user
+  app.post('/api/users', requireAdminSession, async (req: any, res) => {
+    try {
+      const { firstName, lastName, email, role } = req.body;
+      if (!email || !firstName || !lastName || !role) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+      if (!['admin', 'driver', 'customer'].includes(role)) {
+        return res.status(400).json({ message: "Invalid role" });
+      }
+      
+      const newUser = await storage.upsertUser({
+        id: `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        email,
+        firstName,
+        lastName,
+        role: role as "admin" | "driver" | "customer",
+        profileImageUrl: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      
+      res.status(201).json(newUser);
+    } catch (error) {
+      console.error("Error creating user:", error);
+      res.status(500).json({ message: "Failed to create user" });
     }
   });
 

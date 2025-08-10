@@ -307,12 +307,10 @@ export default function UserManagement() {
                         </Badge>
                       </div>
 
-                      {u.phone && (
-                        <div className="flex items-center text-sm text-gray-600 mb-3">
-                          <Mail className="h-4 w-4 mr-2" />
-                          {u.phone}
-                        </div>
-                      )}
+                      <div className="flex items-center text-sm text-gray-600 mb-3">
+                        <Mail className="h-4 w-4 mr-2" />
+                        {u.email}
+                      </div>
 
                       <div className="mb-4">
                         <Label className="text-xs text-gray-500">Cambiar Rol</Label>
@@ -423,15 +421,7 @@ export default function UserManagement() {
                 required
               />
             </div>
-            <div>
-              <Label htmlFor="phone">Teléfono</Label>
-              <Input
-                id="phone"
-                value={editingUser?.phone || ''}
-                onChange={(e) => setEditingUser(prev => prev ? {...prev, phone: e.target.value} : null)}
-                placeholder="+56 9 1234 5678"
-              />
-            </div>
+            {/* Phone field removed as it's not in the user schema */}
 
             <div className="flex gap-2 pt-4">
               <Button
