@@ -4,6 +4,8 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { setupAuthRoutes } from "./authRoutes";
 import { setupTaskRoutes } from "./taskRoutes";
+import { emailService } from "./emailService";
+import { generateTrackingUrl } from "./emailTemplates";
 import { insertCustomerSchema, insertBoxSchema, insertRentalSchema, insertDeliveryTaskSchema, insertBoxMovementSchema } from "@shared/schema";
 import { z } from "zod";
 
@@ -293,6 +295,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!rental) {
         return res.status(404).json({ message: "Rental not found" });
       }
+
+      // Send email if status changed and email service is configured
+      if (rentalData.status && emailService.isEmailConfigured()) {
+        try {
+          const customer = await storage.getCustomer(rental.customerId);
+          if (customer?.email && rental.trackingCode) {
+            const rutDigits = customer.rut?.slice(-4) || "0000";
+            const trackingUrl = generateTrackingUrl(rutDigits, rental.trackingCode);
+            
+            const emailData = {
+              customerName: customer.name,
+              rentalId: rental.id,
+              trackingCode: rental.trackingCode,
+              trackingUrl: trackingUrl,
+              totalBoxes: rental.totalBoxes,
+              deliveryDate: rental.deliveryDate.toLocaleDateString('es-CL', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              }),
+              deliveryAddress: rental.deliveryAddress || '',
+              totalAmount: parseInt(rental.totalAmount || '0'),
+              guaranteeAmount: rental.totalBoxes * 2000,
+            };
+
+            await emailService.sendRentalStatusEmail(customer.email, rentalData.status, emailData);
+            console.log(`Email sent for status change to ${rentalData.status} for customer ${customer.email}`);
+          }
+        } catch (emailError) {
+          console.error("Error sending status change email:", emailError);
+          // Continue with response even if email fails
+        }
+      }
+
       res.json(rental);
     } catch (error) {
       console.error("Error updating rental:", error);
@@ -300,19 +336,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/rentals/:id', requireAdminSession, async (req, res) => {
-    try {
-      const rentalData = insertRentalSchema.partial().parse(req.body);
-      const rental = await storage.updateRental(req.params.id, rentalData);
-      if (!rental) {
-        return res.status(404).json({ message: "Rental not found" });
-      }
-      res.json(rental);
-    } catch (error) {
-      console.error("Error updating rental:", error);
-      res.status(400).json({ message: "Failed to update rental" });
-    }
-  });
+
 
   // Box movement routes
   app.get('/api/box-movements', requireAdminSession, async (req, res) => {
@@ -375,6 +399,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating delivery task:", error);
       res.status(400).json({ message: "Failed to update delivery task" });
+    }
+  });
+
+  // Email routes
+  app.get('/api/email/config', requireAdminSession, async (req, res) => {
+    try {
+      res.json({
+        configured: emailService.isEmailConfigured()
+      });
+    } catch (error) {
+      console.error("Error checking email config:", error);
+      res.status(500).json({ message: "Failed to check email configuration" });
+    }
+  });
+
+  app.post('/api/email/preview', requireAdminSession, async (req, res) => {
+    try {
+      const { status, sampleData } = req.body;
+      const preview = emailService.getEmailPreview(status, sampleData);
+      if (!preview) {
+        return res.status(404).send("Email template not found");
+      }
+      res.set('Content-Type', 'text/html');
+      res.send(preview);
+    } catch (error) {
+      console.error("Error generating email preview:", error);
+      res.status(500).send("Error generating preview");
+    }
+  });
+
+  app.post('/api/email/test', requireAdminSession, async (req, res) => {
+    try {
+      const { to, status, sampleData } = req.body;
+      
+      if (!emailService.isEmailConfigured()) {
+        return res.status(400).json({ message: "Email service not configured" });
+      }
+
+      // Create sample rental data for test
+      const rentalData = {
+        customerName: sampleData?.customerName || 'Usuario de Prueba',
+        rentalId: 'test-rental-id',
+        trackingCode: sampleData?.trackingCode || 'TEST123',
+        trackingUrl: generateTrackingUrl('1234', sampleData?.trackingCode || 'TEST123'),
+        totalBoxes: sampleData?.totalBoxes || 5,
+        deliveryDate: sampleData?.deliveryDate || new Date().toLocaleDateString('es-CL'),
+        deliveryAddress: sampleData?.deliveryAddress || 'Dirección de prueba',
+        totalAmount: sampleData?.totalAmount || 13876,
+        guaranteeAmount: sampleData?.guaranteeAmount || 10000,
+      };
+
+      const success = await emailService.sendRentalStatusEmail(to, status, rentalData);
+      
+      if (success) {
+        res.json({ message: "Test email sent successfully" });
+      } else {
+        res.status(500).json({ message: "Failed to send test email" });
+      }
+    } catch (error) {
+      console.error("Error sending test email:", error);
+      res.status(500).json({ message: "Failed to send test email" });
     }
   });
 

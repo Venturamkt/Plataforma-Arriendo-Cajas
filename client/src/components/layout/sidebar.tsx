@@ -7,7 +7,8 @@ import {
   BarChart3,
   QrCode,
   UserCog,
-  ClipboardList
+  ClipboardList,
+  Mail
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 
@@ -24,6 +25,7 @@ export default function Sidebar({ role }: SidebarProps) {
     { href: "/admin/customers", icon: Users, label: "Clientes" },
     { href: "/admin/rental-status", icon: ClipboardList, label: "Estado Arriendos" },
     { href: "/admin/deliveries", icon: Truck, label: "Entregas" },
+    { href: "/admin/emails", icon: Mail, label: "Emails" },
     { href: "/admin/reports", icon: BarChart3, label: "Reportes" },
     { href: "/admin/users", icon: UserCog, label: "Usuarios" },
   ];

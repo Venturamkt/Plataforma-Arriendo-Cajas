@@ -15,6 +15,7 @@ import AdminReports from "@/pages/admin/reports";
 import UserManagement from "@/pages/admin/user-management";
 import NewRental from "@/pages/admin/new-rental";
 import RentalStatus from "@/pages/admin/rental-status";
+import EmailPreview from "@/pages/admin/email-preview";
 import DriverDashboard from "@/pages/driver/dashboard";
 import CustomerDashboard from "@/pages/customer/dashboard";
 import TrackRental from "@/pages/track-rental";
@@ -40,6 +41,7 @@ function Router() {
       <Route path="/admin/users" component={UserManagement} />
       <Route path="/admin/new-rental" component={NewRental} />
       <Route path="/admin/rental-status" component={RentalStatus} />
+      <Route path="/admin/emails" component={EmailPreview} />
       
       {/* Public tracking routes */}
       <Route path="/track" component={TrackRental} />

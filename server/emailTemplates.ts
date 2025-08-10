@@ -1,0 +1,346 @@
+// Email templates for rental status notifications
+
+export interface EmailTemplate {
+  subject: string;
+  html: string;
+  text: string;
+}
+
+export interface RentalEmailData {
+  customerName: string;
+  rentalId: string;
+  trackingCode: string;
+  trackingUrl: string;
+  totalBoxes: number;
+  deliveryDate: string;
+  deliveryAddress: string;
+  totalAmount: number;
+  guaranteeAmount: number;
+}
+
+export const emailTemplates = {
+  pagada: (data: RentalEmailData): EmailTemplate => ({
+    subject: `¡Tu arriendo ha sido confirmado! - Código ${data.trackingCode}`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            .container { max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif; }
+            .header { background: #C8201D; color: white; padding: 20px; text-align: center; }
+            .content { padding: 20px; }
+            .tracking-box { background: #f8f9fa; border: 2px dashed #C8201D; padding: 15px; margin: 20px 0; text-align: center; }
+            .tracking-link { background: #C8201D; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 0; }
+            .details { background: #f8f9fa; padding: 15px; margin: 15px 0; }
+            .footer { background: #2E5CA6; color: white; padding: 15px; text-align: center; font-size: 12px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>¡Hola ${data.customerName}!</h1>
+              <h2>Tu pago ha sido confirmado 🎉</h2>
+            </div>
+            
+            <div class="content">
+              <p>¡Excelentes noticias! Hemos confirmado tu pago y tu arriendo está listo para ser entregado.</p>
+              
+              <div class="tracking-box">
+                <h3>🔍 Seguimiento de tu Arriendo</h3>
+                <p><strong>Código de seguimiento:</strong> ${data.trackingCode}</p>
+                <a href="${data.trackingUrl}" class="tracking-link">Ver Estado en Tiempo Real</a>
+                <p style="margin-top: 10px; font-size: 12px; color: #666;">
+                  Guarda este enlace para seguir tu arriendo 24/7
+                </p>
+              </div>
+              
+              <div class="details">
+                <h3>📦 Detalles de tu Arriendo</h3>
+                <p><strong>Número de cajas:</strong> ${data.totalBoxes}</p>
+                <p><strong>Fecha de entrega:</strong> ${data.deliveryDate}</p>
+                <p><strong>Dirección:</strong> ${data.deliveryAddress}</p>
+                <p><strong>Total pagado:</strong> $${data.totalAmount.toLocaleString()}</p>
+                <p><strong>Garantía:</strong> $${data.guaranteeAmount.toLocaleString()} (se devuelve al finalizar)</p>
+              </div>
+              
+              <h3>📋 Próximos Pasos:</h3>
+              <ul>
+                <li>Te contactaremos para coordinar la entrega</li>
+                <li>Usa tu código de seguimiento para ver el estado actualizado</li>
+                <li>Prepara el espacio donde ubicarás las cajas</li>
+              </ul>
+              
+              <p>¡Gracias por confiar en Arriendo Cajas! Estamos aquí para ayudarte.</p>
+            </div>
+            
+            <div class="footer">
+              <p>Arriendo Cajas - Tu solución de almacenamiento temporal</p>
+              <p>¿Preguntas? Contáctanos: info@arriendocajas.cl</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `,
+    text: `¡Hola ${data.customerName}! Tu pago ha sido confirmado. Código de seguimiento: ${data.trackingCode}. Seguimiento: ${data.trackingUrl}. Detalles: ${data.totalBoxes} cajas, entrega ${data.deliveryDate} en ${data.deliveryAddress}. Total: $${data.totalAmount.toLocaleString()}. Garantía: $${data.guaranteeAmount.toLocaleString()}.`
+  }),
+
+  entregada: (data: RentalEmailData): EmailTemplate => ({
+    subject: `¡Tus cajas han sido entregadas! - ${data.trackingCode}`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            .container { max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif; }
+            .header { background: #28a745; color: white; padding: 20px; text-align: center; }
+            .content { padding: 20px; }
+            .tracking-box { background: #f8f9fa; border: 2px dashed #28a745; padding: 15px; margin: 20px 0; text-align: center; }
+            .tracking-link { background: #28a745; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 0; }
+            .tips { background: #e8f5e8; padding: 15px; margin: 15px 0; border-left: 4px solid #28a745; }
+            .footer { background: #2E5CA6; color: white; padding: 15px; text-align: center; font-size: 12px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>¡Entrega Completada! 📦</h1>
+              <h2>Hola ${data.customerName}</h2>
+            </div>
+            
+            <div class="content">
+              <p>¡Perfecto! Hemos entregado exitosamente tus ${data.totalBoxes} cajas en ${data.deliveryAddress}.</p>
+              
+              <div class="tracking-box">
+                <h3>📱 Sigue tu Arriendo</h3>
+                <a href="${data.trackingUrl}" class="tracking-link">Ver Estado Actualizado</a>
+                <p style="font-size: 12px; color: #666;">Código: ${data.trackingCode}</p>
+              </div>
+              
+              <div class="tips">
+                <h3>💡 Consejos para el mejor uso:</h3>
+                <ul>
+                  <li>Mantén las cajas en un lugar seco y ventilado</li>
+                  <li>No superes el peso máximo recomendado por caja</li>
+                  <li>Usa las asas para transportar las cajas de forma segura</li>
+                  <li>Evita apilar más de 3 cajas para mayor estabilidad</li>
+                </ul>
+              </div>
+              
+              <h3>🕒 Recordatorio Importante:</h3>
+              <p>Tu período de arriendo está activo. Te avisaremos cuando se acerque la fecha de retiro.</p>
+              
+              <p>¡Disfruta el espacio extra y organiza todo como desees!</p>
+            </div>
+            
+            <div class="footer">
+              <p>Arriendo Cajas - Más espacio, más orden</p>
+              <p>¿Necesitas ayuda? Escríbenos: info@arriendocajas.cl</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `,
+    text: `¡Hola ${data.customerName}! Tus ${data.totalBoxes} cajas han sido entregadas en ${data.deliveryAddress}. Seguimiento: ${data.trackingUrl} (${data.trackingCode}). ¡Disfruta el espacio extra!`
+  }),
+
+  retirada: (data: RentalEmailData): EmailTemplate => ({
+    subject: `¡Retiro completado! Gracias por usar Arriendo Cajas - ${data.trackingCode}`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            .container { max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif; }
+            .header { background: #ffc107; color: #212529; padding: 20px; text-align: center; }
+            .content { padding: 20px; }
+            .success-box { background: #f8f9fa; border: 2px solid #ffc107; padding: 15px; margin: 20px 0; text-align: center; }
+            .tracking-link { background: #ffc107; color: #212529; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 0; }
+            .next-steps { background: #fff3cd; padding: 15px; margin: 15px 0; border-left: 4px solid #ffc107; }
+            .footer { background: #2E5CA6; color: white; padding: 15px; text-align: center; font-size: 12px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>¡Retiro Exitoso! 📤</h1>
+              <h2>Gracias ${data.customerName}</h2>
+            </div>
+            
+            <div class="content">
+              <p>¡Excelente! Hemos retirado exitosamente tus ${data.totalBoxes} cajas.</p>
+              
+              <div class="success-box">
+                <h3>✅ Estado Actual</h3>
+                <p><strong>Cajas retiradas:</strong> ${data.totalBoxes}</p>
+                <a href="${data.trackingUrl}" class="tracking-link">Ver Detalles Finales</a>
+                <p style="font-size: 12px; color: #666;">Código: ${data.trackingCode}</p>
+              </div>
+              
+              <div class="next-steps">
+                <h3>🔄 Próximos Pasos:</h3>
+                <ul>
+                  <li>Revisaremos el estado de las cajas</li>
+                  <li>Procesaremos la devolución de tu garantía</li>
+                  <li>Te confirmaremos cuando esté todo finalizado</li>
+                </ul>
+              </div>
+              
+              <h3>💝 ¡Muchas Gracias!</h3>
+              <p>Esperamos que Arriendo Cajas te haya ayudado con tu mudanza, renovación o almacenamiento temporal. ¡Fue un placer servirte!</p>
+              
+              <p>Si necesitas cajas nuevamente en el futuro, ¡estaremos aquí para ayudarte!</p>
+            </div>
+            
+            <div class="footer">
+              <p>Arriendo Cajas - Siempre a tu servicio</p>
+              <p>¿Cómo fue tu experiencia? Cuéntanos: info@arriendocajas.cl</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `,
+    text: `¡Hola ${data.customerName}! Hemos retirado exitosamente tus ${data.totalBoxes} cajas. Procesaremos la devolución de tu garantía. Seguimiento: ${data.trackingUrl} (${data.trackingCode}). ¡Gracias por confiar en nosotros!`
+  }),
+
+  finalizado: (data: RentalEmailData): EmailTemplate => ({
+    subject: `🎉 ¡Arriendo completado! Tu garantía está en proceso - ${data.trackingCode}`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            .container { max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif; }
+            .header { background: #6f42c1; color: white; padding: 20px; text-align: center; }
+            .content { padding: 20px; }
+            .completion-box { background: #f8f9fa; border: 2px solid #6f42c1; padding: 15px; margin: 20px 0; text-align: center; }
+            .tracking-link { background: #6f42c1; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 0; }
+            .guarantee-info { background: #e7f3ff; padding: 15px; margin: 15px 0; border-left: 4px solid #007bff; }
+            .rating { background: #f0f8f0; padding: 15px; margin: 15px 0; border-left: 4px solid #28a745; }
+            .footer { background: #2E5CA6; color: white; padding: 15px; text-align: center; font-size: 12px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>¡Arriendo Completado! 🎊</h1>
+              <h2>¡Gracias ${data.customerName}!</h2>
+            </div>
+            
+            <div class="content">
+              <p>¡Fantástico! Tu arriendo ha sido completado exitosamente. Todo salió perfecto.</p>
+              
+              <div class="completion-box">
+                <h3>✨ Resumen Final</h3>
+                <p><strong>Cajas utilizadas:</strong> ${data.totalBoxes}</p>
+                <p><strong>Estado:</strong> Completado</p>
+                <a href="${data.trackingUrl}" class="tracking-link">Ver Resumen Completo</a>
+                <p style="font-size: 12px; color: #666;">Código: ${data.trackingCode}</p>
+              </div>
+              
+              <div class="guarantee-info">
+                <h3>💰 Devolución de Garantía</h3>
+                <p><strong>Monto a devolver:</strong> $${data.guaranteeAmount.toLocaleString()}</p>
+                <p>Tu garantía está siendo procesada y será devuelta en los próximos días hábiles.</p>
+              </div>
+              
+              <div class="rating">
+                <h3>⭐ ¿Cómo fue tu experiencia?</h3>
+                <p>Nos encantaría conocer tu opinión para seguir mejorando nuestro servicio.</p>
+                <p>Escríbenos a: <strong>info@arriendocajas.cl</strong></p>
+              </div>
+              
+              <h3>🔄 ¿Necesitas cajas otra vez?</h3>
+              <p>Si en el futuro necesitas nuestro servicio nuevamente, ¡estaremos encantados de ayudarte! Ya tienes una cuenta creada, así que será aún más fácil.</p>
+              
+              <p><strong>¡Muchas gracias por elegir Arriendo Cajas!</strong></p>
+            </div>
+            
+            <div class="footer">
+              <p>Arriendo Cajas - Tu partner en organización</p>
+              <p>Síguenos en redes sociales para tips de organización</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `,
+    text: `¡Hola ${data.customerName}! Tu arriendo ha sido completado. Garantía de $${data.guaranteeAmount.toLocaleString()} en proceso de devolución. Seguimiento: ${data.trackingUrl} (${data.trackingCode}). ¡Gracias por elegirnos!`
+  }),
+
+  cancelada: (data: RentalEmailData): EmailTemplate => ({
+    subject: `Arriendo cancelado - Reembolso en proceso - ${data.trackingCode}`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            .container { max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif; }
+            .header { background: #dc3545; color: white; padding: 20px; text-align: center; }
+            .content { padding: 20px; }
+            .cancellation-box { background: #f8f9fa; border: 2px solid #dc3545; padding: 15px; margin: 20px 0; text-align: center; }
+            .tracking-link { background: #dc3545; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 0; }
+            .refund-info { background: #fff3cd; padding: 15px; margin: 15px 0; border-left: 4px solid #ffc107; }
+            .support { background: #e7f3ff; padding: 15px; margin: 15px 0; border-left: 4px solid #007bff; }
+            .footer { background: #2E5CA6; color: white; padding: 15px; text-align: center; font-size: 12px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>Arriendo Cancelado</h1>
+              <h2>Hola ${data.customerName}</h2>
+            </div>
+            
+            <div class="content">
+              <p>Tu arriendo ha sido cancelado según tu solicitud. Sentimos que no hayamos podido completar el servicio.</p>
+              
+              <div class="cancellation-box">
+                <h3>❌ Estado de Cancelación</h3>
+                <p><strong>Código de referencia:</strong> ${data.trackingCode}</p>
+                <a href="${data.trackingUrl}" class="tracking-link">Ver Detalles</a>
+              </div>
+              
+              <div class="refund-info">
+                <h3>💸 Información de Reembolso</h3>
+                <p><strong>Monto pagado:</strong> $${data.totalAmount.toLocaleString()}</p>
+                <p>Estamos procesando tu reembolso completo. Será devuelto por el mismo medio de pago en los próximos días hábiles.</p>
+              </div>
+              
+              <div class="support">
+                <h3>🤝 ¿Necesitas Ayuda?</h3>
+                <p>Si tienes preguntas sobre la cancelación o el reembolso, no dudes en contactarnos:</p>
+                <ul>
+                  <li>Email: <strong>info@arriendocajas.cl</strong></li>
+                  <li>Te responderemos a la brevedad</li>
+                </ul>
+              </div>
+              
+              <h3>🔄 ¿Quieres intentar de nuevo?</h3>
+              <p>Si cambias de opinión o necesitas nuestro servicio en el futuro, estaremos encantados de ayudarte. Tu cuenta permanece activa para futuras solicitudes.</p>
+              
+              <p>Lamentamos cualquier inconveniente y esperamos poder servirte mejor en una próxima oportunidad.</p>
+            </div>
+            
+            <div class="footer">
+              <p>Arriendo Cajas - Siempre buscando mejorar</p>
+              <p>Tu feedback es importante: info@arriendocajas.cl</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `,
+    text: `Hola ${data.customerName}, tu arriendo ${data.trackingCode} ha sido cancelado. Reembolso de $${data.totalAmount.toLocaleString()} en proceso. Detalles: ${data.trackingUrl}. Consultas: info@arriendocajas.cl`
+  })
+};
+
+// Function to generate tracking URL
+export function generateTrackingUrl(rutDigits: string, trackingCode: string): string {
+  const baseUrl = process.env.REPL_SLUG ? 
+    `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co` : 
+    'http://localhost:5000';
+  return `${baseUrl}/track/${rutDigits}/${trackingCode}`;
+}
