@@ -24,8 +24,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const { seedInitialData } = await import("./seedData");
   await seedInitialData();
 
-  // Legacy auth middleware (keep for compatibility)
-  await setupAuth(app);
+  // Legacy auth middleware (disabled for public access)
+  // await setupAuth(app);
 
   // Middleware to check admin session
   const requireAdminSession = (req: any, res: any, next: any) => {
@@ -35,16 +35,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return res.status(401).json({ message: "Unauthorized" });
   };
 
-  // Auth routes
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      res.json(user);
-    } catch (error) {
-      console.error("Error fetching user:", error);
-      res.status(500).json({ message: "Failed to fetch user" });
-    }
+  // Auth routes (disabled for public access)
+  app.get('/api/auth/user', async (req: any, res) => {
+    res.status(401).json({ message: "Unauthorized" });
   });
 
   // User management routes (admin only)
@@ -378,12 +371,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Delivery task routes
-  app.get('/api/delivery-tasks', isAuthenticated, async (req: any, res) => {
+  // Delivery task routes (disabled for public access)
+  app.get('/api/delivery-tasks', requireAdminSession, async (req: any, res) => {
     try {
-      const user = await storage.getUser(req.user.claims.sub);
-      const driverId = user?.role === 'driver' ? req.user.claims.sub : undefined;
-      const tasks = await storage.getDeliveryTasks(driverId);
+      const tasks = await storage.getDeliveryTasks();
       res.json(tasks);
     } catch (error) {
       console.error("Error fetching delivery tasks:", error);
@@ -391,7 +382,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/delivery-tasks', isAuthenticated, async (req, res) => {
+  app.post('/api/delivery-tasks', requireAdminSession, async (req, res) => {
     try {
       const taskData = insertDeliveryTaskSchema.parse(req.body);
       const task = await storage.createDeliveryTask(taskData);
@@ -402,7 +393,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/delivery-tasks/:id', isAuthenticated, async (req, res) => {
+  app.put('/api/delivery-tasks/:id', requireAdminSession, async (req, res) => {
     try {
       const taskData = insertDeliveryTaskSchema.partial().parse(req.body);
       const task = await storage.updateDeliveryTask(req.params.id, taskData);
