@@ -536,47 +536,64 @@ export class DatabaseStorage implements IStorage {
     return updatedTask;
   }
 
-  // Dashboard metrics
-  async getDashboardMetrics() {
-    // Count boxes currently in rental (rented status)
+  // Dashboard metrics with optional date filtering
+  async getDashboardMetrics(startDate?: Date, endDate?: Date) {
+    // Set default date range if not provided (last 30 days)
+    if (!startDate) {
+      startDate = new Date();
+      startDate.setDate(startDate.getDate() - 30);
+    }
+    if (!endDate) {
+      endDate = new Date();
+    }
+
+    // Count boxes currently in rental (rented status) - no date filter for current status
     const activeBoxesResult = await db
       .select({ count: count() })
       .from(boxes)
       .where(eq(boxes.status, "rented"));
 
+    // Count pending deliveries - no date filter for current status
     const pendingDeliveriesResult = await db
       .select({ count: count() })
       .from(deliveryTasks)
       .where(eq(deliveryTasks.status, "assigned"));
 
-    const monthlyRevenueResult = await db
+    // Revenue for the selected period
+    const revenueResult = await db
       .select({ 
         total: sql<number>`COALESCE(SUM(CAST(${rentals.totalAmount} AS DECIMAL)), 0)` 
       })
       .from(rentals)
       .where(
         and(
-          sql`EXTRACT(MONTH FROM ${rentals.createdAt}) = EXTRACT(MONTH FROM CURRENT_DATE)`,
-          sql`EXTRACT(YEAR FROM ${rentals.createdAt}) = EXTRACT(YEAR FROM CURRENT_DATE)`
+          sql`${rentals.createdAt} >= ${startDate}`,
+          sql`${rentals.createdAt} <= ${endDate}`,
+          sql`${rentals.status} != 'cancelado'`
         )
       );
 
+    // Active customers in the selected period
     const activeCustomersResult = await db
-      .select({ count: count() })
+      .select({ count: sql<number>`COUNT(DISTINCT ${rentals.customerId})` })
       .from(rentals)
-      .where(or(
-        eq(rentals.status, "entregada"),
-        eq(rentals.status, "pagada")
-      ));
+      .where(
+        and(
+          sql`${rentals.createdAt} >= ${startDate}`,
+          sql`${rentals.createdAt} <= ${endDate}`,
+          sql`${rentals.status} != 'cancelado'`
+        )
+      );
 
-    // Status counts
+    // Status counts from current rental status (not filtered by date)
     const statusCountsResult = await db
       .select({
-        status: boxes.status,
+        status: rentals.status,
         count: count()
       })
-      .from(boxes)
-      .groupBy(boxes.status);
+      .from(rentals)
+      .where(sql`${rentals.status} IN ('pendiente', 'pagada', 'entregada', 'retirada', 'finalizado')`)
+      .groupBy(rentals.status);
 
     const statusCounts = statusCountsResult.reduce((acc, item) => {
       if (item.status) {
@@ -588,10 +605,28 @@ export class DatabaseStorage implements IStorage {
     return {
       activeBoxes: activeBoxesResult[0]?.count || 0,
       pendingDeliveries: pendingDeliveriesResult[0]?.count || 0,
-      monthlyRevenue: monthlyRevenueResult[0]?.total || 0,
+      monthlyRevenue: revenueResult[0]?.total || 0,
       activeCustomers: activeCustomersResult[0]?.count || 0,
       statusCounts,
     };
+  }
+
+  async resetTestData(): Promise<number> {
+    try {
+      // Delete recent test rentals (created in the last 2 days for testing purposes)
+      const twoDaysAgo = new Date();
+      twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+      
+      const result = await db
+        .delete(rentals)
+        .where(sql`${rentals.createdAt} >= ${twoDaysAgo}`);
+      
+      console.log(`Reset test data: deleted ${result.rowCount || 0} recent rentals`);
+      return result.rowCount || 0;
+    } catch (error) {
+      console.error("Error resetting test data:", error);
+      return 0;
+    }
   }
 
   // Initialize default admin user

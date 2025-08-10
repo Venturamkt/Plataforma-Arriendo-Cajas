@@ -196,14 +196,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Dashboard metrics
+  // Dashboard metrics with date filter
   app.get('/api/dashboard/metrics', requireAdminSession, async (req, res) => {
     try {
-      const metrics = await storage.getDashboardMetrics();
+      const { startDate, endDate } = req.query;
+      const metrics = await storage.getDashboardMetrics(
+        startDate ? new Date(startDate as string) : undefined,
+        endDate ? new Date(endDate as string) : undefined
+      );
       res.json(metrics);
     } catch (error) {
       console.error("Error fetching metrics:", error);
       res.status(500).json({ message: "Failed to fetch metrics" });
+    }
+  });
+
+  // Reset test data endpoint
+  app.delete('/api/rentals/reset-test-data', requireAdminSession, async (req, res) => {
+    try {
+      // Delete all rentals marked as test data or created in the last day for testing
+      const result = await storage.resetTestData();
+      res.json({ message: "Test data reset successfully", deletedCount: result });
+    } catch (error) {
+      console.error("Error resetting test data:", error);
+      res.status(500).json({ message: "Failed to reset test data" });
     }
   });
 
