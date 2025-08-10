@@ -166,9 +166,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   private async hashPassword(password: string): Promise<string> {
-    const bcrypt = require('bcrypt');
+    const bcrypt = await import('bcrypt');
     const saltRounds = 12;
-    return await bcrypt.hash(password, saltRounds);
+    return await bcrypt.default.hash(password, saltRounds);
   }
 
   // Customer operations
