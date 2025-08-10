@@ -198,6 +198,10 @@ export class DatabaseStorage implements IStorage {
       ...rental,
       trackingCode
     }).returning();
+
+    // Assign available boxes to this rental and mark them as rented
+    await this.assignBoxesToRental(newRental.id, rental.totalBoxes);
+    
     return newRental;
   }
 
@@ -216,7 +220,86 @@ export class DatabaseStorage implements IStorage {
       .set({ ...rental, updatedAt: new Date() })
       .where(eq(rentals.id, id))
       .returning();
+
+    // If totalBoxes changed, reassign boxes
+    if (rental.totalBoxes && updatedRental) {
+      await this.reassignBoxesToRental(id, rental.totalBoxes);
+    }
+
+    // If status changed to finalizado or cancelada, free up the boxes
+    if (rental.status && (rental.status === 'finalizado' || rental.status === 'cancelada')) {
+      await this.freeBoxesFromRental(id);
+    }
+    
     return updatedRental;
+  }
+
+  private async assignBoxesToRental(rentalId: string, totalBoxes: number): Promise<void> {
+    // Get available boxes
+    const availableBoxes = await db
+      .select()
+      .from(boxes)
+      .where(eq(boxes.status, "available"))
+      .limit(totalBoxes);
+
+    // Create rental_boxes relationships and update box status
+    for (const box of availableBoxes) {
+      await db.insert(rentalBoxes).values({
+        rentalId,
+        boxId: box.id,
+        status: "assigned"
+      });
+
+      await db
+        .update(boxes)
+        .set({ status: "rented" })
+        .where(eq(boxes.id, box.id));
+    }
+  }
+
+  private async reassignBoxesToRental(rentalId: string, newTotalBoxes: number): Promise<void> {
+    // Get currently assigned boxes
+    const currentAssignments = await db
+      .select()
+      .from(rentalBoxes)
+      .where(eq(rentalBoxes.rentalId, rentalId));
+
+    const currentCount = currentAssignments.length;
+
+    if (newTotalBoxes > currentCount) {
+      // Need more boxes - assign additional ones
+      const additionalBoxes = newTotalBoxes - currentCount;
+      await this.assignBoxesToRental(rentalId, additionalBoxes);
+    } else if (newTotalBoxes < currentCount) {
+      // Need fewer boxes - free up some
+      const boxesToFree = currentAssignments.slice(newTotalBoxes);
+      for (const assignment of boxesToFree) {
+        await db.delete(rentalBoxes).where(eq(rentalBoxes.id, assignment.id));
+        await db
+          .update(boxes)
+          .set({ status: "available" })
+          .where(eq(boxes.id, assignment.boxId));
+      }
+    }
+  }
+
+  private async freeBoxesFromRental(rentalId: string): Promise<void> {
+    // Get all boxes assigned to this rental
+    const assignments = await db
+      .select()
+      .from(rentalBoxes)
+      .where(eq(rentalBoxes.rentalId, rentalId));
+
+    // Free up all boxes
+    for (const assignment of assignments) {
+      await db
+        .update(boxes)
+        .set({ status: "available" })
+        .where(eq(boxes.id, assignment.boxId));
+    }
+
+    // Remove rental_boxes relationships
+    await db.delete(rentalBoxes).where(eq(rentalBoxes.rentalId, rentalId));
   }
 
   async getRentalsByCustomer(customerId: string): Promise<Rental[]> {
@@ -300,10 +383,11 @@ export class DatabaseStorage implements IStorage {
 
   // Dashboard metrics
   async getDashboardMetrics() {
+    // Count boxes currently in rental (rented status)
     const activeBoxesResult = await db
       .select({ count: count() })
       .from(boxes)
-      .where(eq(boxes.status, "available"));
+      .where(eq(boxes.status, "rented"));
 
     const pendingDeliveriesResult = await db
       .select({ count: count() })
