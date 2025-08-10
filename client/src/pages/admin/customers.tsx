@@ -1378,7 +1378,7 @@ export default function AdminCustomers() {
                                           🚛
                                           {mostRecentRental.assignedDriver ? (
                                             <div className="flex items-center gap-1">
-                                              <span className="text-green-600 font-medium">{mostRecentRental.assignedDriver}</span>
+                                              <span className="text-green-600 font-medium">{mostRecentRental.driverName || mostRecentRental.assignedDriver}</span>
                                               <Button 
                                                 size="sm" 
                                                 variant="outline" 
@@ -1659,7 +1659,7 @@ export default function AdminCustomers() {
                                       🚛
                                       {mostRecentRental.assignedDriver ? (
                                         <div className="flex items-center gap-2">
-                                          <span className="text-sm text-green-600 font-medium">{mostRecentRental.assignedDriver}</span>
+                                          <span className="text-sm text-green-600 font-medium">{mostRecentRental.driverName || mostRecentRental.assignedDriver}</span>
                                           <Button 
                                             size="sm" 
                                             variant="outline" 

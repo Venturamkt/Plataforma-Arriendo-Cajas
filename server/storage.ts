@@ -6,6 +6,7 @@ import {
   rentalBoxes,
   boxMovements,
   deliveryTasks,
+  driverUsers,
   type User,
   type UpsertUser,
   type Customer,
@@ -260,8 +261,28 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Rental operations
-  async getRentals(): Promise<Rental[]> {
-    return await db.select().from(rentals).orderBy(desc(rentals.createdAt));
+  async getRentals(): Promise<any[]> {
+    // Get rentals with driver information
+    const rentalsWithDrivers = await db
+      .select({
+        rental: rentals,
+        driver: {
+          id: driverUsers.id,
+          firstName: driverUsers.firstName,
+          lastName: driverUsers.lastName,
+          email: driverUsers.email
+        }
+      })
+      .from(rentals)
+      .leftJoin(driverUsers, eq(rentals.assignedDriver, driverUsers.id))
+      .orderBy(desc(rentals.createdAt));
+
+    // Transform the data to include driver name in the rental object
+    return rentalsWithDrivers.map(item => ({
+      ...item.rental,
+      driverName: item.driver ? `${item.driver.firstName} ${item.driver.lastName}` : null,
+      driverEmail: item.driver?.email || null
+    }));
   }
 
   async getRental(id: string): Promise<Rental | undefined> {
