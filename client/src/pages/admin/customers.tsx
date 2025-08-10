@@ -48,7 +48,8 @@ export default function AdminCustomers() {
     notes: "",
     boxSize: "mediano",
     customPrice: 2000,
-    discount: 0
+    discount: 0,
+    additionalProducts: [] as Array<{name: string, price: number, quantity: number}>
   });
   const [availabilityCheck, setAvailabilityCheck] = useState<{
     available: number;
@@ -187,7 +188,8 @@ export default function AdminCustomers() {
       pickupAddress: customer.address || "",
       notes: "",
       customPrice: 2000,
-      discount: 0
+      discount: 0,
+      additionalProducts: []
     });
     setShowRentalDialog(true);
   };
@@ -285,7 +287,8 @@ export default function AdminCustomers() {
         notes: "",
         boxSize: "mediano",
         customPrice: 2000,
-        discount: 0
+        discount: 0,
+        additionalProducts: []
       });
       
       // Show tracking code to admin
@@ -337,11 +340,19 @@ export default function AdminCustomers() {
     const returnDate = new Date(deliveryDate);
     returnDate.setDate(returnDate.getDate() + newRental.rentalDays);
 
+    const guaranteeAmount = newRental.boxQuantity * 2000; // $2,000 por caja
+    const additionalTotal = newRental.additionalProducts.reduce((sum, product) => 
+      sum + (product.price * product.quantity), 0);
+    const rentalTotal = (newRental.customPrice || 2000) * newRental.boxQuantity * newRental.rentalDays * (1 - (newRental.discount || 0) / 100);
+    
     createRentalMutation.mutate({
       customerId: selectedCustomerForRental.id,
       totalBoxes: newRental.boxQuantity.toString(),
       dailyRate: (newRental.customPrice || 2000).toString(),
-      totalAmount: ((newRental.customPrice || 2000) * newRental.boxQuantity * newRental.rentalDays * (1 - (newRental.discount || 0) / 100)).toString(),
+      totalAmount: (rentalTotal + additionalTotal).toString(),
+      guaranteeAmount: guaranteeAmount.toString(),
+      additionalProducts: JSON.stringify(newRental.additionalProducts),
+      additionalProductsTotal: additionalTotal.toString(),
       deliveryDate: deliveryDate,
       returnDate: returnDate,
       deliveryAddress: newRental.deliveryAddress,
@@ -632,6 +643,85 @@ export default function AdminCustomers() {
                         placeholder="0"
                       />
                     </div>
+
+                    {/* Additional Products Section */}
+                    <div className="col-span-2 border-t pt-4">
+                      <h4 className="font-semibold mb-3 flex items-center gap-2">
+                        <Package className="h-4 w-4" />
+                        Productos Adicionales
+                      </h4>
+                      
+                      {newRental.additionalProducts.map((product, index) => (
+                        <div key={index} className="flex gap-2 mb-2 items-end">
+                          <div className="flex-1">
+                            <Label className="text-xs">Producto</Label>
+                            <Input
+                              placeholder="Ej: Candados, Etiquetas, etc."
+                              value={product.name}
+                              onChange={(e) => {
+                                const updated = [...newRental.additionalProducts];
+                                updated[index].name = e.target.value;
+                                setNewRental({ ...newRental, additionalProducts: updated });
+                              }}
+                            />
+                          </div>
+                          <div className="w-20">
+                            <Label className="text-xs">Cant.</Label>
+                            <Input
+                              type="number"
+                              min="1"
+                              value={product.quantity}
+                              onChange={(e) => {
+                                const updated = [...newRental.additionalProducts];
+                                updated[index].quantity = parseInt(e.target.value) || 1;
+                                setNewRental({ ...newRental, additionalProducts: updated });
+                              }}
+                            />
+                          </div>
+                          <div className="w-28">
+                            <Label className="text-xs">Precio c/u</Label>
+                            <Input
+                              type="number"
+                              min="0"
+                              step="100"
+                              value={product.price}
+                              onChange={(e) => {
+                                const updated = [...newRental.additionalProducts];
+                                updated[index].price = parseInt(e.target.value) || 0;
+                                setNewRental({ ...newRental, additionalProducts: updated });
+                              }}
+                            />
+                          </div>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const updated = newRental.additionalProducts.filter((_, i) => i !== index);
+                              setNewRental({ ...newRental, additionalProducts: updated });
+                            }}
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            ✕
+                          </Button>
+                        </div>
+                      ))}
+                      
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setNewRental({
+                            ...newRental,
+                            additionalProducts: [...newRental.additionalProducts, { name: "", price: 0, quantity: 1 }]
+                          });
+                        }}
+                        className="text-blue-600 hover:text-blue-700"
+                      >
+                        + Agregar Producto
+                      </Button>
+                    </div>
                   </div>
 
                   {/* Dates and Addresses */}
@@ -718,16 +808,54 @@ export default function AdminCustomers() {
                 {/* Price Calculation */}
                 {newRental.boxQuantity && newRental.rentalDays && (
                   <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                    <h4 className="font-semibold mb-2">Resumen de Precio</h4>
-                    <div className="text-sm space-y-1">
-                      <p>{newRental.boxQuantity} cajas × {newRental.rentalDays} días × ${(newRental.customPrice || 2000).toLocaleString()} = ${((newRental.customPrice || 2000) * newRental.boxQuantity * newRental.rentalDays).toLocaleString()}</p>
-                      {newRental.discount > 0 && (
-                        <>
-                          <p className="text-orange-600">Descuento aplicado: {newRental.discount}%</p>
-                          <p className="line-through text-gray-500">Subtotal: ${((newRental.customPrice || 2000) * newRental.boxQuantity * newRental.rentalDays).toLocaleString()}</p>
-                        </>
+                    <h4 className="font-semibold mb-3">Resumen de Precio</h4>
+                    <div className="text-sm space-y-2">
+                      {/* Rental calculation */}
+                      <div className="border-b pb-2">
+                        <p className="font-medium text-blue-800">Arriendo de Cajas:</p>
+                        <p>{newRental.boxQuantity} cajas × {newRental.rentalDays} días × ${(newRental.customPrice || 2000).toLocaleString()} = ${((newRental.customPrice || 2000) * newRental.boxQuantity * newRental.rentalDays).toLocaleString()}</p>
+                        {newRental.discount > 0 && (
+                          <>
+                            <p className="text-orange-600">Descuento aplicado: {newRental.discount}%</p>
+                            <p className="line-through text-gray-500">Subtotal: ${((newRental.customPrice || 2000) * newRental.boxQuantity * newRental.rentalDays).toLocaleString()}</p>
+                          </>
+                        )}
+                        <p className="font-medium">Subtotal Arriendo: ${Math.round((newRental.customPrice || 2000) * newRental.boxQuantity * newRental.rentalDays * (1 - (newRental.discount || 0) / 100)).toLocaleString()}</p>
+                      </div>
+
+                      {/* Additional products */}
+                      {newRental.additionalProducts.length > 0 && (
+                        <div className="border-b pb-2">
+                          <p className="font-medium text-green-800">Productos Adicionales:</p>
+                          {newRental.additionalProducts.map((product, index) => (
+                            <p key={index} className="text-xs">
+                              {product.name}: {product.quantity} × ${product.price.toLocaleString()} = ${(product.quantity * product.price).toLocaleString()}
+                            </p>
+                          ))}
+                          <p className="font-medium">Subtotal Productos: ${newRental.additionalProducts.reduce((sum, p) => sum + (p.price * p.quantity), 0).toLocaleString()}</p>
+                        </div>
                       )}
-                      <p className="font-semibold text-lg">Total: ${Math.round((newRental.customPrice || 2000) * newRental.boxQuantity * newRental.rentalDays * (1 - (newRental.discount || 0) / 100)).toLocaleString()}</p>
+
+                      {/* Guarantee */}
+                      <div className="border-b pb-2">
+                        <p className="font-medium text-purple-800">Garantía:</p>
+                        <p>{newRental.boxQuantity} cajas × $2.000 = ${(newRental.boxQuantity * 2000).toLocaleString()}</p>
+                        <p className="text-xs text-gray-600">*Se devuelve al finalizar el arriendo</p>
+                      </div>
+
+                      {/* Total */}
+                      <div className="pt-2">
+                        <p className="font-bold text-lg text-blue-900">
+                          Total a Pagar: ${(
+                            Math.round((newRental.customPrice || 2000) * newRental.boxQuantity * newRental.rentalDays * (1 - (newRental.discount || 0) / 100)) +
+                            newRental.additionalProducts.reduce((sum, p) => sum + (p.price * p.quantity), 0) +
+                            (newRental.boxQuantity * 2000)
+                          ).toLocaleString()}
+                        </p>
+                        <p className="text-xs text-gray-600">
+                          (Incluye ${(newRental.boxQuantity * 2000).toLocaleString()} de garantía)
+                        </p>
+                      </div>
                     </div>
                   </div>
                 )}

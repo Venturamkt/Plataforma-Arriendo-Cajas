@@ -113,6 +113,9 @@ export const rentals = pgTable("rentals", {
   totalBoxes: integer("total_boxes").notNull(),
   dailyRate: decimal("daily_rate", { precision: 10, scale: 2 }).notNull(),
   totalAmount: decimal("total_amount", { precision: 10, scale: 2 }),
+  guaranteeAmount: decimal("guarantee_amount", { precision: 10, scale: 2 }).notNull(),
+  additionalProducts: text("additional_products"), // JSON string for flexible products
+  additionalProductsTotal: decimal("additional_products_total", { precision: 10, scale: 2 }).default("0"),
   deliveryDate: timestamp("delivery_date").notNull(),
   returnDate: timestamp("return_date"),
   deliveryAddress: text("delivery_address"),

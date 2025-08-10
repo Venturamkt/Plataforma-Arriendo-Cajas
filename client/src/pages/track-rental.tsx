@@ -15,6 +15,9 @@ interface Rental {
   totalBoxes: number;
   dailyRate: string;
   totalAmount: string;
+  guaranteeAmount: string;
+  additionalProducts?: string;
+  additionalProductsTotal: string;
   deliveryDate: string;
   returnDate?: string;
   deliveryAddress: string;
@@ -212,8 +215,17 @@ export default function TrackRental() {
                 <div className="flex items-center gap-3">
                   <Package className="h-5 w-5 text-brand-blue" />
                   <div>
-                    <p className="text-sm text-gray-500">Total</p>
+                    <p className="text-sm text-gray-500">Total Arriendo</p>
                     <p className="font-semibold text-lg">${Number(rental.totalAmount).toLocaleString()}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <Package className="h-5 w-5 text-purple-600" />
+                  <div>
+                    <p className="text-sm text-gray-500">Garantía</p>
+                    <p className="font-semibold">${Number(rental.guaranteeAmount).toLocaleString()}</p>
+                    <p className="text-xs text-gray-500">Se devuelve al finalizar</p>
                   </div>
                 </div>
               </div>
@@ -272,6 +284,25 @@ export default function TrackRental() {
                   })}
                 </div>
               </div>
+
+              {/* Additional Products */}
+              {rental.additionalProducts && JSON.parse(rental.additionalProducts).length > 0 && (
+                <div className="border-t pt-4">
+                  <h4 className="font-semibold mb-2">Productos Adicionales</h4>
+                  <div className="bg-green-50 p-3 rounded-lg">
+                    {JSON.parse(rental.additionalProducts).map((product: any, index: number) => (
+                      <div key={index} className="flex justify-between items-center py-1">
+                        <span className="text-sm">{product.name} x{product.quantity}</span>
+                        <span className="font-medium">${(product.price * product.quantity).toLocaleString()}</span>
+                      </div>
+                    ))}
+                    <div className="border-t mt-2 pt-2 flex justify-between font-semibold">
+                      <span>Total Productos:</span>
+                      <span>${Number(rental.additionalProductsTotal).toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Notes */}
               {rental.notes && (
