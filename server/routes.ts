@@ -29,9 +29,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Middleware to check admin session
   const requireAdminSession = (req: any, res: any, next: any) => {
-    if (req.session?.admin?.type === 'admin') {
+    // Check both new and legacy auth systems
+    const isAdminNew = req.session?.currentUser?.type === 'admin';
+    const isAdminLegacy = req.session?.admin?.type === 'admin';
+    
+    if (isAdminNew || isAdminLegacy) {
       return next();
     }
+    console.log('Session check failed:', {
+      currentUser: req.session?.currentUser,
+      admin: req.session?.admin,
+      sessionExists: !!req.session
+    });
     return res.status(401).json({ message: "Unauthorized" });
   };
 

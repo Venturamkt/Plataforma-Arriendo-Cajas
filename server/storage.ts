@@ -140,10 +140,25 @@ export class DatabaseStorage implements IStorage {
 
   async deleteUser(id: string): Promise<boolean> {
     try {
+      // First check if user exists
+      const existingUser = await this.getUser(id);
+      if (!existingUser) {
+        console.log(`User with id ${id} not found`);
+        return false;
+      }
+
+      // Also delete from driver_users table if it's a driver
+      if (existingUser.role === 'driver') {
+        await db.delete(driverUsers).where(eq(driverUsers.id, id));
+      }
+
+      // Delete the user
       const result = await db
         .delete(users)
         .where(eq(users.id, id));
-      return true;
+      
+      console.log(`User deletion result:`, result);
+      return result.rowCount > 0;
     } catch (error) {
       console.error("Error deleting user:", error);
       return false;
