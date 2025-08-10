@@ -10,13 +10,13 @@ app.use(express.urlencoded({ extended: false }));
 // Serve static files from public directory
 app.use(express.static('public'));
 
-// Setup session middleware
+// Setup session middleware (minimal for public access)
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'your-secret-key-here',
+  secret: process.env.SESSION_SECRET || 'public-session-key',
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: false, // Set to true in production with HTTPS
+    secure: false,
     maxAge: 24 * 60 * 60 * 1000 // 24 hours
   }
 }));

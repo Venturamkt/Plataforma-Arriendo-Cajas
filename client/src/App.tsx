@@ -3,6 +3,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import HomePage from "@/pages/home-page";
 import LoginSelector from "@/pages/auth/login-selector";
 import CustomerLogin from "@/pages/auth/customer-login";
 import AdminLogin from "@/pages/auth/admin-login";
@@ -25,8 +26,11 @@ import NotFound from "@/pages/not-found";
 function Router() {
   return (
     <Switch>
-      {/* Main login selector */}
-      <Route path="/" component={LoginSelector} />
+      {/* Public home page */}
+      <Route path="/" component={HomePage} />
+      
+      {/* Login selector for old route */}
+      <Route path="/login" component={LoginSelector} />
       
       {/* Authentication routes */}
       <Route path="/auth/customer" component={CustomerLogin} />
