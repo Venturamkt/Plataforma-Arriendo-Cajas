@@ -583,6 +583,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User management routes
+  app.post('/api/users', requireAdminSession, async (req, res) => {
+    try {
+      const userData = {
+        id: `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        email: req.body.email,
+        firstName: req.body.firstName,
+        lastName: req.body.lastName,
+        role: req.body.role,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      
+      const newUser = await storage.upsertUser(userData);
+      res.json(newUser);
+    } catch (error) {
+      console.error("Error creating user:", error);
+      res.status(400).json({ message: "Failed to create user" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

@@ -358,7 +358,7 @@ export default function AdminInventory() {
             </Card>
 
             {/* Inventory Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
               {boxesLoading ? (
                 Array.from({ length: 8 }).map((_, i) => (
                   <Card key={i} className="animate-pulse">
@@ -388,47 +388,40 @@ export default function AdminInventory() {
                 </div>
               ) : (
                 filteredBoxes.map((box) => (
-                  <Card key={box.id} className="hover:shadow-md transition-shadow">
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <p className="text-sm text-gray-600">Código</p>
-                          <p className="font-semibold text-gray-900">{box.barcode}</p>
-                        </div>
+                  <Card key={box.id || `box-${Math.random()}`} className="hover:shadow-md transition-shadow">
+                    <CardContent className="p-3">
+                      <div className="flex items-center justify-between mb-2">
                         <BoxStatusBadge status={box.status} />
                       </div>
                       
-                      <div className="space-y-2">
+                      <div className="mb-3">
+                        <p className="text-xs text-gray-600">Código</p>
+                        <p className="text-sm font-semibold text-gray-900 truncate">{box.barcode}</p>
+                      </div>
+                      
+                      <div className="space-y-1 text-xs">
                         <div className="flex justify-between">
-                          <span className="text-sm text-gray-600">Tamaño:</span>
-                          <span className="text-sm font-medium">
-                            {box.size === 'medium' ? '60x40 cms' : box.size === 'small' ? 'Pequeño' : 'Grande'}
-                          </span>
+                          <span className="text-gray-600">Tamaño:</span>
+                          <span className="font-medium">60x40 cms</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-sm text-gray-600">Condición:</span>
-                          <span className="text-sm font-medium">
+                          <span className="text-gray-600">Condición:</span>
+                          <span className="font-medium">
                             {box.condition === 'excellent' ? 'Excelente' : 
                              box.condition === 'good' ? 'Buena' :
                              box.condition === 'fair' ? 'Regular' : 'Necesita reparación'}
                           </span>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-sm text-gray-600">Actualizado:</span>
-                          <span className="text-sm text-gray-500">
-                            {new Date(box.updatedAt).toLocaleDateString()}
-                          </span>
-                        </div>
                       </div>
                       
-                      <div className="mt-4 flex gap-2">
-                        <Button size="sm" variant="outline" className="flex-1">
-                          Ver Historial
+                      <div className="mt-3 flex gap-1">
+                        <Button size="sm" variant="outline" className="flex-1 text-xs px-2">
+                          Historial
                         </Button>
                         <Button 
                           size="sm" 
                           onClick={() => handleEditBox(box)}
-                          className="bg-brand-blue hover:bg-brand-blue text-white"
+                          className="flex-1 text-xs px-2 bg-brand-blue hover:bg-brand-blue text-white"
                         >
                           Editar
                         </Button>

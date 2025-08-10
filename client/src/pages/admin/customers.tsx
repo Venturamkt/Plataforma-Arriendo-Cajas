@@ -1328,6 +1328,20 @@ export default function AdminCustomers() {
                                     {activeRentals.length > 1 && (
                                       <div className="text-xs text-gray-500">+{activeRentals.length - 1} más</div>
                                     )}
+                                    
+                                    {/* Show driver assignment for non-pending rentals */}
+                                    {mostRecentRental.status !== 'pendiente' && (
+                                      <div className="text-xs text-gray-600 mt-1">
+                                        <div className="flex items-center gap-1">
+                                          🚛
+                                          {mostRecentRental.assignedDriver ? (
+                                            <span className="text-green-600 font-medium">{mostRecentRental.assignedDriver}</span>
+                                          ) : (
+                                            <span className="text-red-500">Sin asignar</span>
+                                          )}
+                                        </div>
+                                      </div>
+                                    )}
                                   </div>
                                 );
                               })()}
@@ -1566,6 +1580,30 @@ export default function AdminCustomers() {
                           <p className="text-sm text-gray-900">
                             {new Date(stats.lastRental.createdAt).toLocaleDateString()}
                           </p>
+                          
+                          {/* Show driver assignment in card view for active rentals */}
+                          {stats.active > 0 && (() => {
+                            const activeRentals = getCustomerActiveRentals(customer.id);
+                            if (activeRentals.length > 0) {
+                              const mostRecentRental = activeRentals[0];
+                              if (mostRecentRental.status !== 'pendiente') {
+                                return (
+                                  <div className="mt-2">
+                                    <p className="text-xs text-gray-600 mb-1">Repartidor:</p>
+                                    <div className="flex items-center gap-1">
+                                      🚛
+                                      {mostRecentRental.assignedDriver ? (
+                                        <span className="text-sm text-green-600 font-medium">{mostRecentRental.assignedDriver}</span>
+                                      ) : (
+                                        <span className="text-sm text-red-500">Sin asignar</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              }
+                            }
+                            return null;
+                          })()}
                         </div>
                       )}
 

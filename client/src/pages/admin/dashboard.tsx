@@ -92,7 +92,7 @@ export default function AdminDashboard() {
     };
     
     return {
-      status,
+      status: status === 'rented' ? 'Arrendadas' : status,
       count: count as number,
       color: colorMap[status] || 'bg-gray-400',
       percentage: total > 0 ? ((count as number) / total) * 100 : 0,
