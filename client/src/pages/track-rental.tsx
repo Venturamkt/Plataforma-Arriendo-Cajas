@@ -33,6 +33,9 @@ function formatRut(rut: string): string {
   
   if (cleanRut.length <= 1) return cleanRut;
   
+  // Don't format if less than 7 digits (too short for meaningful formatting)
+  if (cleanRut.length < 7) return cleanRut;
+  
   // Separate the main number from the check digit
   const mainNumber = cleanRut.slice(0, -1);
   const checkDigit = cleanRut.slice(-1);
@@ -41,7 +44,7 @@ function formatRut(rut: string): string {
   let formatted = mainNumber.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
   
   // Add the check digit with hyphen
-  if (checkDigit) {
+  if (checkDigit && cleanRut.length >= 8) {
     formatted += `-${checkDigit}`;
   }
   
@@ -96,7 +99,7 @@ export default function TrackRental() {
       if (!res.ok) throw new Error('No encontrado');
       return res.json();
     }),
-    enabled: rutDigits.length === 4 && trackingCode.length >= 6 && rawRut.length >= 8,
+    enabled: rutDigits.length === 4 && trackingCode.length >= 6,
     retry: false,
   });
 
