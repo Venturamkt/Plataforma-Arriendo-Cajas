@@ -33,8 +33,8 @@ function formatRut(rut: string): string {
   
   if (cleanRut.length <= 1) return cleanRut;
   
-  // Don't format if less than 7 digits (too short for meaningful formatting)
-  if (cleanRut.length < 7) return cleanRut;
+  // Only format complete RUTs (8-9 digits)
+  if (cleanRut.length < 8) return cleanRut;
   
   // Separate the main number from the check digit
   const mainNumber = cleanRut.slice(0, -1);
@@ -44,9 +44,7 @@ function formatRut(rut: string): string {
   let formatted = mainNumber.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
   
   // Add the check digit with hyphen
-  if (checkDigit && cleanRut.length >= 8) {
-    formatted += `-${checkDigit}`;
-  }
+  formatted += `-${checkDigit}`;
   
   return formatted;
 }
@@ -186,6 +184,9 @@ export default function TrackRental() {
                   onChange={handleRutChange}
                   placeholder="12.345.678-9"
                   className="text-center text-lg tracking-wider"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  spellCheck="false"
                 />
                 <p className="text-sm text-gray-500 mt-1">
                   Ingresa tu RUT completo, se formateará automáticamente
@@ -234,8 +235,17 @@ export default function TrackRental() {
         {error && (
           <Alert variant="destructive" className="mb-6">
             <AlertDescription>
-              No se encontró ningún arriendo con los datos proporcionados. 
-              Verifica que hayas ingresado correctamente los últimos 4 dígitos de tu RUT y el código de seguimiento.
+              <strong>No se encontró ningún arriendo con estos datos.</strong>
+              <br />
+              <br />
+              Verifica que hayas ingresado:
+              <br />
+              • Tu RUT completo (ejemplo: 16.220.939-6)
+              <br />
+              • El código de seguimiento exacto (8 caracteres, ejemplo: HO2RLARR)
+              <br />
+              <br />
+              Si el problema persiste, contacta a: <strong>jalarcon@arriendocajas.cl</strong>
             </AlertDescription>
           </Alert>
         )}
