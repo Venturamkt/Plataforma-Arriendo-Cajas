@@ -27,11 +27,57 @@ interface Rental {
   trackingCode?: string;
 }
 
+function formatRut(rut: string): string {
+  // Remove all non-numeric characters
+  const cleanRut = rut.replace(/\D/g, '');
+  
+  if (cleanRut.length <= 1) return cleanRut;
+  
+  // Separate the main number from the check digit
+  const mainNumber = cleanRut.slice(0, -1);
+  const checkDigit = cleanRut.slice(-1);
+  
+  // Format the main number with dots
+  let formatted = mainNumber.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  
+  // Add the check digit with hyphen
+  if (checkDigit) {
+    formatted += `-${checkDigit}`;
+  }
+  
+  return formatted;
+}
+
+function extractRutDigits(rut: string): string {
+  // Remove all non-numeric characters
+  const cleanRut = rut.replace(/\D/g, '');
+  
+  if (cleanRut.length < 5) return '';
+  
+  // Get the 4 digits before the check digit
+  const mainNumber = cleanRut.slice(0, -1);
+  return mainNumber.slice(-4);
+}
+
 export default function TrackRental() {
   const params = useParams();
+  const [rawRut, setRawRut] = useState("");
+  const [formattedRut, setFormattedRut] = useState("");
   const [rutDigits, setRutDigits] = useState("");
   const [trackingCode, setTrackingCode] = useState("");
   const [isSearching, setIsSearching] = useState(false);
+
+  const handleRutChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    const cleanValue = value.replace(/\D/g, '');
+    
+    // Limit to 9 digits (8 + 1 check digit)
+    if (cleanValue.length <= 9) {
+      setRawRut(cleanValue);
+      setFormattedRut(formatRut(cleanValue));
+      setRutDigits(extractRutDigits(cleanValue));
+    }
+  };
 
   // Auto-populate from URL parameters if present
   useEffect(() => {
@@ -48,14 +94,14 @@ export default function TrackRental() {
       if (!res.ok) throw new Error('No encontrado');
       return res.json();
     }),
-    enabled: rutDigits.length === 4 && trackingCode.length >= 6,
+    enabled: rutDigits.length === 4 && trackingCode.length >= 6 && rawRut.length >= 8,
     retry: false,
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (rutDigits.length !== 4) {
-      alert("Ingresa los últimos 4 dígitos de tu RUT");
+    if (rawRut.length < 8) {
+      alert("Ingresa un RUT válido");
       return;
     }
     if (trackingCode.length < 6) {
@@ -126,19 +172,18 @@ export default function TrackRental() {
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <Label htmlFor="rutDigits">Últimos 4 dígitos de tu RUT</Label>
+                <Label htmlFor="rut">RUT completo</Label>
                 <Input
-                  id="rutDigits"
+                  id="rut"
                   type="text"
-                  maxLength={4}
-                  pattern="[0-9]{4}"
-                  value={rutDigits}
-                  onChange={(e) => setRutDigits(e.target.value.replace(/\D/g, ''))}
-                  placeholder="1234"
-                  className="text-center text-lg tracking-widest"
+                  maxLength={12}
+                  value={formattedRut}
+                  onChange={handleRutChange}
+                  placeholder="12.345.678-9"
+                  className="text-center text-lg tracking-wider"
                 />
                 <p className="text-sm text-gray-500 mt-1">
-                  Ejemplo: Si tu RUT es 12.345.678-9, ingresa: 8679
+                  Ingresa tu RUT completo, se formateará automáticamente
                 </p>
               </div>
 
@@ -160,7 +205,7 @@ export default function TrackRental() {
               <Button 
                 type="submit" 
                 className="w-full bg-brand-blue hover:bg-brand-blue/90"
-                disabled={isLoading || rutDigits.length !== 4 || trackingCode.length < 6}
+                disabled={isLoading || rawRut.length < 8 || trackingCode.length < 6}
               >
                 {isLoading ? "Buscando..." : "Buscar Arriendo"}
               </Button>
