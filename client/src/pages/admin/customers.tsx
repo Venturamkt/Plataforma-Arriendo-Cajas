@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { 
   Search, Plus, User, MapPin, Calendar, Package, Edit, Trash2, Grid3X3,
   Table as TableIcon, Eye, Phone, Mail, CheckCircle, AlertTriangle, 
-  Download, QrCode, MessageSquare, Trash, ShoppingCart
+  Download, QrCode, MessageSquare, Trash, ShoppingCart, Building2, UserPlus
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -15,48 +15,152 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useToast } from "@/hooks/use-toast"
+import { Switch } from "@/components/ui/switch"
+import { apiRequest, queryClient } from "@/lib/queryClient"
 
-// Mock initial data
-const initialCustomers = [
-  {
-    id: 1,
-    name: "María González",
-    email: "maria.gonzalez@email.com",
-    phone: "+56 9 1234 5678",
-    rut: "12345678-9",
-    address: "Av. Providencia 1234, Santiago"
-  }
-]
+// Utility functions
+const formatRut = (rut: string) => {
+  if (!rut) return ""
+  const cleaned = rut.replace(/[^0-9kK]/g, "")
+  if (cleaned.length < 2) return cleaned
+  
+  const rutNumber = cleaned.slice(0, -1)
+  const dv = cleaned.slice(-1)
+  
+  let formatted = rutNumber.replace(/\B(?=(\d{3})+(?!\d))/g, ".")
+  return `${formatted}-${dv}`
+}
+
+const displayFormattedRut = (rut: string) => {
+  if (!rut) return ""
+  return formatRut(rut)
+}
 
 const Customers = () => {
   const [searchQuery, setSearchQuery] = useState("")
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('table')
   const [showNewCustomerDialog, setShowNewCustomerDialog] = useState(false)
+  const [showEditDialog, setShowEditDialog] = useState(false)
+  const [editingCustomer, setEditingCustomer] = useState<any>(null)
   const [newCustomer, setNewCustomer] = useState({
     name: "",
     email: "",
     phone: "",
     rut: ""
   })
+  const [formattedRut, setFormattedRut] = useState("")
   const { toast } = useToast()
 
-  // Simulate customers query
-  const customers = initialCustomers
-  const filteredCustomers = customers.filter(customer =>
+  // Fetch customers
+  const { data: customers = [], isLoading: customersLoading } = useQuery({
+    queryKey: ["/api/customers"],
+  })
+
+  // Create customer mutation
+  const createCustomerMutation = useMutation({
+    mutationFn: async (customer: any) => {
+      const res = await apiRequest("POST", "/api/customers", customer)
+      return res.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/customers"] })
+      toast({
+        title: "Cliente creado",
+        description: "El cliente ha sido agregado exitosamente"
+      })
+      setShowNewCustomerDialog(false)
+      setNewCustomer({ name: "", email: "", phone: "", rut: "" })
+      setFormattedRut("")
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Error al crear el cliente",
+        variant: "destructive"
+      })
+    }
+  })
+
+  // Update customer mutation
+  const updateCustomerMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: any }) => {
+      const res = await apiRequest("PUT", `/api/customers/${id}`, data)
+      return res.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/customers"] })
+      toast({
+        title: "Cliente actualizado",
+        description: "Los datos del cliente han sido actualizados"
+      })
+      setShowEditDialog(false)
+      setEditingCustomer(null)
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Error al actualizar el cliente",
+        variant: "destructive"
+      })
+    }
+  })
+
+  // Delete customer mutation
+  const deleteCustomerMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", `/api/customers/${id}`)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/customers"] })
+      toast({
+        title: "Cliente eliminado",
+        description: "El cliente ha sido eliminado del sistema"
+      })
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Error al eliminar el cliente",
+        variant: "destructive"
+      })
+    }
+  })
+
+  const filteredCustomers = (customers as any[]).filter((customer: any) =>
     customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     customer.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    customer.phone.includes(searchQuery)
+    (customer.phone && customer.phone.includes(searchQuery))
   )
 
-  const handleCreateCustomer = (e: React.FormEvent) => {
+  const handleCreateCustomer = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Simulate create
-    toast({
-      title: "Cliente creado",
-      description: `${newCustomer.name} ha sido agregado exitosamente`
-    })
-    setShowNewCustomerDialog(false)
-    setNewCustomer({ name: "", email: "", phone: "", rut: "" })
+    await createCustomerMutation.mutateAsync(newCustomer)
+  }
+
+  const handleEditCustomer = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (editingCustomer) {
+      await updateCustomerMutation.mutateAsync({
+        id: editingCustomer.id,
+        data: editingCustomer
+      })
+    }
+  }
+
+  const handleDeleteCustomer = async (id: number) => {
+    if (confirm("¿Estás seguro de que quieres eliminar este cliente?")) {
+      await deleteCustomerMutation.mutateAsync(id)
+    }
+  }
+
+  const handleRutChange = (value: string, isEditing = false) => {
+    const formatted = formatRut(value)
+    if (isEditing && editingCustomer) {
+      setEditingCustomer({ ...editingCustomer, rut: formatted })
+    } else {
+      setFormattedRut(formatted)
+      setNewCustomer({ ...newCustomer, rut: formatted })
+    }
   }
 
   return (
@@ -152,8 +256,8 @@ const Customers = () => {
                       <Label htmlFor="rut">RUT</Label>
                       <Input
                         id="rut"
-                        value={newCustomer.rut}
-                        onChange={(e) => setNewCustomer({ ...newCustomer, rut: e.target.value })}
+                        value={formattedRut}
+                        onChange={(e) => handleRutChange(e.target.value)}
                         placeholder="12345678-9"
                       />
                     </div>
@@ -181,6 +285,74 @@ const Customers = () => {
           </div>
         </CardHeader>
       </Card>
+
+      {/* Edit Customer Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="w-full max-w-md mx-4 sm:mx-auto">
+          <DialogHeader>
+            <DialogTitle>Editar Cliente</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleEditCustomer} className="space-y-4">
+            <div>
+              <Label htmlFor="edit-name">Nombre *</Label>
+              <Input
+                id="edit-name"
+                value={editingCustomer?.name || ""}
+                onChange={(e) => setEditingCustomer({ ...editingCustomer, name: e.target.value })}
+                placeholder="Nombre completo"
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-email">Email *</Label>
+              <Input
+                id="edit-email"
+                type="email"
+                value={editingCustomer?.email || ""}
+                onChange={(e) => setEditingCustomer({ ...editingCustomer, email: e.target.value })}
+                placeholder="correo@ejemplo.com"
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-phone">Teléfono</Label>
+              <Input
+                id="edit-phone"
+                value={editingCustomer?.phone || ""}
+                onChange={(e) => setEditingCustomer({ ...editingCustomer, phone: e.target.value })}
+                placeholder="+56 9 1234 5678"
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-rut">RUT</Label>
+              <Input
+                id="edit-rut"
+                value={editingCustomer?.rut || ""}
+                onChange={(e) => handleRutChange(e.target.value, true)}
+                placeholder="12345678-9"
+              />
+            </div>
+            
+            <div className="flex gap-2 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowEditDialog(false)}
+                className="flex-1"
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                disabled={updateCustomerMutation.isPending}
+                className="flex-1 bg-brand-blue hover:bg-blue-700 text-white"
+              >
+                {updateCustomerMutation.isPending ? "Actualizando..." : "Actualizar"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Customer Display */}
       {viewMode === 'table' ? (
@@ -217,8 +389,8 @@ const Customers = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredCustomers.map((customer) => {
-                      const initials = customer.name.split(' ').map(n => n[0]).join('').toUpperCase()
+                    {filteredCustomers.map((customer: any) => {
+                      const initials = customer.name.split(' ').map((n: string) => n[0]).join('').toUpperCase()
                       
                       return (
                         <TableRow key={customer.id}>
@@ -259,13 +431,23 @@ const Customers = () => {
                           </TableCell>
                           <TableCell className="text-center">
                             <div className="flex items-center justify-center gap-1">
-                              <Button variant="ghost" size="sm">
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm">
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => {
+                                  setEditingCustomer(customer)
+                                  setShowEditDialog(true)
+                                }}
+                              >
                                 <Edit className="h-4 w-4" />
                               </Button>
-                              <Button variant="ghost" size="sm" className="text-red-600">
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="text-red-600"
+                                onClick={() => handleDeleteCustomer(customer.id)}
+                                disabled={deleteCustomerMutation.isPending}
+                              >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </div>
@@ -282,8 +464,8 @@ const Customers = () => {
       ) : (
         // Cards view for mobile
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredCustomers.map((customer) => {
-            const initials = customer.name.split(' ').map(n => n[0]).join('').toUpperCase()
+          {filteredCustomers.map((customer: any) => {
+            const initials = customer.name.split(' ').map((n: string) => n[0]).join('').toUpperCase()
             
             return (
               <Card key={customer.id} className="hover:shadow-md transition-shadow">
@@ -325,13 +507,23 @@ const Customers = () => {
                       <span className="font-semibold">0</span> total
                     </div>
                     <div className="flex gap-1">
-                      <Button variant="ghost" size="sm">
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => {
+                          setEditingCustomer(customer)
+                          setShowEditDialog(true)
+                        }}
+                      >
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="sm" className="text-red-600">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-red-600"
+                        onClick={() => handleDeleteCustomer(customer.id)}
+                        disabled={deleteCustomerMutation.isPending}
+                      >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
