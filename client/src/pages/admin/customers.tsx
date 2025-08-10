@@ -416,7 +416,7 @@ export default function AdminCustomers() {
       sum + (product.price * product.quantity), 0);
     const rentalTotal = (newRental.customPrice || 2775) * (1 - (newRental.discount || 0) / 100);
     
-    createRentalMutation.mutate({
+    const requestData = {
       customerId: selectedCustomerForRental.id,
       totalBoxes: newRental.boxQuantity,
       dailyRate: (newRental.customPrice || 2775).toString(),
@@ -430,7 +430,12 @@ export default function AdminCustomers() {
       pickupAddress: newRental.pickupAddress || newRental.deliveryAddress,
       notes: newRental.notes || "",
       status: "pendiente"
-    });
+    };
+    
+    console.log("Frontend sending:", JSON.stringify(requestData, null, 2));
+    
+    createRentalMutation.mutate(requestData);
+
   };
 
   const filteredCustomers = customers?.filter((customer) => 

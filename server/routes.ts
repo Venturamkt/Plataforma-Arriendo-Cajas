@@ -233,6 +233,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/rentals', requireAdminSession, async (req, res) => {
     try {
+      console.log("Raw request body:", JSON.stringify(req.body, null, 2));
+      
       // Convert date strings to Date objects before validation
       const processedBody = {
         ...req.body,
@@ -240,11 +242,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         returnDate: req.body.returnDate ? new Date(req.body.returnDate) : undefined
       };
       
+      console.log("Processed body:", JSON.stringify(processedBody, null, 2));
+      console.log("DeliveryDate type:", typeof processedBody.deliveryDate);
+      console.log("ReturnDate type:", typeof processedBody.returnDate);
+      
       const rentalData = insertRentalSchema.parse(processedBody);
       const rental = await storage.createRental(rentalData);
       res.status(201).json(rental);
     } catch (error) {
       console.error("Error creating rental:", error);
+      console.error("Error details:", error);
       res.status(400).json({ message: "Failed to create rental" });
     }
   });
