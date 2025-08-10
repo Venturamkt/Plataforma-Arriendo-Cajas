@@ -151,9 +151,11 @@ export class DatabaseStorage implements IStorage {
 
   async updateUserPassword(id: string, password: string): Promise<boolean> {
     try {
+      // Hash the password before storing
+      const hashedPassword = await this.hashPassword(password);
       const [user] = await db
         .update(users)
-        .set({ password, updatedAt: new Date() })
+        .set({ password: hashedPassword, updatedAt: new Date() })
         .where(eq(users.id, id))
         .returning();
       return !!user;
@@ -161,6 +163,12 @@ export class DatabaseStorage implements IStorage {
       console.error("Error updating password:", error);
       return false;
     }
+  }
+
+  private async hashPassword(password: string): Promise<string> {
+    const bcrypt = require('bcrypt');
+    const saltRounds = 12;
+    return await bcrypt.hash(password, saltRounds);
   }
 
   // Customer operations
