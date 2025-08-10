@@ -55,9 +55,10 @@ function extractRutDigits(rut: string): string {
   if (cleanRut.length < 5) return '';
   
   // Get the last 4 digits before the check digit
-  // For 162209396, we want 0939 (positions -5 to -1, excluding check digit)
+  // For 162209396, we want 0939 (digits 5-8 from the end, excluding check digit)
   const withoutCheckDigit = cleanRut.slice(0, -1);
-  return withoutCheckDigit.slice(-4).padStart(4, '0');
+  const last4 = withoutCheckDigit.slice(-4);
+  return last4.padStart(4, '0');
 }
 
 export default function TrackRental() {

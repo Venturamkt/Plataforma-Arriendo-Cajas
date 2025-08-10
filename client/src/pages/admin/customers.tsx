@@ -36,7 +36,6 @@ export default function AdminCustomers() {
     name: "",
     email: "",
     phone: "",
-    address: "",
     rut: ""
   });
   const [includeRental, setIncludeRental] = useState(false);
@@ -175,7 +174,7 @@ export default function AdminCustomers() {
         setShowNewCustomerDialog(false);
       }
       
-      setNewCustomer({ name: "", email: "", phone: "", address: "", rut: "" });
+      setNewCustomer({ name: "", email: "", phone: "", rut: "" });
       setIncludeRental(false);
       toast({
         title: "Cliente creado",
@@ -200,7 +199,7 @@ export default function AdminCustomers() {
       queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
       setShowEditDialog(false);
       setEditingCustomer(null);
-      setNewCustomer({ name: "", email: "", phone: "", address: "", rut: "" });
+      setNewCustomer({ name: "", email: "", phone: "", rut: "" });
       toast({
         title: "Cliente actualizado",
         description: "El cliente ha sido actualizado exitosamente",
@@ -334,7 +333,6 @@ export default function AdminCustomers() {
       name: customer.name,
       email: customer.email,
       phone: customer.phone || "",
-      address: customer.address || "",
       rut: customer.rut || ""
     });
     setShowEditDialog(true);
@@ -675,15 +673,7 @@ export default function AdminCustomers() {
                           placeholder="12.345.678-9"
                         />
                       </div>
-                      <div>
-                        <Label htmlFor="address">Dirección</Label>
-                        <Input
-                          id="address"
-                          value={newCustomer.address}
-                          onChange={(e) => setNewCustomer({ ...newCustomer, address: e.target.value })}
-                          placeholder="Dirección completa"
-                        />
-                      </div>
+
                       
                       {/* Opción para crear arriendo inmediatamente */}
                       <div className="flex items-center space-x-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
@@ -1591,15 +1581,7 @@ export default function AdminCustomers() {
                     placeholder="+56 9 1234 5678"
                   />
                 </div>
-                <div>
-                  <Label htmlFor="edit-address">Dirección</Label>
-                  <Input
-                    id="edit-address"
-                    value={newCustomer.address}
-                    onChange={(e) => setNewCustomer({ ...newCustomer, address: e.target.value })}
-                    placeholder="Dirección completa"
-                  />
-                </div>
+
                 <div className="flex gap-2 pt-4">
                   <Button
                     type="button"
