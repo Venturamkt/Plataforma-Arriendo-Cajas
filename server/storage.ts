@@ -147,12 +147,15 @@ export class DatabaseStorage implements IStorage {
         return false;
       }
 
-      // Also delete from driver_users table if it's a driver
+      // Delete all delivery tasks assigned to this user first
+      await db.delete(deliveryTasks).where(eq(deliveryTasks.driverId, id));
+
+      // Delete from driver_users table if it's a driver
       if (existingUser.role === 'driver') {
         await db.delete(driverUsers).where(eq(driverUsers.id, id));
       }
 
-      // Delete the user
+      // Finally delete the user
       const result = await db
         .delete(users)
         .where(eq(users.id, id));
