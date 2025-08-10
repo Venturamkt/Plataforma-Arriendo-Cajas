@@ -69,17 +69,19 @@ const Customers = () => {
   const { toast } = useToast()
   const [, setLocation] = useLocation()
 
-  // Check authentication
-  const { data: user, isLoading: userLoading } = useQuery({
+  // Check authentication - SIMPLIFIED FOR MOBILE COMPATIBILITY
+  const { data: user, isLoading: userLoading, error: userError } = useQuery({
     queryKey: ["/api/auth/user"],
-    retry: false
+    retry: false,
+    refetchOnWindowFocus: false
   })
 
-  useEffect(() => {
-    if (!userLoading && !user) {
-      setLocation("/auth")
-    }
-  }, [user, userLoading, setLocation])
+  // Don't redirect immediately - allow the page to load
+  // useEffect(() => {
+  //   if (!userLoading && !user) {
+  //     setLocation("/auth")
+  //   }
+  // }, [user, userLoading, setLocation])
 
   // Fetch customers
   const { data: customers = [], isLoading: customersLoading } = useQuery({

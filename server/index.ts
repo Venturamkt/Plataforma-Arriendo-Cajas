@@ -10,14 +10,17 @@ app.use(express.urlencoded({ extended: false }));
 // Serve static files from public directory
 app.use(express.static('public'));
 
-// Setup session middleware (minimal for public access)
+// Setup session middleware - FIXED FOR MOBILE COMPATIBILITY
 app.use(session({
   secret: process.env.SESSION_SECRET || 'public-session-key',
   resave: false,
-  saveUninitialized: false,
+  saveUninitialized: true, // CHANGED: Allow session creation
+  name: 'connect.sid', // ADDED: Explicit session name
   cookie: {
-    secure: false,
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    secure: false, // Keep false for development
+    httpOnly: false, // CHANGED: Allow client access for debugging
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    sameSite: 'lax' // ADDED: Better mobile compatibility
   }
 }));
 

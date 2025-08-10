@@ -111,17 +111,20 @@ export function setupAuthRoutes(app: Express) {
         .set({ lastLogin: new Date() })
         .where(eq(adminUsers.id, admin[0].id));
       
-      // Set admin session
+      // Set admin session - SAVE IN BOTH FORMATS FOR COMPATIBILITY
       if (!req.session) {
         req.session = {} as any;
       }
-      (req.session as any).admin = {
+      const adminSession = {
         id: admin[0].id,
         email: admin[0].email,
         firstName: admin[0].firstName,
         lastName: admin[0].lastName,
         type: 'admin'
       };
+      
+      (req.session as any).admin = adminSession;
+      (req.session as any).currentUser = adminSession;  // Also save as currentUser for compatibility
       
       res.json({ success: true, redirect: '/admin/dashboard' });
     } catch (error) {
