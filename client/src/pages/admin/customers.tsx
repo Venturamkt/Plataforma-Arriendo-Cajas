@@ -215,6 +215,29 @@ export default function AdminCustomers() {
     },
   });
 
+  const deleteCustomerMutation = useMutation({
+    mutationFn: async (customerId: string) => {
+      const response = await apiRequest("DELETE", `/api/customers/${customerId}`);
+      return await response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/rentals"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/metrics"] });
+      toast({
+        title: "Cliente eliminado",
+        description: "El cliente ha sido eliminado exitosamente",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "No se pudo eliminar el cliente",
+        variant: "destructive",
+      });
+    },
+  });
+
   const updateRentalStatusMutation = useMutation({
     mutationFn: async ({ rentalId, status }: { rentalId: string; status: string }) => {
       const response = await apiRequest("PUT", `/api/rentals/${rentalId}`, { status });
@@ -315,6 +338,12 @@ export default function AdminCustomers() {
       rut: customer.rut || ""
     });
     setShowEditDialog(true);
+  };
+
+  const handleDeleteCustomer = (customer: any) => {
+    if (window.confirm(`¿Estás seguro de que quieres eliminar al cliente ${customer.name}? Esta acción no se puede deshacer y eliminará también todos sus arriendos.`)) {
+      deleteCustomerMutation.mutate(customer.id);
+    }
   };
 
   const handleEditCustomerSubmit = (e: React.FormEvent) => {
@@ -1170,7 +1199,7 @@ export default function AdminCustomers() {
                           <TableHead className="w-32 hidden lg:table-cell">Dirección</TableHead>
                           <TableHead className="text-center w-20">Activos</TableHead>
                           <TableHead className="text-center w-20">Total</TableHead>
-                          <TableHead className="text-center w-32">Estado</TableHead>
+                          <TableHead className="text-center w-36">Estado</TableHead>
                           <TableHead className="text-center w-40 hidden xl:table-cell">Seguimiento</TableHead>
                           <TableHead className="text-center w-48">Acciones</TableHead>
                         </TableRow>
@@ -1229,7 +1258,7 @@ export default function AdminCustomers() {
                                       onValueChange={(newStatus) => handleStatusChange(mostRecentRental.id, newStatus)}
                                       disabled={updateRentalStatusMutation.isPending}
                                     >
-                                      <SelectTrigger className="w-28 h-8 text-xs">
+                                      <SelectTrigger className="w-32 h-8 text-xs">
                                         <SelectValue />
                                       </SelectTrigger>
                                       <SelectContent>
@@ -1363,6 +1392,15 @@ export default function AdminCustomers() {
                                   onClick={() => handleEditCustomer(customer)}
                                 >
                                   Editar
+                                </Button>
+                                
+                                <Button 
+                                  size="sm" 
+                                  className="bg-red-500 hover:bg-red-600 text-white text-xs px-2 py-1"
+                                  onClick={() => handleDeleteCustomer(customer)}
+                                  disabled={deleteCustomerMutation.isPending}
+                                >
+                                  {deleteCustomerMutation.isPending ? "..." : "🗑️"}
                                 </Button>
                               </div>
                             </TableCell>

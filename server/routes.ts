@@ -136,6 +136,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete('/api/customers/:id', requireAdminSession, async (req, res) => {
+    try {
+      const success = await storage.deleteCustomer(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: "Customer not found" });
+      }
+      res.json({ message: "Customer deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting customer:", error);
+      res.status(500).json({ message: "Failed to delete customer" });
+    }
+  });
+
   // Box routes
   app.get('/api/boxes', requireAdminSession, async (req, res) => {
     try {

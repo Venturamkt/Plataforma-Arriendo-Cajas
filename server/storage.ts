@@ -38,6 +38,7 @@ export interface IStorage {
   getCustomerByEmail(email: string): Promise<Customer | undefined>;
   createCustomer(customer: InsertCustomer): Promise<Customer>;
   updateCustomer(id: string, customer: Partial<InsertCustomer>): Promise<Customer | undefined>;
+  deleteCustomer(id: string): Promise<boolean>;
   
   // Box operations
   getBoxes(): Promise<Box[]>;
@@ -145,6 +146,32 @@ export class DatabaseStorage implements IStorage {
       .where(eq(customers.id, id))
       .returning();
     return updatedCustomer;
+  }
+
+  async deleteCustomer(id: string): Promise<boolean> {
+    try {
+      // First, delete all rental boxes associated with rentals of this customer
+      const customerRentals = await db
+        .select({ id: rentals.id })
+        .from(rentals)
+        .where(eq(rentals.customerId, id));
+
+      for (const rental of customerRentals) {
+        // Delete rental boxes
+        await db.delete(rentalBoxes).where(eq(rentalBoxes.rentalId, rental.id));
+      }
+
+      // Delete all rentals for this customer
+      await db.delete(rentals).where(eq(rentals.customerId, id));
+
+      // Finally delete the customer
+      const result = await db.delete(customers).where(eq(customers.id, id));
+      
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error("Error deleting customer:", error);
+      return false;
+    }
   }
 
   // Box operations
