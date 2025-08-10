@@ -19,6 +19,60 @@ export interface RentalEmailData {
 }
 
 export const emailTemplates = {
+  pendiente: (data: RentalEmailData): EmailTemplate => ({
+    subject: `Solicitud Recibida - Código ${data.trackingCode} - Arriendo Cajas`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            .container { max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif; }
+            .header { background: #C8201D; color: white; padding: 20px; text-align: center; }
+            .content { padding: 20px; }
+            .tracking-box { background: #f8f9fa; border: 2px dashed #C8201D; padding: 15px; margin: 20px 0; text-align: center; }
+            .details { background: #f8f9fa; padding: 15px; margin: 15px 0; }
+            .footer { background: #2E5CA6; color: white; padding: 15px; text-align: center; font-size: 12px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>¡Hola ${data.customerName}!</h1>
+              <h2>Solicitud Recibida 📋</h2>
+            </div>
+            
+            <div class="content">
+              <p>Hemos recibido tu solicitud de arriendo de cajas. Los detalles están siendo procesados y te contactaremos pronto.</p>
+              
+              <div class="tracking-box">
+                <h3>🔍 Tu Código de Seguimiento</h3>
+                <p><strong>Código:</strong> ${data.trackingCode}</p>
+                <a href="${data.trackingUrl}" style="background: #C8201D; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 0;">Ver Estado</a>
+              </div>
+              
+              <div class="details">
+                <h3>📦 Detalles de tu Solicitud</h3>
+                <p><strong>Número de cajas:</strong> ${data.totalBoxes}</p>
+                <p><strong>Dirección de entrega:</strong> ${data.deliveryAddress}</p>
+                <p><strong>Total:</strong> $${data.totalAmount.toLocaleString()}</p>
+                <p><strong>Garantía:</strong> $${data.guaranteeAmount.toLocaleString()} (reembolsable)</p>
+              </div>
+              
+              <p>Te contactaremos pronto para coordinar los detalles y confirmar el pago.</p>
+            </div>
+            
+            <div class="footer">
+              <p>📞 +56 9 1234 5678 | 📧 info@arriendocajas.cl</p>
+              <p>Arriendo Cajas - Tu solución en almacenamiento temporal</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `,
+    text: `¡Hola ${data.customerName}! Hemos recibido tu solicitud de arriendo (${data.trackingCode}). Te contactaremos pronto para coordinar la entrega de ${data.totalBoxes} cajas. Total: $${data.totalAmount.toLocaleString()}. Seguimiento: ${data.trackingUrl}`
+  }),
+
   pagada: (data: RentalEmailData): EmailTemplate => ({
     subject: `¡Tu arriendo ha sido confirmado! - Código ${data.trackingCode}`,
     html: `
