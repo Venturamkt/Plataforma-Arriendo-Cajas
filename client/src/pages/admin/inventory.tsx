@@ -13,8 +13,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { Search, Plus, QrCode, Package } from "lucide-react";
+import { Search, Plus, QrCode, Package, Grid3X3, List, Filter } from "lucide-react";
 import BarcodeScanner from "@/components/barcode-scanner";
 
 export default function AdminInventory() {
@@ -22,6 +24,9 @@ export default function AdminInventory() {
   const { user, isLoading } = useCurrentUser();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [sortBy, setSortBy] = useState<"barcode" | "status" | "condition" | "createdAt">("createdAt");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [showScanner, setShowScanner] = useState(false);
   const [showNewBoxDialog, setShowNewBoxDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -186,11 +191,56 @@ export default function AdminInventory() {
     });
   };
 
-  const filteredBoxes = boxes?.filter((box) => 
-    searchQuery === "" || 
-    box.barcode.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    box.id.toLowerCase().includes(searchQuery.toLowerCase())
-  ) || [];
+  // Filter and sort boxes
+  const filteredAndSortedBoxes = (() => {
+    if (!boxes) return [];
+    
+    // Filter by search query
+    let filtered = boxes.filter((box) => 
+      searchQuery === "" || 
+      box.barcode.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      box.id.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    
+    // Filter by status
+    if (statusFilter !== "all") {
+      filtered = filtered.filter(box => box.status === statusFilter);
+    }
+    
+    // Sort
+    filtered.sort((a, b) => {
+      let aValue: any, bValue: any;
+      
+      switch (sortBy) {
+        case 'barcode':
+          aValue = a.barcode || '';
+          bValue = b.barcode || '';
+          break;
+        case 'status':
+          aValue = a.status || '';
+          bValue = b.status || '';
+          break;
+        case 'condition':
+          const conditionOrder = { excellent: 4, good: 3, fair: 2, needs_repair: 1 };
+          aValue = conditionOrder[a.condition as keyof typeof conditionOrder] || 0;
+          bValue = conditionOrder[b.condition as keyof typeof conditionOrder] || 0;
+          break;
+        case 'createdAt':
+        default:
+          aValue = new Date(a.createdAt || '').getTime();
+          bValue = new Date(b.createdAt || '').getTime();
+          break;
+      }
+      
+      if (typeof aValue === 'string') {
+        return sortOrder === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+      }
+      
+      return sortOrder === 'asc' ? aValue - bValue : bValue - aValue;
+    });
+    
+    return filtered;
+  })();
 
   if (isLoading || !user) {
     return (
@@ -242,19 +292,55 @@ export default function AdminInventory() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">Todos los estados</SelectItem>
-                        <SelectItem value="available">Disponible</SelectItem>
-                        <SelectItem value="pendiente">Pendiente</SelectItem>
-                        <SelectItem value="pagada">Pagada</SelectItem>
-                        <SelectItem value="entregada">Entregada</SelectItem>
-                        <SelectItem value="retirada">Retirada</SelectItem>
-                        <SelectItem value="finalizado">Finalizado</SelectItem>
-                        <SelectItem value="cancelada">Cancelada</SelectItem>
+                        <SelectItem value="available">🟢 Disponible</SelectItem>
+                        <SelectItem value="rented">🔵 Arrendadas</SelectItem>
+                        <SelectItem value="maintenance">🟡 Mantenimiento</SelectItem>
+                        <SelectItem value="damaged">🔴 Con Problemas</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    
+                    {/* Sort */}
+                    <Select value={`${sortBy}-${sortOrder}`} onValueChange={(value) => {
+                      const [field, order] = value.split('-');
+                      setSortBy(field as typeof sortBy);
+                      setSortOrder(order as typeof sortOrder);
+                    }}>
+                      <SelectTrigger className="w-full sm:w-48">
+                        <Filter className="h-4 w-4 mr-2" />
+                        <SelectValue placeholder="Ordenar por" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="createdAt-desc">Más recientes</SelectItem>
+                        <SelectItem value="createdAt-asc">Más antiguos</SelectItem>
+                        <SelectItem value="barcode-asc">Código A-Z</SelectItem>
+                        <SelectItem value="barcode-desc">Código Z-A</SelectItem>
+                        <SelectItem value="status-asc">Estado A-Z</SelectItem>
+                        <SelectItem value="condition-desc">Mejor condición</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   
-                  {/* Action Buttons */}
-                  <div className="flex gap-2">
+                  {/* View Toggle and Action Buttons */}
+                  <div className="flex items-center gap-2">
+                    {/* View Toggle */}
+                    <div className="flex border rounded-lg p-1">
+                      <Button
+                        variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => setViewMode('grid')}
+                        className="px-3"
+                      >
+                        <Grid3X3 className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant={viewMode === 'list' ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => setViewMode('list')}
+                        className="px-3"
+                      >
+                        <List className="h-4 w-4" />
+                      </Button>
+                    </div>
                     <Button
                       onClick={() => setShowScanner(true)}
                       variant="outline"
@@ -357,89 +443,201 @@ export default function AdminInventory() {
               </CardHeader>
             </Card>
 
-            {/* Inventory Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
-              {boxesLoading ? (
-                Array.from({ length: 8 }).map((_, i) => (
-                  <Card key={i} className="animate-pulse">
-                    <CardContent className="p-4">
-                      <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                      <div className="h-6 bg-gray-200 rounded mb-3"></div>
-                      <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                    </CardContent>
-                  </Card>
-                ))
-              ) : filteredBoxes.length === 0 ? (
-                <div className="col-span-full">
-                  <Card>
-                    <CardContent className="flex flex-col items-center justify-center py-12">
-                      <Package className="h-12 w-12 text-gray-400 mb-4" />
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                        No se encontraron cajas
-                      </h3>
-                      <p className="text-gray-600 text-center">
-                        {searchQuery || statusFilter !== "all" 
-                          ? "Intenta ajustar tus filtros de búsqueda"
-                          : "Comienza agregando cajas al inventario"
-                        }
-                      </p>
-                    </CardContent>
-                  </Card>
-                </div>
-              ) : (
-                filteredBoxes.map((box) => (
-                  <Card key={box.id || `box-${Math.random()}`} className="hover:shadow-md transition-shadow">
-                    <CardContent className="p-3">
-                      <div className="flex items-center justify-between mb-2">
-                        <BoxStatusBadge status={box.status} />
-                      </div>
-                      
-                      <div className="mb-3">
-                        <p className="text-xs text-gray-600">Código</p>
-                        <p className="text-sm font-semibold text-gray-900 truncate">{box.barcode}</p>
-                      </div>
-                      
-                      <div className="space-y-1 text-xs">
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Tamaño:</span>
-                          <span className="font-medium">60x40 cms</span>
+            {/* Inventory Content */}
+            {viewMode === 'grid' ? (
+              /* Grid View */
+              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
+                {boxesLoading ? (
+                  Array.from({ length: 8 }).map((_, i) => (
+                    <Card key={i} className="animate-pulse">
+                      <CardContent className="p-4">
+                        <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                        <div className="h-6 bg-gray-200 rounded mb-3"></div>
+                        <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                      </CardContent>
+                    </Card>
+                  ))
+                ) : filteredAndSortedBoxes.length === 0 ? (
+                  <div className="col-span-full">
+                    <Card>
+                      <CardContent className="flex flex-col items-center justify-center py-12">
+                        <Package className="h-12 w-12 text-gray-400 mb-4" />
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                          No se encontraron cajas
+                        </h3>
+                        <p className="text-gray-600 text-center">
+                          {searchQuery || statusFilter !== "all" 
+                            ? "Intenta ajustar tus filtros de búsqueda"
+                            : "Comienza agregando cajas al inventario"
+                          }
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </div>
+                ) : (
+                  filteredAndSortedBoxes.map((box) => (
+                    <Card key={box.id || `box-${Math.random()}`} className="hover:shadow-md transition-shadow">
+                      <CardContent className="p-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <BoxStatusBadge status={box.status} />
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Condición:</span>
-                          <span className="font-medium">
-                            {box.condition === 'excellent' ? 'Excelente' : 
-                             box.condition === 'good' ? 'Buena' :
-                             box.condition === 'fair' ? 'Regular' : 'Necesita reparación'}
-                          </span>
+                        
+                        <div className="mb-3">
+                          <p className="text-xs text-gray-600">Código</p>
+                          <p className="text-sm font-semibold text-gray-900 truncate">{box.barcode}</p>
                         </div>
-                      </div>
-                      
-                      <div className="mt-3 flex gap-1">
-                        <Button size="sm" variant="outline" className="flex-1 text-xs px-2">
-                          Historial
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          onClick={() => handleEditBox(box)}
-                          className="flex-1 text-xs px-2 bg-brand-blue hover:bg-brand-blue text-white"
-                        >
-                          Editar
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
-              )}
-            </div>
+                        
+                        <div className="space-y-1 text-xs">
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Tamaño:</span>
+                            <span className="font-medium">60x40 cms</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Condición:</span>
+                            <span className="font-medium">
+                              {box.condition === 'excellent' ? 'Excelente' : 
+                               box.condition === 'good' ? 'Buena' :
+                               box.condition === 'fair' ? 'Regular' : 'Necesita reparación'}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        <div className="mt-3 flex gap-1">
+                          <Button size="sm" variant="outline" className="flex-1 text-xs px-2">
+                            Historial
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            onClick={() => handleEditBox(box)}
+                            className="flex-1 text-xs px-2 bg-brand-blue hover:bg-brand-blue text-white"
+                          >
+                            Editar
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
+              </div>
+            ) : (
+              /* List View */
+              <Card>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[100px]">Estado</TableHead>
+                      <TableHead>Código</TableHead>
+                      <TableHead>Tamaño</TableHead>
+                      <TableHead>Condición</TableHead>
+                      <TableHead>Fecha Creación</TableHead>
+                      <TableHead className="text-right">Acciones</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {boxesLoading ? (
+                      Array.from({ length: 5 }).map((_, i) => (
+                        <TableRow key={i}>
+                          <TableCell><div className="h-4 bg-gray-200 rounded animate-pulse"></div></TableCell>
+                          <TableCell><div className="h-4 bg-gray-200 rounded animate-pulse"></div></TableCell>
+                          <TableCell><div className="h-4 bg-gray-200 rounded animate-pulse"></div></TableCell>
+                          <TableCell><div className="h-4 bg-gray-200 rounded animate-pulse"></div></TableCell>
+                          <TableCell><div className="h-4 bg-gray-200 rounded animate-pulse"></div></TableCell>
+                          <TableCell><div className="h-4 bg-gray-200 rounded animate-pulse"></div></TableCell>
+                        </TableRow>
+                      ))
+                    ) : filteredAndSortedBoxes.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center py-12">
+                          <div className="flex flex-col items-center">
+                            <Package className="h-12 w-12 text-gray-400 mb-4" />
+                            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                              No se encontraron cajas
+                            </h3>
+                            <p className="text-gray-600">
+                              {searchQuery || statusFilter !== "all" 
+                                ? "Intenta ajustar tus filtros de búsqueda"
+                                : "Comienza agregando cajas al inventario"
+                              }
+                            </p>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      filteredAndSortedBoxes.map((box) => (
+                        <TableRow key={box.id}>
+                          <TableCell>
+                            <BoxStatusBadge status={box.status} />
+                          </TableCell>
+                          <TableCell className="font-mono text-sm">{box.barcode}</TableCell>
+                          <TableCell>
+                            <span className="text-sm">
+                              {box.size === 'small' ? 'Pequeño' : 
+                               box.size === 'medium' ? 'Mediano (60x40)' : 'Grande'} 
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="secondary" className={
+                              box.condition === 'excellent' ? 'bg-green-100 text-green-800' :
+                              box.condition === 'good' ? 'bg-blue-100 text-blue-800' :
+                              box.condition === 'fair' ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-red-100 text-red-800'
+                            }>
+                              {box.condition === 'excellent' ? 'Excelente' : 
+                               box.condition === 'good' ? 'Buena' :
+                               box.condition === 'fair' ? 'Regular' : 'Necesita reparación'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-sm text-gray-600">
+                            {box.createdAt ? new Date(box.createdAt).toLocaleDateString() : '-'}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <Button size="sm" variant="outline" className="text-xs">
+                                Historial
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                onClick={() => handleEditBox(box)}
+                                className="text-xs bg-brand-blue hover:bg-brand-blue text-white"
+                              >
+                                Editar
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </Card>
+            )}
 
             {/* Summary */}
-            {!boxesLoading && filteredBoxes.length > 0 && (
+            {!boxesLoading && filteredAndSortedBoxes.length > 0 && (
               <Card className="mt-6">
                 <CardContent className="p-4">
-                  <p className="text-sm text-gray-600">
-                    Mostrando {filteredBoxes.length} de {boxes?.length || 0} cajas
-                    {statusFilter !== "all" && ` con estado "${statusFilter}"`}
-                  </p>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <p className="text-sm text-gray-600">
+                      Mostrando {filteredAndSortedBoxes.length} de {boxes?.length || 0} cajas
+                      {statusFilter !== "all" && ` con estado "${statusFilter}"`}
+                    </p>
+                    
+                    {/* Quick Stats */}
+                    <div className="flex gap-4 text-xs">
+                      <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <span>Disponible: {boxes?.filter(b => b.status === 'available').length || 0}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        <span>Arrendadas: {boxes?.filter(b => b.status === 'rented').length || 0}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                        <span>Mantenimiento: {boxes?.filter(b => b.status === 'maintenance').length || 0}</span>
+                      </div>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             )}
