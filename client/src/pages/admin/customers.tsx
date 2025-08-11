@@ -67,7 +67,14 @@ const Customers = () => {
     boxSize: "mediano",
     customPrice: 2775,
     discount: 0,
-    additionalProducts: [] as Array<{name: string, price: number, quantity: number}>
+    additionalProducts: [] as Array<{name: string, price: number, quantity: number}>,
+    manualPrice: false
+  })
+
+  const [newProduct, setNewProduct] = useState({
+    name: "",
+    price: 0,
+    quantity: 1
   })
   const { toast } = useToast()
   const [, setLocation] = useLocation()
@@ -111,6 +118,21 @@ const Customers = () => {
       setShowNewCustomerDialog(false)
       setNewCustomer({ name: "", email: "", phone: "", rut: "" })
       setFormattedRut("")
+      setIncludeRental(false)
+      setNewRental({
+        boxQuantity: 2,
+        rentalDays: 7,
+        deliveryDate: "",
+        deliveryAddress: "",
+        pickupAddress: "",
+        notes: "",
+        boxSize: "mediano",
+        customPrice: 2775,
+        discount: 0,
+        additionalProducts: [],
+        manualPrice: false
+      })
+      setNewProduct({ name: "", price: 0, quantity: 1 })
     },
     onError: (error: any) => {
       toast({
@@ -247,11 +269,13 @@ const Customers = () => {
     return availableBoxes >= quantity
   }
 
-  // Update rental price when quantity or days change
+  // Update rental price when quantity or days change (only if not manual)
   useEffect(() => {
-    const newPrice = getPriceByPeriod(newRental.boxQuantity, newRental.rentalDays)
-    setNewRental(prev => ({ ...prev, customPrice: newPrice }))
-  }, [newRental.boxQuantity, newRental.rentalDays])
+    if (!newRental.manualPrice) {
+      const newPrice = getPriceByPeriod(newRental.boxQuantity, newRental.rentalDays)
+      setNewRental(prev => ({ ...prev, customPrice: newPrice }))
+    }
+  }, [newRental.boxQuantity, newRental.rentalDays, newRental.manualPrice])
 
   // Get availability status for display
   const getAvailabilityStatus = (quantity: number) => {
@@ -436,19 +460,38 @@ const Customers = () => {
                           </div>
                           <div>
                             <Label htmlFor="rental-days">Días de arriendo</Label>
-                            <Select
-                              value={newRental.rentalDays.toString()}
-                              onValueChange={(value) => setNewRental(prev => ({ ...prev, rentalDays: parseInt(value) }))}
-                            >
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="7">7 días</SelectItem>
-                                <SelectItem value="14">14 días</SelectItem>
-                                <SelectItem value="30">30 días</SelectItem>
-                              </SelectContent>
-                            </Select>
+                            <div className="flex gap-2">
+                              <Select
+                                value={[7, 14, 30].includes(newRental.rentalDays) ? newRental.rentalDays.toString() : 'custom'}
+                                onValueChange={(value) => {
+                                  if (value === 'custom') {
+                                    setNewRental(prev => ({ ...prev, rentalDays: 1 }))
+                                  } else {
+                                    setNewRental(prev => ({ ...prev, rentalDays: parseInt(value) }))
+                                  }
+                                }}
+                              >
+                                <SelectTrigger className="flex-1">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="7">7 días</SelectItem>
+                                  <SelectItem value="14">14 días</SelectItem>
+                                  <SelectItem value="30">30 días</SelectItem>
+                                  <SelectItem value="custom">Otro...</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              {![7, 14, 30].includes(newRental.rentalDays) && (
+                                <Input
+                                  type="number"
+                                  placeholder="Días"
+                                  min="1"
+                                  value={newRental.rentalDays}
+                                  className="w-20"
+                                  onChange={(e) => setNewRental(prev => ({ ...prev, rentalDays: parseInt(e.target.value) || 1 }))}
+                                />
+                              )}
+                            </div>
                           </div>
                         </div>
                         
@@ -498,8 +541,108 @@ const Customers = () => {
                           </div>
                         </div>
 
+                        {/* Manual Price Toggle */}
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="manual-price">Precio manual</Label>
+                          <Switch
+                            id="manual-price"
+                            checked={newRental.manualPrice}
+                            onCheckedChange={(checked) => setNewRental(prev => ({ ...prev, manualPrice: checked }))}
+                          />
+                        </div>
+
+                        {/* Price Display/Input */}
                         <div className="bg-gray-50 p-3 rounded-lg">
-                          <Label className="text-lg font-semibold">Precio calculado: ${newRental.customPrice.toLocaleString('es-CL')}</Label>
+                          {newRental.manualPrice ? (
+                            <div>
+                              <Label htmlFor="custom-price" className="text-sm text-gray-600">Precio personalizado</Label>
+                              <Input
+                                id="custom-price"
+                                type="number"
+                                value={newRental.customPrice}
+                                onChange={(e) => setNewRental(prev => ({ ...prev, customPrice: parseInt(e.target.value) || 0 }))}
+                                placeholder="Precio en pesos"
+                                className="mt-1"
+                              />
+                            </div>
+                          ) : (
+                            <Label className="text-lg font-semibold">Precio calculado: ${newRental.customPrice.toLocaleString('es-CL')}</Label>
+                          )}
+                        </div>
+
+                        {/* Additional Products Section */}
+                        <div className="border-t pt-4">
+                          <Label className="text-base font-medium">Productos Adicionales</Label>
+                          
+                          {/* Add Product Form */}
+                          <div className="mt-2 grid grid-cols-3 gap-2">
+                            <Input
+                              placeholder="Producto"
+                              value={newProduct.name}
+                              onChange={(e) => setNewProduct(prev => ({ ...prev, name: e.target.value }))}
+                            />
+                            <Input
+                              type="number"
+                              placeholder="Precio"
+                              value={newProduct.price}
+                              onChange={(e) => setNewProduct(prev => ({ ...prev, price: parseInt(e.target.value) || 0 }))}
+                            />
+                            <div className="flex gap-1">
+                              <Input
+                                type="number"
+                                placeholder="Cant."
+                                min="1"
+                                value={newProduct.quantity}
+                                onChange={(e) => setNewProduct(prev => ({ ...prev, quantity: parseInt(e.target.value) || 1 }))}
+                                className="flex-1"
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  if (newProduct.name && newProduct.price > 0) {
+                                    setNewRental(prev => ({
+                                      ...prev,
+                                      additionalProducts: [...prev.additionalProducts, newProduct]
+                                    }))
+                                    setNewProduct({ name: "", price: 0, quantity: 1 })
+                                  }
+                                }}
+                              >
+                                <Plus className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+
+                          {/* Products List */}
+                          {newRental.additionalProducts.length > 0 && (
+                            <div className="mt-3 space-y-2">
+                              {newRental.additionalProducts.map((product, index) => (
+                                <div key={index} className="flex items-center justify-between bg-white p-2 rounded border">
+                                  <span className="text-sm">
+                                    {product.quantity}x {product.name} - ${product.price.toLocaleString('es-CL')}
+                                  </span>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                      setNewRental(prev => ({
+                                        ...prev,
+                                        additionalProducts: prev.additionalProducts.filter((_, i) => i !== index)
+                                      }))
+                                    }}
+                                  >
+                                    <Trash className="h-4 w-4 text-red-500" />
+                                  </Button>
+                                </div>
+                              ))}
+                              <div className="text-right text-sm font-medium">
+                                Total productos: ${newRental.additionalProducts.reduce((sum, p) => sum + (p.price * p.quantity), 0).toLocaleString('es-CL')}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     )}
