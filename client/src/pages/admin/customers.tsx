@@ -91,6 +91,11 @@ const Customers = () => {
     queryKey: ["/api/customers"],
   })
 
+  // Fetch inventory to check box availability
+  const { data: inventory = [] } = useQuery({
+    queryKey: ["/api/inventory"],
+  })
+
   // Create customer mutation
   const createCustomerMutation = useMutation({
     mutationFn: async (customer: any) => {
@@ -233,11 +238,31 @@ const Customers = () => {
     return Math.round(baseBoxPrice * boxes * (days / 7))
   }
 
+  // Check box availability
+  const checkBoxAvailability = (quantity: number) => {
+    const availableBoxes = inventory.filter((box: any) => 
+      box.status === 'available' || box.status === 'maintenance'
+    ).length
+    return availableBoxes >= quantity
+  }
+
   // Update rental price when quantity or days change
   useEffect(() => {
     const newPrice = getPriceByPeriod(newRental.boxQuantity, newRental.rentalDays)
     setNewRental(prev => ({ ...prev, customPrice: newPrice }))
   }, [newRental.boxQuantity, newRental.rentalDays])
+
+  // Get availability status for display
+  const getAvailabilityStatus = (quantity: number) => {
+    const isAvailable = checkBoxAvailability(quantity)
+    return {
+      available: isAvailable,
+      message: isAvailable ? 
+        `${quantity} cajas disponibles` : 
+        `Solo ${inventory.filter((box: any) => box.status === 'available').length} cajas disponibles`,
+      className: isAvailable ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'
+    }
+  }
 
   const handleEditCustomer = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -456,6 +481,20 @@ const Customers = () => {
                           />
                         </div>
 
+                        {/* Availability Status */}
+                        <div className={`p-3 rounded-lg border ${getAvailabilityStatus(newRental.boxQuantity).className}`}>
+                          <div className="flex items-center gap-2">
+                            {getAvailabilityStatus(newRental.boxQuantity).available ? (
+                              <CheckCircle className="h-5 w-5 text-green-600" />
+                            ) : (
+                              <AlertTriangle className="h-5 w-5 text-red-600" />
+                            )}
+                            <Label className="font-medium">
+                              {getAvailabilityStatus(newRental.boxQuantity).message}
+                            </Label>
+                          </div>
+                        </div>
+
                         <div className="bg-gray-50 p-3 rounded-lg">
                           <Label className="text-lg font-semibold">Precio calculado: ${newRental.customPrice.toLocaleString('es-CL')}</Label>
                         </div>
@@ -476,8 +515,8 @@ const Customers = () => {
                       </Button>
                       <Button
                         type="submit"
-                        disabled={createCustomerMutation.isPending}
-                        className="flex-1 bg-brand-red hover:bg-red-700 text-white"
+                        disabled={createCustomerMutation.isPending || (includeRental && !checkBoxAvailability(newRental.boxQuantity))}
+                        className="flex-1 bg-brand-red hover:bg-red-700 text-white disabled:opacity-50"
                       >
                         {createCustomerMutation.isPending ? "Creando..." : (includeRental ? "Crear y Agendar" : "Crear Cliente")}
                       </Button>
