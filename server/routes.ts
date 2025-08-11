@@ -491,7 +491,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
           
           if (customer?.email && updatedRental?.trackingCode) {
-            const rutDigits = customer.rut ? customer.rut.slice(0, -1).slice(-4).padStart(4, '0') : "0000";
+            // Extract last 4 digits before the verification digit
+            // RUT format: "16.220.939-6" -> extract "0939"
+            // RUT format: "1.234.567-8" -> extract "4567"
+            const rutDigits = customer.rut ? 
+              customer.rut.replace(/[.-]/g, '').slice(0, -1).slice(-4).padStart(4, '0') : "0000";
             const trackingUrl = generateTrackingUrl(rutDigits, updatedRental.trackingCode);
             
             const emailData = {

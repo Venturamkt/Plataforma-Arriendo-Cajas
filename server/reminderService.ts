@@ -104,7 +104,9 @@ export class ReminderService {
         return;
       }
       
-      const rutDigits = customer.rut ? customer.rut.slice(0, -1).slice(-4).padStart(4, '0') : "0000";
+      // Extract last 4 digits before verification digit: "16.220.939-6" -> "0939"
+      const rutDigits = customer.rut ? 
+        customer.rut.replace(/[.-]/g, '').slice(0, -1).slice(-4).padStart(4, '0') : "0000";
       const trackingUrl = generateTrackingUrl(rutDigits, rental.trackingCode);
       
       const emailData = {
@@ -148,7 +150,9 @@ export class ReminderService {
         return;
       }
       
-      const rutDigits = customer.rut ? customer.rut.slice(0, -1).slice(-4).padStart(4, '0') : "0000";
+      // Extract last 4 digits before verification digit: "16.220.939-6" -> "0939"  
+      const rutDigits = customer.rut ? 
+        customer.rut.replace(/[.-]/g, '').slice(0, -1).slice(-4).padStart(4, '0') : "0000";
       const trackingUrl = generateTrackingUrl(rutDigits, rental.trackingCode);
       
       // Calculate return date
