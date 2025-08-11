@@ -574,44 +574,103 @@ const Customers = () => {
                         <div className="border-t pt-4">
                           <Label className="text-base font-medium">Productos Adicionales</Label>
                           
-                          {/* Add Product Form */}
-                          <div className="mt-2 grid grid-cols-3 gap-2">
-                            <Input
-                              placeholder="Producto"
-                              value={newProduct.name}
-                              onChange={(e) => setNewProduct(prev => ({ ...prev, name: e.target.value }))}
-                            />
-                            <Input
-                              type="number"
-                              placeholder="Precio"
-                              value={newProduct.price}
-                              onChange={(e) => setNewProduct(prev => ({ ...prev, price: parseInt(e.target.value) || 0 }))}
-                            />
-                            <div className="flex gap-1">
+                          {/* Quick Product Buttons */}
+                          <div className="mt-2 grid grid-cols-2 gap-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setNewRental(prev => ({
+                                  ...prev,
+                                  additionalProducts: [...prev.additionalProducts, { name: "Carrito plegable", price: 15000, quantity: 1 }]
+                                }))
+                              }}
+                            >
+                              Carrito plegable - $15.000
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setNewRental(prev => ({
+                                  ...prev,
+                                  additionalProducts: [...prev.additionalProducts, { name: "Base móvil", price: 8000, quantity: 1 }]
+                                }))
+                              }}
+                            >
+                              Base móvil - $8.000
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setNewRental(prev => ({
+                                  ...prev,
+                                  additionalProducts: [...prev.additionalProducts, { name: "Kit 2 bases móviles", price: 15000, quantity: 1 }]
+                                }))
+                              }}
+                            >
+                              Kit 2 bases móviles - $15.000
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setNewRental(prev => ({
+                                  ...prev,
+                                  additionalProducts: [...prev.additionalProducts, { name: "Correa Ratchet", price: 5000, quantity: 1 }]
+                                }))
+                              }}
+                            >
+                              Correa Ratchet - $5.000
+                            </Button>
+                          </div>
+
+                          {/* Custom Product Form */}
+                          <div className="mt-4 p-3 bg-gray-50 rounded">
+                            <Label className="text-sm font-medium">Producto personalizado</Label>
+                            <div className="mt-2 grid grid-cols-3 gap-2">
+                              <Input
+                                placeholder="Nombre del producto"
+                                value={newProduct.name}
+                                onChange={(e) => setNewProduct(prev => ({ ...prev, name: e.target.value }))}
+                              />
                               <Input
                                 type="number"
-                                placeholder="Cant."
-                                min="1"
-                                value={newProduct.quantity}
-                                onChange={(e) => setNewProduct(prev => ({ ...prev, quantity: parseInt(e.target.value) || 1 }))}
-                                className="flex-1"
+                                placeholder="Precio"
+                                value={newProduct.price || ""}
+                                onChange={(e) => setNewProduct(prev => ({ ...prev, price: parseInt(e.target.value) || 0 }))}
                               />
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  if (newProduct.name && newProduct.price > 0) {
-                                    setNewRental(prev => ({
-                                      ...prev,
-                                      additionalProducts: [...prev.additionalProducts, newProduct]
-                                    }))
-                                    setNewProduct({ name: "", price: 0, quantity: 1 })
-                                  }
-                                }}
-                              >
-                                <Plus className="h-4 w-4" />
-                              </Button>
+                              <div className="flex gap-1">
+                                <Input
+                                  type="number"
+                                  placeholder="Cant."
+                                  min="1"
+                                  value={newProduct.quantity}
+                                  onChange={(e) => setNewProduct(prev => ({ ...prev, quantity: parseInt(e.target.value) || 1 }))}
+                                  className="flex-1"
+                                />
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    if (newProduct.name && newProduct.price > 0) {
+                                      setNewRental(prev => ({
+                                        ...prev,
+                                        additionalProducts: [...prev.additionalProducts, newProduct]
+                                      }))
+                                      setNewProduct({ name: "", price: 0, quantity: 1 })
+                                    }
+                                  }}
+                                >
+                                  <Plus className="h-4 w-4" />
+                                </Button>
+                              </div>
                             </div>
                           </div>
 
