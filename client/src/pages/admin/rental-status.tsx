@@ -386,15 +386,14 @@ export default function RentalStatus() {
                   />
                 </div>
                 <div>
-                  <Label>Días de Arriendo</Label>
+                  <Label>Días de Arriendo (calculado)</Label>
                   <Input 
                     type="number" 
-                    value={editingRental.rentalDays || 7} 
-                    onChange={(e) => setEditingRental({
-                      ...editingRental,
-                      rentalDays: parseInt(e.target.value) || 7
-                    })}
+                    value={7}
+                    disabled
+                    className="bg-gray-100"
                   />
+                  <p className="text-xs text-gray-500 mt-1">Los días se calculan automáticamente</p>
                 </div>
               </div>
 
@@ -414,10 +413,10 @@ export default function RentalStatus() {
                   <Label>Monto Total</Label>
                   <Input 
                     type="number" 
-                    value={editingRental.totalAmount} 
+                    value={editingRental.totalAmount ? parseInt(editingRental.totalAmount.toString()) : 0} 
                     onChange={(e) => setEditingRental({
                       ...editingRental,
-                      totalAmount: parseInt(e.target.value) || 0
+                      totalAmount: e.target.value
                     })}
                   />
                 </div>
@@ -429,7 +428,7 @@ export default function RentalStatus() {
                   value={editingRental.deliveryAddress || ''} 
                   onChange={(e) => setEditingRental({
                     ...editingRental,
-                    deliveryAddress: e.target.value
+                    deliveryAddress: e.target.value || null
                   })}
                 />
               </div>

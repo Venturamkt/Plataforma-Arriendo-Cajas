@@ -98,7 +98,7 @@ export class DatabaseStorage implements IStorage {
   async getUsers(filters?: { role?: string }): Promise<User[]> {
     if (filters?.role) {
       return await db.select().from(users)
-        .where(eq(users.role, filters.role))
+        .where(eq(users.role, filters.role as "admin" | "driver" | "customer"))
         .orderBy(desc(users.createdAt));
     }
     
