@@ -240,7 +240,8 @@ const Customers = () => {
 
   // Check box availability
   const checkBoxAvailability = (quantity: number) => {
-    const availableBoxes = inventory.filter((box: any) => 
+    const inventoryArray = Array.isArray(inventory) ? inventory : []
+    const availableBoxes = inventoryArray.filter((box: any) => 
       box.status === 'available' || box.status === 'maintenance'
     ).length
     return availableBoxes >= quantity
@@ -255,11 +256,13 @@ const Customers = () => {
   // Get availability status for display
   const getAvailabilityStatus = (quantity: number) => {
     const isAvailable = checkBoxAvailability(quantity)
+    const inventoryArray = Array.isArray(inventory) ? inventory : []
+    const availableCount = inventoryArray.filter((box: any) => box.status === 'available').length
     return {
       available: isAvailable,
       message: isAvailable ? 
         `${quantity} cajas disponibles` : 
-        `Solo ${inventory.filter((box: any) => box.status === 'available').length} cajas disponibles`,
+        `Solo ${availableCount} cajas disponibles`,
       className: isAvailable ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'
     }
   }
@@ -350,7 +353,7 @@ const Customers = () => {
                     Nuevo Cliente
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="w-full max-w-md mx-4 sm:mx-auto">
+                <DialogContent className="w-full max-w-md mx-4 sm:mx-auto max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>Crear Nuevo Cliente</DialogTitle>
                   </DialogHeader>
@@ -531,7 +534,7 @@ const Customers = () => {
 
       {/* Edit Customer Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent className="w-full max-w-md mx-4 sm:mx-auto">
+        <DialogContent className="w-full max-w-md mx-4 sm:mx-auto max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Editar Cliente</DialogTitle>
           </DialogHeader>
