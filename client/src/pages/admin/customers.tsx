@@ -93,8 +93,19 @@ const Customers = () => {
   })
 
   // Fetch inventory to check box availability
-  const { data: inventory = [] } = useQuery({
+  const { data: inventory = [], isLoading: inventoryLoading, error: inventoryError } = useQuery({
     queryKey: ["/api/inventory"],
+    refetchInterval: 5000,
+    retry: 1
+  })
+
+  // Debug inventory connection
+  console.log('Inventory state:', { 
+    inventory, 
+    inventoryLoading, 
+    inventoryError: inventoryError?.message,
+    isArray: Array.isArray(inventory),
+    length: inventory?.length 
   })
 
   // Create customer mutation
@@ -580,7 +591,6 @@ const Customers = () => {
                                   id="manual-price"
                                   checked={newRental.manualPrice || false}
                                   onCheckedChange={(checked) => setNewRental(prev => ({ ...prev, manualPrice: checked }))}
-                                  size="sm"
                                 />
                               </div>
                             </div>
@@ -598,6 +608,125 @@ const Customers = () => {
                               </div>
                             )}
                           </div>
+                        </div>
+                        
+                        {/* Products Section */}
+                        <div className="bg-gradient-to-r from-orange-50 to-yellow-50 p-6 rounded-lg border border-orange-200">
+                          <h4 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
+                            <ShoppingCart className="h-5 w-5 text-orange-600" />
+                            Productos Adicionales
+                          </h4>
+                          
+                          {/* Quick Product Buttons */}
+                          <div className="grid grid-cols-2 gap-3 mb-4">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-auto p-3 justify-start text-left"
+                              onClick={() => {
+                                setNewRental(prev => ({
+                                  ...prev,
+                                  additionalProducts: [...prev.additionalProducts, { name: "Carrito plegable", price: 15000, quantity: 1 }]
+                                }))
+                              }}
+                            >
+                              <div>
+                                <div className="font-medium">Carrito plegable</div>
+                                <div className="text-xs text-green-600">$15.000</div>
+                              </div>
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-auto p-3 justify-start text-left"
+                              onClick={() => {
+                                setNewRental(prev => ({
+                                  ...prev,
+                                  additionalProducts: [...prev.additionalProducts, { name: "Base móvil", price: 8000, quantity: 1 }]
+                                }))
+                              }}
+                            >
+                              <div>
+                                <div className="font-medium">Base móvil</div>
+                                <div className="text-xs text-green-600">$8.000</div>
+                              </div>
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-auto p-3 justify-start text-left"
+                              onClick={() => {
+                                setNewRental(prev => ({
+                                  ...prev,
+                                  additionalProducts: [...prev.additionalProducts, { name: "Kit 2 bases móviles", price: 15000, quantity: 1 }]
+                                }))
+                              }}
+                            >
+                              <div>
+                                <div className="font-medium">Kit 2 bases móviles</div>
+                                <div className="text-xs text-green-600">$15.000</div>
+                              </div>
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-auto p-3 justify-start text-left"
+                              onClick={() => {
+                                setNewRental(prev => ({
+                                  ...prev,
+                                  additionalProducts: [...prev.additionalProducts, { name: "Correa Ratchet", price: 5000, quantity: 1 }]
+                                }))
+                              }}
+                            >
+                              <div>
+                                <div className="font-medium">Correa Ratchet</div>
+                                <div className="text-xs text-green-600">$5.000</div>
+                              </div>
+                            </Button>
+                          </div>
+
+                          {/* Products List */}
+                          {newRental.additionalProducts.length > 0 && (
+                            <div className="space-y-2">
+                              <Label className="text-sm font-medium text-gray-700">Productos agregados:</Label>
+                              {newRental.additionalProducts.map((product, index) => (
+                                <div key={index} className="flex items-center justify-between bg-white p-3 rounded-lg border">
+                                  <span className="text-sm font-medium">
+                                    {product.quantity}x {product.name}
+                                  </span>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-sm font-semibold text-green-600">
+                                      ${product.price.toLocaleString('es-CL')}
+                                    </span>
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => {
+                                        setNewRental(prev => ({
+                                          ...prev,
+                                          additionalProducts: prev.additionalProducts.filter((_, i) => i !== index)
+                                        }))
+                                      }}
+                                    >
+                                      <Trash className="h-4 w-4 text-red-500" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              ))}
+                              {newRental.additionalProducts.length > 0 && (
+                                <div className="text-right p-2 bg-green-50 rounded border border-green-200">
+                                  <span className="text-sm font-semibold text-green-700">
+                                    Total productos: ${newRental.additionalProducts.reduce((sum, p) => sum + (p.price * p.quantity), 0).toLocaleString('es-CL')}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                     )}

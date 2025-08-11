@@ -306,7 +306,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Box routes
+  // Box/Inventory routes (public access for inventory checking)
+  app.get('/api/inventory', async (req, res) => {
+    try {
+      console.log('Fetching inventory...');
+      const boxes = await storage.getBoxes();
+      console.log('Inventory result:', boxes?.length || 0, 'boxes');
+      res.json(boxes || []);
+    } catch (error) {
+      console.error("Error fetching inventory:", error);
+      res.status(500).json({ message: "Failed to fetch inventory" });
+    }
+  });
+
   app.get('/api/boxes', requireAdminSession, async (req, res) => {
     try {
       const { status } = req.query;
