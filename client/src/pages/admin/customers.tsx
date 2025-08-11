@@ -67,7 +67,7 @@ const Customers = () => {
     boxSize: "mediano",
     customPrice: 2775,
     discount: 0,
-    additionalProducts: [] as Array<{name: string, price: number, quantity: number}>,
+    additionalProducts: [] as Array<{name: string, price: number, quantity: number, manualPrice?: boolean, originalPrice?: number}>,
     manualPrice: false
   })
   const { toast } = useToast()
@@ -627,7 +627,7 @@ const Customers = () => {
                               onClick={() => {
                                 setNewRental(prev => ({
                                   ...prev,
-                                  additionalProducts: [...prev.additionalProducts, { name: "Carrito plegable", price: 15000, quantity: 1 }]
+                                  additionalProducts: [...prev.additionalProducts, { name: "Carrito plegable", price: 15000, quantity: 1, originalPrice: 15000, manualPrice: false }]
                                 }))
                               }}
                             >
@@ -644,7 +644,7 @@ const Customers = () => {
                               onClick={() => {
                                 setNewRental(prev => ({
                                   ...prev,
-                                  additionalProducts: [...prev.additionalProducts, { name: "Base móvil", price: 8000, quantity: 1 }]
+                                  additionalProducts: [...prev.additionalProducts, { name: "Base móvil", price: 8000, quantity: 1, originalPrice: 8000, manualPrice: false }]
                                 }))
                               }}
                             >
@@ -661,7 +661,7 @@ const Customers = () => {
                               onClick={() => {
                                 setNewRental(prev => ({
                                   ...prev,
-                                  additionalProducts: [...prev.additionalProducts, { name: "Kit 2 bases móviles", price: 15000, quantity: 1 }]
+                                  additionalProducts: [...prev.additionalProducts, { name: "Kit 2 bases móviles", price: 15000, quantity: 1, originalPrice: 15000, manualPrice: false }]
                                 }))
                               }}
                             >
@@ -678,7 +678,7 @@ const Customers = () => {
                               onClick={() => {
                                 setNewRental(prev => ({
                                   ...prev,
-                                  additionalProducts: [...prev.additionalProducts, { name: "Correa Ratchet", price: 5000, quantity: 1 }]
+                                  additionalProducts: [...prev.additionalProducts, { name: "Correa Ratchet", price: 5000, quantity: 1, originalPrice: 5000, manualPrice: false }]
                                 }))
                               }}
                             >
@@ -694,13 +694,10 @@ const Customers = () => {
                             <div className="space-y-2">
                               <Label className="text-sm font-medium text-gray-700">Productos agregados:</Label>
                               {newRental.additionalProducts.map((product, index) => (
-                                <div key={index} className="flex items-center justify-between bg-white p-3 rounded-lg border">
-                                  <span className="text-sm font-medium">
-                                    {product.quantity}x {product.name}
-                                  </span>
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-sm font-semibold text-green-600">
-                                      ${product.price.toLocaleString('es-CL')}
+                                <div key={index} className="bg-white p-3 rounded-lg border space-y-2">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-sm font-medium">
+                                      {product.quantity}x {product.name}
                                     </span>
                                     <Button
                                       type="button"
@@ -715,6 +712,44 @@ const Customers = () => {
                                     >
                                       <Trash className="h-4 w-4 text-red-500" />
                                     </Button>
+                                  </div>
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                      <Label className="text-xs text-gray-600">Precio manual</Label>
+                                      <Switch
+                                        checked={product.manualPrice || false}
+                                        onCheckedChange={(checked) => {
+                                          setNewRental(prev => ({
+                                            ...prev,
+                                            additionalProducts: prev.additionalProducts.map((p, i) => 
+                                              i === index 
+                                                ? { ...p, manualPrice: checked, price: checked ? p.price : (p.originalPrice || p.price) }
+                                                : p
+                                            )
+                                          }))
+                                        }}
+                                      />
+                                    </div>
+                                    {product.manualPrice ? (
+                                      <Input
+                                        type="number"
+                                        value={product.price}
+                                        onChange={(e) => {
+                                          setNewRental(prev => ({
+                                            ...prev,
+                                            additionalProducts: prev.additionalProducts.map((p, i) => 
+                                              i === index ? { ...p, price: parseInt(e.target.value) || 0 } : p
+                                            )
+                                          }))
+                                        }}
+                                        className="w-24 text-sm"
+                                        placeholder="Precio"
+                                      />
+                                    ) : (
+                                      <span className="text-sm font-semibold text-green-600">
+                                        ${product.price.toLocaleString('es-CL')}
+                                      </span>
+                                    )}
                                   </div>
                                 </div>
                               ))}

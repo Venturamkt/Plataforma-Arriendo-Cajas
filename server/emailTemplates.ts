@@ -399,6 +399,116 @@ export const emailTemplates = {
     text: `¡Hola ${data.customerName}! RECORDATORIO: En 2 días debes devolver tus ${data.totalBoxes} cajas. Prepáralas: límpia, revisa estado, apila ordenadamente. Dirección: ${data.deliveryAddress}. Garantía: $${data.guaranteeAmount.toLocaleString()} se devuelve al completar. Seguimiento: ${data.trackingUrl} (${data.trackingCode}). Consultas: jalarcon@arriendocajas.cl`
   }),
 
+  "recordatorio-entrega": (data: RentalEmailData): EmailTemplate => ({
+    subject: `Recordatorio de Entrega - ${data.trackingCode} - Mañana`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            .container { max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif; }
+            .header { background: #28a745; color: white; padding: 20px; text-align: center; }
+            .content { padding: 20px; }
+            .reminder-box { background: #e8f5e8; border: 2px solid #28a745; padding: 15px; margin: 20px 0; text-align: center; }
+            .footer { background: #2E5CA6; color: white; padding: 15px; text-align: center; font-size: 12px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>🚚 Recordatorio de Entrega</h1>
+              <h2>¡Hola ${data.customerName}!</h2>
+            </div>
+            
+            <div class="content">
+              <p><strong>¡Tu entrega es mañana!</strong></p>
+              
+              <div class="reminder-box">
+                <h3>📦 Detalles de Entrega</h3>
+                <p><strong>Fecha:</strong> ${data.deliveryDate}</p>
+                <p><strong>Dirección:</strong> ${data.deliveryAddress}</p>
+                <p><strong>Cantidad de cajas:</strong> ${data.totalBoxes}</p>
+                <p><strong>Horario aproximado:</strong> 09:00 - 18:00</p>
+                <p><strong>Código:</strong> ${data.trackingCode}</p>
+              </div>
+              
+              <h3>📞 Contacto del Conductor</h3>
+              <p>Nuestro conductor se contactará contigo el día de la entrega para coordinar el horario exacto.</p>
+              <p><strong>WhatsApp/Teléfono:</strong> +56987290995</p>
+              
+              <p>¡Te esperamos mañana!</p>
+            </div>
+            
+            <div class="footer">
+              <p>Arriendo Cajas - Entrega puntual garantizada</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `,
+    text: `¡Hola ${data.customerName}! Recordatorio: Tu entrega es mañana (${data.deliveryDate}) en ${data.deliveryAddress}. ${data.totalBoxes} cajas. Horario: 09:00-18:00. Código: ${data.trackingCode}. Contacto conductor: +56987290995. ¡Nos vemos mañana!`
+  }),
+
+  "recordatorio-retiro": (data: RentalEmailData): EmailTemplate => ({
+    subject: `Recordatorio de Retiro - ${data.trackingCode} - En 2 días`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            .container { max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif; }
+            .header { background: #ffc107; color: #000; padding: 20px; text-align: center; }
+            .content { padding: 20px; }
+            .reminder-box { background: #fff3cd; border: 2px solid #ffc107; padding: 15px; margin: 20px 0; text-align: center; }
+            .footer { background: #2E5CA6; color: white; padding: 15px; text-align: center; font-size: 12px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>📅 Recordatorio de Retiro</h1>
+              <h2>¡Hola ${data.customerName}!</h2>
+            </div>
+            
+            <div class="content">
+              <p><strong>En 2 días debes devolver tus cajas</strong></p>
+              
+              <div class="reminder-box">
+                <h3>📦 Detalles de Retiro</h3>
+                <p><strong>Fecha de retiro:</strong> ${(data as any).returnDate}</p>
+                <p><strong>Dirección de retiro:</strong> ${(data as any).pickupAddress}</p>
+                <p><strong>Cantidad de cajas:</strong> ${data.totalBoxes}</p>
+                <p><strong>Código:</strong> ${data.trackingCode}</p>
+              </div>
+              
+              <h3>✅ ¡Prepara tus cajas!</h3>
+              <ul>
+                <li><strong>Límpia las cajas:</strong> Sin restos de comida, papel o suciedad</li>
+                <li><strong>Revisa su estado:</strong> Informa si alguna tiene daños</li>
+                <li><strong>Apila ordenadamente:</strong> En la misma ubicación de entrega</li>
+                <li><strong>Ten el código listo:</strong> ${data.trackingCode}</li>
+              </ul>
+              
+              <h3>💰 Devolución de Garantía</h3>
+              <p>Tu garantía de $${data.guaranteeAmount.toLocaleString()} se devolverá completamente una vez confirmado el retiro.</p>
+              
+              <h3>📞 Contacto</h3>
+              <p>WhatsApp/Teléfono: +56987290995</p>
+              <p>Email: jalarcon@arriendocajas.cl</p>
+            </div>
+            
+            <div class="footer">
+              <p>Arriendo Cajas - Gracias por tu confianza</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `,
+    text: `¡Hola ${data.customerName}! RECORDATORIO: En 2 días (${(data as any).returnDate}) debes devolver ${data.totalBoxes} cajas en ${(data as any).pickupAddress}. Prepáralas: limpias, apiladas, código ${data.trackingCode} listo. Garantía $${data.guaranteeAmount.toLocaleString()} se devuelve completamente. Contacto: +56987290995`
+  }),
+
   cancelada: (data: RentalEmailData): EmailTemplate => ({
     subject: `Arriendo cancelado - Reembolso en proceso - ${data.trackingCode}`,
     html: `
