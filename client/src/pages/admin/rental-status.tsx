@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, Package, Calendar, Truck, CheckCircle, Clock, XCircle, Edit3 } from "lucide-react";
+import { Search, Package, Calendar, Truck, CheckCircle, Clock, XCircle, Edit3, Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import type { Rental, Customer } from "@shared/schema";
@@ -33,7 +33,9 @@ export default function RentalStatus() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedRental, setSelectedRental] = useState<Rental | null>(null);
   const [showStatusDialog, setShowStatusDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const [newStatus, setNewStatus] = useState("");
+  const [editingRental, setEditingRental] = useState<Rental | null>(null);
 
   // Redirect to home if not authenticated
   useEffect(() => {
@@ -212,7 +214,7 @@ export default function RentalStatus() {
                         <div>
                           <p className="font-medium">{getCustomerName(rental.customerId)}</p>
                           <p className="text-sm text-gray-500">
-                            {new Date(rental.createdAt).toLocaleDateString()}
+                            {rental.createdAt ? new Date(rental.createdAt).toLocaleDateString() : ""}
                           </p>
                         </div>
                       </TableCell>
@@ -225,7 +227,7 @@ export default function RentalStatus() {
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4 text-gray-500" />
-                          <span>{rental.startDate ? new Date(rental.startDate as string).toLocaleDateString() : "Sin fecha"}</span>
+                          <span>{rental.deliveryDate ? new Date(rental.deliveryDate).toLocaleDateString() : "Sin fecha"}</span>
                         </div>
                       </TableCell>
                       <TableCell className="font-semibold">
@@ -238,14 +240,27 @@ export default function RentalStatus() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-center">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => openStatusDialog(rental)}
-                        >
-                          <Edit3 className="h-4 w-4 mr-1" />
-                          Cambiar Estado
-                        </Button>
+                        <div className="flex gap-1 justify-center">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => openStatusDialog(rental)}
+                          >
+                            <Edit3 className="h-4 w-4 mr-1" />
+                            Estado
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              setEditingRental(rental)
+                              setShowEditDialog(true)
+                            }}
+                            title="Editar arriendo completo"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   );
@@ -319,6 +334,150 @@ export default function RentalStatus() {
               </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Rental Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Editar Arriendo Completo</DialogTitle>
+            <DialogDescription>
+              Cliente: {editingRental ? getCustomerName(editingRental.customerId) : ""} • ID: {editingRental?.id?.substring(0, 8)}...
+            </DialogDescription>
+          </DialogHeader>
+          {editingRental && (
+            <div className="space-y-6 max-h-96 overflow-y-auto">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Cantidad de Cajas</Label>
+                  <Input 
+                    type="number" 
+                    value={editingRental.totalBoxes} 
+                    onChange={(e) => setEditingRental({
+                      ...editingRental,
+                      totalBoxes: parseInt(e.target.value) || 1
+                    })}
+                  />
+                </div>
+                <div>
+                  <Label>Días de Arriendo</Label>
+                  <Input 
+                    type="number" 
+                    value={editingRental.rentalDays || 7} 
+                    onChange={(e) => setEditingRental({
+                      ...editingRental,
+                      rentalDays: parseInt(e.target.value) || 7
+                    })}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Fecha de Entrega</Label>
+                  <Input 
+                    type="date" 
+                    value={editingRental.deliveryDate ? new Date(editingRental.deliveryDate).toISOString().split('T')[0] : ''} 
+                    onChange={(e) => setEditingRental({
+                      ...editingRental,
+                      deliveryDate: new Date(e.target.value)
+                    })}
+                  />
+                </div>
+                <div>
+                  <Label>Monto Total</Label>
+                  <Input 
+                    type="number" 
+                    value={editingRental.totalAmount} 
+                    onChange={(e) => setEditingRental({
+                      ...editingRental,
+                      totalAmount: parseInt(e.target.value) || 0
+                    })}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label>Dirección de Entrega</Label>
+                <Input 
+                  value={editingRental.deliveryAddress || ''} 
+                  onChange={(e) => setEditingRental({
+                    ...editingRental,
+                    deliveryAddress: e.target.value
+                  })}
+                />
+              </div>
+
+              <div>
+                <Label>Dirección de Retiro</Label>
+                <Input 
+                  value={editingRental.pickupAddress || ''} 
+                  onChange={(e) => setEditingRental({
+                    ...editingRental,
+                    pickupAddress: e.target.value
+                  })}
+                />
+              </div>
+
+              <div>
+                <Label>Notas</Label>
+                <Input 
+                  value={editingRental.notes || ''} 
+                  onChange={(e) => setEditingRental({
+                    ...editingRental,
+                    notes: e.target.value
+                  })}
+                />
+              </div>
+
+              <div>
+                <Label>Estado</Label>
+                <Select 
+                  value={editingRental.status || 'pendiente'} 
+                  onValueChange={(value) => setEditingRental({
+                    ...editingRental,
+                    status: value as any
+                  })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pendiente">Pendiente</SelectItem>
+                    <SelectItem value="pagada">Pagada</SelectItem>
+                    <SelectItem value="entregada">Entregada</SelectItem>
+                    <SelectItem value="retirada">Retirada</SelectItem>
+                    <SelectItem value="finalizado">Finalizada</SelectItem>
+                    <SelectItem value="cancelada">Cancelada</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex gap-2 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowEditDialog(false)
+                    setEditingRental(null)
+                  }}
+                  className="flex-1"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={() => {
+                    // TODO: Implement rental update mutation
+                    toast({ title: "Funcionalidad en desarrollo", description: "La edición completa estará disponible pronto" })
+                    setShowEditDialog(false)
+                  }}
+                  className="flex-1 bg-brand-blue hover:bg-blue-700 text-white"
+                >
+                  Actualizar Arriendo
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

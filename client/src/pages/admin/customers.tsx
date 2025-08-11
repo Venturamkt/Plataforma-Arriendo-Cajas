@@ -942,10 +942,19 @@ const Customers = () => {
                               <Button 
                                 variant="ghost" 
                                 size="sm"
+                                onClick={() => setLocation(`/admin/rental-status?customer=${customer.id}`)}
+                                title="Ver arriendos del cliente"
+                              >
+                                <Package className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
                                 onClick={() => {
                                   setEditingCustomer(customer)
                                   setShowEditDialog(true)
                                 }}
+                                title="Editar información del cliente"
                               >
                                 <Edit className="h-4 w-4" />
                               </Button>
@@ -955,6 +964,7 @@ const Customers = () => {
                                 className="text-red-600"
                                 onClick={() => handleDeleteCustomer(customer.id)}
                                 disabled={deleteCustomerMutation.isPending}
+                                title="Eliminar cliente"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
@@ -1018,10 +1028,19 @@ const Customers = () => {
                       <Button 
                         variant="ghost" 
                         size="sm"
+                        onClick={() => setLocation(`/admin/rental-status?customer=${customer.id}`)}
+                        title="Ver arriendos del cliente"
+                      >
+                        <Package className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
                         onClick={() => {
                           setEditingCustomer(customer)
                           setShowEditDialog(true)
                         }}
+                        title="Editar información del cliente"
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -1031,6 +1050,7 @@ const Customers = () => {
                         className="text-red-600"
                         onClick={() => handleDeleteCustomer(customer.id)}
                         disabled={deleteCustomerMutation.isPending}
+                        title="Eliminar cliente"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
