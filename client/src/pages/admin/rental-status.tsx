@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +30,7 @@ const statusConfig = {
 export default function RentalStatus() {
   const { toast } = useToast();
   const { user, isLoading } = useCurrentUser();
+  const [location] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedRental, setSelectedRental] = useState<Rental | null>(null);
@@ -36,6 +38,10 @@ export default function RentalStatus() {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [newStatus, setNewStatus] = useState("");
   const [editingRental, setEditingRental] = useState<Rental | null>(null);
+  
+  // Extract customer filter from URL params
+  const urlParams = new URLSearchParams(location.split('?')[1] || '');
+  const customerFilter = urlParams.get('customer');
 
   // Redirect to home if not authenticated
   useEffect(() => {
@@ -61,13 +67,18 @@ export default function RentalStatus() {
   // Update rental status mutation
   const updateStatusMutation = useMutation({
     mutationFn: async ({ rentalId, status }: { rentalId: string; status: string }) => {
+      console.log('Updating rental status:', { rentalId, status });
       const response = await fetch(`/api/rentals/${rentalId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ status }),
       });
-      if (!response.ok) throw new Error("Failed to update status");
+      if (!response.ok) {
+        const error = await response.text();
+        console.error('Failed to update status:', error);
+        throw new Error("Failed to update status");
+      }
       return response.json();
     },
     onSuccess: () => {
@@ -101,8 +112,9 @@ export default function RentalStatus() {
       rental.id.toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesStatus = statusFilter === "all" || rental.status === statusFilter;
+    const matchesCustomer = !customerFilter || rental.customerId === customerFilter;
     
-    return matchesSearch && matchesStatus;
+    return matchesSearch && matchesStatus && matchesCustomer;
   }) || [];
 
   const getCustomerName = (customerId: string) => {
@@ -129,8 +141,21 @@ export default function RentalStatus() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">Estado de Arriendos</h1>
-          <p className="text-gray-600 mt-1">Gestiona y actualiza el estado de todos los arriendos</p>
+          <p className="text-gray-600 mt-1">
+            {customerFilter 
+              ? `Arriendos de ${customers?.find(c => c.id === customerFilter)?.name || 'cliente seleccionado'}` 
+              : 'Gestiona y actualiza el estado de todos los arriendos'
+            }
+          </p>
         </div>
+        {customerFilter && (
+          <Button 
+            variant="outline" 
+            onClick={() => window.location.href = '/admin/rental-status'}
+          >
+            Ver todos los arriendos
+          </Button>
+        )}
       </div>
 
       {/* Filters */}
