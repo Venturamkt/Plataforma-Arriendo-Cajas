@@ -92,6 +92,11 @@ const Customers = () => {
     queryKey: ["/api/customers"],
   })
 
+  // Fetch rentals to calculate customer status
+  const { data: rentals = [] } = useQuery({
+    queryKey: ["/api/rentals"],
+  })
+
   // Fetch inventory to check box availability
   const { data: inventory = [], isLoading: inventoryLoading, error: inventoryError } = useQuery({
     queryKey: ["/api/inventory"],
@@ -105,7 +110,7 @@ const Customers = () => {
     inventoryLoading, 
     inventoryError: inventoryError?.message,
     isArray: Array.isArray(inventory),
-    length: inventory?.length 
+    length: Array.isArray(inventory) ? inventory.length : 0
   })
 
   // Create customer mutation
@@ -271,6 +276,54 @@ const Customers = () => {
       box.status === 'available' || box.status === 'maintenance'
     ).length
     return availableBoxes >= quantity
+  }
+
+  // Get customer rental information
+  const getCustomerRentalInfo = (customerId: string) => {
+    const customerRentals = Array.isArray(rentals) ? rentals.filter((r: any) => r.customerId === customerId) : []
+    const activeRentals = customerRentals.filter((r: any) => 
+      r.status && ['pendiente', 'pagada', 'entregada', 'retirada'].includes(r.status)
+    )
+    const totalRentals = customerRentals.length || 0
+    
+    // Calculate total amount from numeric totalAmount
+    const totalSpent = customerRentals.reduce((sum: number, rental: any) => {
+      const amount = typeof rental.totalAmount === 'string' 
+        ? parseInt(rental.totalAmount) || 0
+        : rental.totalAmount || 0
+      return sum + amount
+    }, 0)
+    
+    // Determine status based on active rentals
+    let status = 'Sin arriendos activos'
+    let statusColor = 'secondary'
+    
+    if (activeRentals.length > 0) {
+      const mostRecentRental = activeRentals.sort((a: any, b: any) => 
+        new Date(b.deliveryDate).getTime() - new Date(a.deliveryDate).getTime()
+      )[0]
+      
+      const statusMap: Record<string, { label: string; color: string }> = {
+        pendiente: { label: 'Pendiente', color: 'outline' },
+        pagada: { label: 'Pagada', color: 'default' },
+        entregada: { label: 'Entregada', color: 'secondary' },
+        retirada: { label: 'Retirada', color: 'destructive' }
+      }
+      
+      const statusInfo = statusMap[mostRecentRental.status as string]
+      if (statusInfo) {
+        status = statusInfo.label
+        statusColor = statusInfo.color
+      }
+    }
+    
+    return {
+      active: activeRentals.length || 0,
+      total: totalRentals,
+      totalSpent,
+      status,
+      statusColor
+    }
   }
 
   // Update rental price when quantity or days change (only if not manual)
@@ -899,6 +952,7 @@ const Customers = () => {
                   <TableBody>
                     {filteredCustomers.map((customer: any) => {
                       const initials = customer.name.split(' ').map((n: string) => n[0]).join('').toUpperCase()
+                      const rentalInfo = getCustomerRentalInfo(customer.id)
                       
                       return (
                         <TableRow key={customer.id}>
@@ -927,14 +981,14 @@ const Customers = () => {
                             <p className="text-sm">{customer.address || "No especificada"}</p>
                           </TableCell>
                           <TableCell className="text-center">
-                            <span className="text-sm font-bold text-brand-blue">0</span>
+                            <span className="text-sm font-bold text-brand-blue">{rentalInfo.active}</span>
                           </TableCell>
                           <TableCell className="text-center">
-                            <span className="text-sm font-bold">0</span>
+                            <span className="text-sm font-bold">{rentalInfo.total}</span>
                           </TableCell>
                           <TableCell className="text-center">
-                            <Badge variant="secondary">
-                              Sin arriendos
+                            <Badge variant={rentalInfo.statusColor as any}>
+                              {rentalInfo.status}
                             </Badge>
                           </TableCell>
                           <TableCell className="text-center">
