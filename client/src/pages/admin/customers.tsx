@@ -67,7 +67,8 @@ const Customers = () => {
     boxSize: "mediano",
     customPrice: 2775,
     discount: 0,
-    additionalProducts: [] as Array<{name: string, price: number, quantity: number}>
+    additionalProducts: [] as Array<{name: string, price: number, quantity: number}>,
+    manualPrice: false
   })
   const { toast } = useToast()
   const [, setLocation] = useLocation()
@@ -122,7 +123,8 @@ const Customers = () => {
         boxSize: "mediano",
         customPrice: 2775,
         discount: 0,
-        additionalProducts: []
+        additionalProducts: [],
+        manualPrice: false
       })
     },
     onError: (error: any) => {
@@ -260,11 +262,13 @@ const Customers = () => {
     return availableBoxes >= quantity
   }
 
-  // Update rental price when quantity or days change
+  // Update rental price when quantity or days change (only if not manual)
   useEffect(() => {
-    const newPrice = getPriceByPeriod(newRental.boxQuantity, newRental.rentalDays)
-    setNewRental(prev => ({ ...prev, customPrice: newPrice }))
-  }, [newRental.boxQuantity, newRental.rentalDays])
+    if (!newRental.manualPrice) {
+      const newPrice = getPriceByPeriod(newRental.boxQuantity, newRental.rentalDays)
+      setNewRental(prev => ({ ...prev, customPrice: newPrice }))
+    }
+  }, [newRental.boxQuantity, newRental.rentalDays, newRental.manualPrice])
 
   // Get availability status for display
   const getAvailabilityStatus = (quantity: number) => {
@@ -366,77 +370,100 @@ const Customers = () => {
                     Nuevo Cliente
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="w-full max-w-md mx-4 sm:mx-auto max-h-[90vh] overflow-y-auto">
+                <DialogContent className="w-full max-w-2xl mx-4 sm:mx-auto max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>Crear Nuevo Cliente</DialogTitle>
                   </DialogHeader>
-                  <form onSubmit={handleCreateCustomer} className="space-y-4">
-                    <div>
-                      <Label htmlFor="name">Nombre *</Label>
-                      <Input
-                        id="name"
-                        value={newCustomer.name}
-                        onChange={(e) => setNewCustomer({ ...newCustomer, name: e.target.value })}
-                        placeholder="Nombre completo"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="email">Email *</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={newCustomer.email}
-                        onChange={(e) => setNewCustomer({ ...newCustomer, email: e.target.value })}
-                        placeholder="correo@ejemplo.com"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="phone">Teléfono</Label>
-                      <Input
-                        id="phone"
-                        value={newCustomer.phone}
-                        onChange={(e) => setNewCustomer({ ...newCustomer, phone: e.target.value })}
-                        placeholder="+56 9 1234 5678"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="rut">RUT</Label>
-                      <Input
-                        id="rut"
-                        value={formattedRut}
-                        onChange={(e) => handleRutChange(e.target.value)}
-                        placeholder="12345678-9"
-                      />
+                  <form onSubmit={handleCreateCustomer} className="space-y-6">
+                    {/* Customer Information Section */}
+                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border border-blue-200">
+                      <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                        <User className="h-5 w-5 text-blue-600" />
+                        Información del Cliente
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="name" className="text-sm font-medium text-gray-700">Nombre completo *</Label>
+                          <Input
+                            id="name"
+                            value={newCustomer.name}
+                            onChange={(e) => setNewCustomer({ ...newCustomer, name: e.target.value })}
+                            placeholder="Ej: Juan Pérez González"
+                            className="mt-1"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="email" className="text-sm font-medium text-gray-700">Email *</Label>
+                          <Input
+                            id="email"
+                            type="email"
+                            value={newCustomer.email}
+                            onChange={(e) => setNewCustomer({ ...newCustomer, email: e.target.value })}
+                            placeholder="juan@ejemplo.com"
+                            className="mt-1"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="phone" className="text-sm font-medium text-gray-700">Teléfono</Label>
+                          <Input
+                            id="phone"
+                            value={newCustomer.phone}
+                            onChange={(e) => setNewCustomer({ ...newCustomer, phone: e.target.value })}
+                            placeholder="+56 9 1234 5678"
+                            className="mt-1"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="rut" className="text-sm font-medium text-gray-700">RUT</Label>
+                          <Input
+                            id="rut"
+                            value={formattedRut}
+                            onChange={(e) => handleRutChange(e.target.value)}
+                            placeholder="12.345.678-9"
+                            className="mt-1"
+                          />
+                        </div>
+                      </div>
                     </div>
 
-                    {/* Toggle for rental scheduling */}
-                    <div className="border-t pt-4">
+                    {/* Rental Toggle Section */}
+                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-lg border border-green-200">
                       <div className="flex items-center justify-between">
                         <div>
-                          <Label htmlFor="include-rental">¿Agendar cajas ahora?</Label>
-                          <p className="text-sm text-muted-foreground">Programa el arriendo al crear el cliente</p>
+                          <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                            <Calendar className="h-5 w-5 text-green-600" />
+                            ¿Agendar cajas ahora?
+                          </h3>
+                          <p className="text-sm text-gray-600 mt-1">Programa el arriendo directamente al crear el cliente</p>
                         </div>
                         <Switch
                           id="include-rental"
                           checked={includeRental}
                           onCheckedChange={setIncludeRental}
+                          className="data-[state=checked]:bg-green-600"
                         />
                       </div>
                     </div>
 
-                    {/* Rental details (when enabled) */}
+                    {/* Rental Details Section */}
                     {includeRental && (
-                      <div className="space-y-4 border-t pt-4">
-                        <div className="grid grid-cols-2 gap-4">
+                      <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-lg border border-purple-200 space-y-6">
+                        <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                          <Package className="h-5 w-5 text-purple-600" />
+                          Detalles del Arriendo
+                        </h3>
+                        
+                        {/* Quantity and Days */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                            <Label htmlFor="box-quantity">Cantidad de cajas</Label>
+                            <Label htmlFor="box-quantity" className="text-sm font-medium text-gray-700">Cantidad de cajas</Label>
                             <Select
                               value={newRental.boxQuantity.toString()}
                               onValueChange={(value) => setNewRental(prev => ({ ...prev, boxQuantity: parseInt(value) }))}
                             >
-                              <SelectTrigger>
+                              <SelectTrigger className="mt-1">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -448,71 +475,129 @@ const Customers = () => {
                             </Select>
                           </div>
                           <div>
-                            <Label htmlFor="rental-days">Días de arriendo</Label>
-                            <Select
-                              value={newRental.rentalDays.toString()}
-                              onValueChange={(value) => setNewRental(prev => ({ ...prev, rentalDays: parseInt(value) }))}
-                            >
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="7">7 días</SelectItem>
-                                <SelectItem value="14">14 días</SelectItem>
-                                <SelectItem value="30">30 días</SelectItem>
-                              </SelectContent>
-                            </Select>
+                            <Label htmlFor="rental-days" className="text-sm font-medium text-gray-700">Días de arriendo</Label>
+                            <div className="flex gap-2 mt-1">
+                              <Select
+                                value={[7, 14, 30].includes(newRental.rentalDays) ? newRental.rentalDays.toString() : 'custom'}
+                                onValueChange={(value) => {
+                                  if (value === 'custom') {
+                                    setNewRental(prev => ({ ...prev, rentalDays: 1 }))
+                                  } else {
+                                    setNewRental(prev => ({ ...prev, rentalDays: parseInt(value) }))
+                                  }
+                                }}
+                              >
+                                <SelectTrigger className="flex-1">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="7">7 días</SelectItem>
+                                  <SelectItem value="14">14 días</SelectItem>
+                                  <SelectItem value="30">30 días</SelectItem>
+                                  <SelectItem value="custom">Personalizado</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              {![7, 14, 30].includes(newRental.rentalDays) && (
+                                <Input
+                                  type="number"
+                                  placeholder="Días"
+                                  min="1"
+                                  value={newRental.rentalDays}
+                                  className="w-20"
+                                  onChange={(e) => setNewRental(prev => ({ ...prev, rentalDays: parseInt(e.target.value) || 1 }))}
+                                />
+                              )}
+                            </div>
                           </div>
                         </div>
                         
+                        {/* Delivery Date */}
                         <div>
-                          <Label htmlFor="delivery-date">Fecha de entrega</Label>
+                          <Label htmlFor="delivery-date" className="text-sm font-medium text-gray-700">Fecha de entrega</Label>
                           <Input
                             id="delivery-date"
                             type="date"
                             value={newRental.deliveryDate}
                             onChange={(e) => setNewRental(prev => ({ ...prev, deliveryDate: e.target.value }))}
+                            className="mt-1"
                           />
                         </div>
                         
-                        <div>
-                          <Label htmlFor="delivery-address">Dirección de entrega</Label>
-                          <Textarea
-                            id="delivery-address"
-                            value={newRental.deliveryAddress}
-                            onChange={(e) => setNewRental(prev => ({ ...prev, deliveryAddress: e.target.value }))}
-                            placeholder="Dirección completa de entrega..."
-                            rows={2}
-                          />
-                        </div>
-                        
-                        <div>
-                          <Label htmlFor="pickup-address">Dirección de retiro</Label>
-                          <Textarea
-                            id="pickup-address"
-                            value={newRental.pickupAddress}
-                            onChange={(e) => setNewRental(prev => ({ ...prev, pickupAddress: e.target.value }))}
-                            placeholder="Dirección completa de retiro (opcional si es la misma)..."
-                            rows={2}
-                          />
-                        </div>
-
-                        {/* Availability Status */}
-                        <div className={`p-3 rounded-lg border ${getAvailabilityStatus(newRental.boxQuantity).className}`}>
-                          <div className="flex items-center gap-2">
-                            {getAvailabilityStatus(newRental.boxQuantity).available ? (
-                              <CheckCircle className="h-5 w-5 text-green-600" />
-                            ) : (
-                              <AlertTriangle className="h-5 w-5 text-red-600" />
-                            )}
-                            <Label className="font-medium">
-                              {getAvailabilityStatus(newRental.boxQuantity).message}
-                            </Label>
+                        {/* Addresses */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor="delivery-address" className="text-sm font-medium text-gray-700">Dirección de entrega</Label>
+                            <Textarea
+                              id="delivery-address"
+                              value={newRental.deliveryAddress}
+                              onChange={(e) => setNewRental(prev => ({ ...prev, deliveryAddress: e.target.value }))}
+                              placeholder="Calle, número, comuna, ciudad..."
+                              rows={3}
+                              className="mt-1"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="pickup-address" className="text-sm font-medium text-gray-700">Dirección de retiro</Label>
+                            <Textarea
+                              id="pickup-address"
+                              value={newRental.pickupAddress}
+                              onChange={(e) => setNewRental(prev => ({ ...prev, pickupAddress: e.target.value }))}
+                              placeholder="Si es diferente a la entrega..."
+                              rows={3}
+                              className="mt-1"
+                            />
                           </div>
                         </div>
 
-                        <div className="bg-gray-50 p-3 rounded-lg">
-                          <Label className="text-lg font-semibold">Precio calculado: ${newRental.customPrice.toLocaleString('es-CL')}</Label>
+                        {/* Price and Availability */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {/* Availability Status */}
+                          <div className={`p-4 rounded-lg border-2 ${getAvailabilityStatus(newRental.boxQuantity).className}`}>
+                            <div className="flex items-center gap-3">
+                              {getAvailabilityStatus(newRental.boxQuantity).available ? (
+                                <CheckCircle className="h-6 w-6 text-green-600 flex-shrink-0" />
+                              ) : (
+                                <AlertTriangle className="h-6 w-6 text-red-600 flex-shrink-0" />
+                              )}
+                              <div>
+                                <div className="font-semibold text-sm">
+                                  {getAvailabilityStatus(newRental.boxQuantity).available ? 'Disponible' : 'Sin Stock'}
+                                </div>
+                                <div className="text-sm">
+                                  {getAvailabilityStatus(newRental.boxQuantity).message}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* Price with manual option */}
+                          <div className="p-4 bg-gray-50 rounded-lg border-2 border-gray-200">
+                            <div className="flex items-center justify-between mb-3">
+                              <Label className="text-sm font-medium text-gray-700">Precio</Label>
+                              <div className="flex items-center gap-2">
+                                <Label htmlFor="manual-price" className="text-xs text-gray-600">Manual</Label>
+                                <Switch
+                                  id="manual-price"
+                                  checked={newRental.manualPrice || false}
+                                  onCheckedChange={(checked) => setNewRental(prev => ({ ...prev, manualPrice: checked }))}
+                                  size="sm"
+                                />
+                              </div>
+                            </div>
+                            {newRental.manualPrice ? (
+                              <Input
+                                type="number"
+                                value={newRental.customPrice}
+                                onChange={(e) => setNewRental(prev => ({ ...prev, customPrice: parseInt(e.target.value) || 0 }))}
+                                placeholder="Precio personalizado"
+                                className="text-lg font-semibold"
+                              />
+                            ) : (
+                              <div className="text-2xl font-bold text-green-600">
+                                ${newRental.customPrice.toLocaleString('es-CL')}
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     )}
