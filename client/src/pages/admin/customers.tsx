@@ -322,7 +322,13 @@ const Customers = () => {
       total: totalRentals,
       totalSpent,
       status,
-      statusColor
+      statusColor,
+      mostRecentStatus: activeRentals.length > 0 ? activeRentals.sort((a: any, b: any) => 
+        new Date(b.deliveryDate).getTime() - new Date(a.deliveryDate).getTime()
+      )[0].status : null,
+      mostRecentRentalId: activeRentals.length > 0 ? activeRentals.sort((a: any, b: any) => 
+        new Date(b.deliveryDate).getTime() - new Date(a.deliveryDate).getTime()
+      )[0].id : null
     }
   }
 
@@ -333,6 +339,49 @@ const Customers = () => {
       setNewRental(prev => ({ ...prev, customPrice: newPrice }))
     }
   }, [newRental.boxQuantity, newRental.rentalDays, newRental.manualPrice])
+
+  // Handle status change from customers table
+  const handleStatusChangeFromCustomers = async (customerId: string, newStatus: string) => {
+    // Find the most recent active rental for this customer
+    const customerRentals = Array.isArray(rentals) ? rentals.filter((r: any) => r.customerId === customerId) : []
+    const activeRentals = customerRentals.filter((r: any) => 
+      r.status && ['pendiente', 'pagada', 'entregada', 'retirada'].includes(r.status)
+    )
+    
+    if (activeRentals.length === 0) return
+
+    const mostRecentRental = activeRentals.sort((a: any, b: any) => 
+      new Date(b.deliveryDate).getTime() - new Date(a.deliveryDate).getTime()
+    )[0]
+
+    try {
+      const response = await fetch(`/api/rentals/${mostRecentRental.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ status: newStatus }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to update status")
+      }
+
+      // Refresh both customers and rentals data
+      queryClient.invalidateQueries({ queryKey: ["/api/rentals"] })
+      queryClient.invalidateQueries({ queryKey: ["/api/customers"] })
+      
+      toast({
+        title: "Estado actualizado",
+        description: `Estado del arriendo cambiado a ${newStatus}`
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar el estado",
+        variant: "destructive"
+      })
+    }
+  }
 
   // Get availability status for display
   const getAvailabilityStatus = (quantity: number) => {
@@ -987,9 +1036,30 @@ const Customers = () => {
                             <span className="text-sm font-bold">{rentalInfo.total}</span>
                           </TableCell>
                           <TableCell className="text-center">
-                            <Badge variant={rentalInfo.statusColor as any}>
-                              {rentalInfo.status}
-                            </Badge>
+                            {rentalInfo.total > 0 && rentalInfo.active > 0 ? (
+                              <Select 
+                                value={rentalInfo.mostRecentStatus || ""}
+                                onValueChange={(newStatus) => handleStatusChangeFromCustomers(customer.id, newStatus)}
+                              >
+                                <SelectTrigger className="w-auto h-auto p-1 border-0 bg-transparent">
+                                  <Badge variant={rentalInfo.statusColor as any} className="cursor-pointer">
+                                    {rentalInfo.status}
+                                  </Badge>
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="pendiente">Pendiente</SelectItem>
+                                  <SelectItem value="pagada">Pagada</SelectItem>
+                                  <SelectItem value="entregada">Entregada</SelectItem>
+                                  <SelectItem value="retirada">Retirada</SelectItem>
+                                  <SelectItem value="finalizado">Finalizado</SelectItem>
+                                  <SelectItem value="cancelada">Cancelada</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            ) : (
+                              <Badge variant="secondary">
+                                Sin arriendos activos
+                              </Badge>
+                            )}
                           </TableCell>
                           <TableCell className="text-center">
                             <div className="flex items-center justify-center gap-1">
