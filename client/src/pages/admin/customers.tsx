@@ -266,26 +266,13 @@ const Customers = () => {
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      {/* Desktop Sidebar */}
-      <div className="hidden lg:block">
-        <Sidebar role="admin" />
-      </div>
+    <div className="min-h-screen bg-gray-50">
+      <Header />
       
-      {/* Main Content Area */}
-      <div className="flex-1 lg:ml-64">
-        {/* Mobile Navigation */}
-        <div className="lg:hidden">
-          <MobileNav role="admin" />
-        </div>
+      <div className="flex">
+        <Sidebar role="admin" />
         
-        {/* Desktop Header */}
-        <div className="hidden lg:block">
-          <Header />
-        </div>
-        
-        {/* Page Content */}
-        <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
+        <main className="flex-1 p-4 lg:p-8 pb-20 lg:pb-8">
           <div className="mb-6">
             <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
               Gestión de Clientes
@@ -751,7 +738,7 @@ const Customers = () => {
           })}
         </div>
       )}
-        </div>
+        </main>
       </div>
     </div>
   )
