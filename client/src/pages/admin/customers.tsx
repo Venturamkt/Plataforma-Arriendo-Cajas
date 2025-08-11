@@ -19,6 +19,9 @@ import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { apiRequest, queryClient } from "@/lib/queryClient"
 import { useLocation } from "wouter"
+import Header from "@/components/layout/header"
+import Sidebar from "@/components/layout/sidebar"
+import MobileNav from "@/components/layout/mobile-nav"
 
 // Utility functions
 const formatRut = (rut: string) => {
@@ -263,15 +266,34 @@ const Customers = () => {
   }
 
   return (
-    <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
-          Gestión de Clientes
-        </h1>
-        <p className="text-gray-600 text-sm md:text-base">
-          Base de datos completa de clientes y su historial de arriendos
-        </p>
+    <div className="flex min-h-screen bg-gray-50">
+      {/* Desktop Sidebar */}
+      <div className="hidden lg:block">
+        <Sidebar role="admin" />
       </div>
+      
+      {/* Main Content Area */}
+      <div className="flex-1 lg:ml-64">
+        {/* Mobile Navigation */}
+        <div className="lg:hidden">
+          <MobileNav role="admin" />
+        </div>
+        
+        {/* Desktop Header */}
+        <div className="hidden lg:block">
+          <Header />
+        </div>
+        
+        {/* Page Content */}
+        <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
+          <div className="mb-6">
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
+              Gestión de Clientes
+            </h1>
+            <p className="text-gray-600 text-sm md:text-base">
+              Base de datos completa de clientes y su historial de arriendos
+            </p>
+          </div>
 
       {/* Search and Actions - Mobile Optimized */}
       <Card className="mb-6">
@@ -729,6 +751,8 @@ const Customers = () => {
           })}
         </div>
       )}
+        </div>
+      </div>
     </div>
   )
 }
