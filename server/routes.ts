@@ -482,28 +482,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const customer = await storage.getCustomer(rental.customerId);
           console.log(`Customer found: ${customer?.name}, email: ${customer?.email}`);
           
-          if (customer?.email && rental.trackingCode) {
+          // Generate trackingCode if it doesn't exist
+          let updatedRental = rental;
+          if (!rental.trackingCode) {
+            console.log('Rental missing tracking code, generating new one...');
+            updatedRental = await storage.generateTrackingCodeForRental(rental.id);
+            console.log(`Generated tracking code: ${updatedRental?.trackingCode}`);
+          }
+          
+          if (customer?.email && updatedRental?.trackingCode) {
             const rutDigits = customer.rut ? customer.rut.slice(0, -1).slice(-4).padStart(4, '0') : "0000";
-            const trackingUrl = generateTrackingUrl(rutDigits, rental.trackingCode);
+            const trackingUrl = generateTrackingUrl(rutDigits, updatedRental.trackingCode);
             
             const emailData = {
               customerName: customer.name,
-              rentalId: rental.id,
-              trackingCode: rental.trackingCode,
+              rentalId: updatedRental.id,
+              trackingCode: updatedRental.trackingCode,
               trackingUrl: trackingUrl,
-              totalBoxes: rental.totalBoxes,
-              deliveryDate: rental.deliveryDate.toLocaleDateString('es-CL', { 
+              totalBoxes: updatedRental.totalBoxes,
+              deliveryDate: updatedRental.deliveryDate.toLocaleDateString('es-CL', { 
                 year: 'numeric', 
                 month: 'long', 
                 day: 'numeric' 
               }),
-              deliveryAddress: rental.deliveryAddress || '',
-              totalAmount: parseInt(rental.totalAmount || '0'),
-              guaranteeAmount: rental.totalBoxes * 2000,
+              deliveryAddress: updatedRental.deliveryAddress || '',
+              totalAmount: parseInt(updatedRental.totalAmount || '0'),
+              guaranteeAmount: updatedRental.totalBoxes * 2000,
             };
 
             console.log(`Sending email with data:`, JSON.stringify(emailData, null, 2));
-            console.log(`Generated tracking URL: ${trackingUrl} (RUT digits: ${rutDigits}, Tracking code: ${rental.trackingCode})`);
+            console.log(`Generated tracking URL: ${trackingUrl} (RUT digits: ${rutDigits}, Tracking code: ${updatedRental.trackingCode})`);
             const emailSent = await emailService.sendRentalStatusEmail(customer.email, rentalData.status, emailData);
             
             if (emailSent) {
@@ -541,7 +549,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   // Create delivery task
                   const deliveryTask = {
                     id: `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                    rentalId: rental.id,
+                    rentalId: updatedRental.id,
                     driverId: selectedDriver.id,
                     type: 'delivery' as const,
                     status: 'assigned' as const,
@@ -597,7 +605,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               }
             }
           } else {
-            console.log(`Cannot send email - missing customer email or tracking code. Customer email: ${customer?.email}, tracking code: ${rental.trackingCode}`);
+            console.log(`Cannot send email - missing customer email or tracking code. Customer email: ${customer?.email}, tracking code: ${updatedRental?.trackingCode}`);
           }
         } catch (emailError) {
           console.error("Error sending status change email:", emailError);
@@ -607,7 +615,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`Email not sent - conditions not met. Status: ${rentalData.status}, Email configured: ${emailService.isEmailConfigured()}`);
       }
 
-      res.json(rental);
+      res.json(updatedRental || rental);
     } catch (error) {
       console.error("Error updating rental:", error);
       res.status(400).json({ message: "Failed to update rental" });

@@ -351,6 +351,21 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
+  async generateTrackingCodeForRental(rentalId: string): Promise<Rental | undefined> {
+    try {
+      const trackingCode = this.generateTrackingCode();
+      const [updatedRental] = await db
+        .update(rentals)
+        .set({ trackingCode, updatedAt: new Date() })
+        .where(eq(rentals.id, rentalId))
+        .returning();
+      return updatedRental;
+    } catch (error) {
+      console.error("Error generating tracking code for rental:", error);
+      return undefined;
+    }
+  }
+
   async updateRental(id: string, rental: Partial<InsertRental>): Promise<Rental | undefined> {
     const [updatedRental] = await db
       .update(rentals)
