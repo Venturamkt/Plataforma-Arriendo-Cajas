@@ -4,7 +4,7 @@ import {
   Search, Plus, User, MapPin, Calendar, Package, Edit, Edit2, Trash2, Grid3X3,
   Table as TableIcon, Eye, Phone, Mail, CheckCircle, AlertTriangle, 
   Download, QrCode, MessageSquare, Trash, ShoppingCart, Building2, UserPlus,
-  ShieldCheck
+  ShieldCheck, Calculator
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
