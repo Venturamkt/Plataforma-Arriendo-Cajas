@@ -65,6 +65,7 @@ const Customers = () => {
     boxQuantity: 2,
     rentalDays: 7,
     deliveryDate: "",
+    pickupDate: "",
     deliveryAddress: "",
     pickupAddress: "",
     notes: "",
@@ -74,6 +75,21 @@ const Customers = () => {
     additionalProducts: [] as Array<{name: string, price: number, quantity: number, manualPrice?: boolean, originalPrice?: number}>,
     manualPrice: false
   })
+
+  // Calculate pickup date automatically when delivery date or rental days change
+  useEffect(() => {
+    if (newRental.deliveryDate && newRental.rentalDays) {
+      const deliveryDate = new Date(newRental.deliveryDate);
+      const pickupDate = new Date(deliveryDate);
+      pickupDate.setDate(deliveryDate.getDate() + newRental.rentalDays);
+      const pickupDateStr = pickupDate.toISOString().split('T')[0];
+      
+      setNewRental(prev => ({
+        ...prev,
+        pickupDate: pickupDateStr
+      }));
+    }
+  }, [newRental.deliveryDate, newRental.rentalDays])
   const { toast } = useToast()
   const [, setLocation] = useLocation()
 
@@ -808,20 +824,39 @@ const Customers = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
                             <Label htmlFor="box-quantity" className="text-sm font-medium text-gray-700">Cantidad de cajas</Label>
-                            <Select
-                              value={newRental.boxQuantity.toString()}
-                              onValueChange={(value) => setNewRental(prev => ({ ...prev, boxQuantity: parseInt(value) }))}
-                            >
-                              <SelectTrigger className="mt-1">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="2">2 cajas</SelectItem>
-                                <SelectItem value="5">5 cajas</SelectItem>
-                                <SelectItem value="10">10 cajas</SelectItem>
-                                <SelectItem value="15">15 cajas</SelectItem>
-                              </SelectContent>
-                            </Select>
+                            <div className="flex gap-2 mt-1">
+                              <Select
+                                value={[2, 5, 10, 15].includes(newRental.boxQuantity) ? newRental.boxQuantity.toString() : 'custom'}
+                                onValueChange={(value) => {
+                                  if (value === 'custom') {
+                                    setNewRental(prev => ({ ...prev, boxQuantity: 1 }))
+                                  } else {
+                                    setNewRental(prev => ({ ...prev, boxQuantity: parseInt(value) }))
+                                  }
+                                }}
+                              >
+                                <SelectTrigger className="flex-1">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="2">2 cajas</SelectItem>
+                                  <SelectItem value="5">5 cajas</SelectItem>
+                                  <SelectItem value="10">10 cajas</SelectItem>
+                                  <SelectItem value="15">15 cajas</SelectItem>
+                                  <SelectItem value="custom">Manual</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              {![2, 5, 10, 15].includes(newRental.boxQuantity) && (
+                                <Input
+                                  type="number"
+                                  placeholder="Cantidad"
+                                  min="1"
+                                  value={newRental.boxQuantity}
+                                  className="w-24"
+                                  onChange={(e) => setNewRental(prev => ({ ...prev, boxQuantity: parseInt(e.target.value) || 1 }))}
+                                />
+                              )}
+                            </div>
                           </div>
                           <div>
                             <Label htmlFor="rental-days" className="text-sm font-medium text-gray-700">Días de arriendo</Label>
@@ -860,16 +895,31 @@ const Customers = () => {
                           </div>
                         </div>
                         
-                        {/* Delivery Date */}
-                        <div>
-                          <Label htmlFor="delivery-date" className="text-sm font-medium text-gray-700">Fecha de entrega</Label>
-                          <Input
-                            id="delivery-date"
-                            type="date"
-                            value={newRental.deliveryDate}
-                            onChange={(e) => setNewRental(prev => ({ ...prev, deliveryDate: e.target.value }))}
-                            className="mt-1"
-                          />
+                        {/* Delivery and Pickup Dates */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor="delivery-date" className="text-sm font-medium text-gray-700">Fecha de entrega</Label>
+                            <Input
+                              id="delivery-date"
+                              type="date"
+                              value={newRental.deliveryDate}
+                              onChange={(e) => setNewRental(prev => ({ ...prev, deliveryDate: e.target.value }))}
+                              className="mt-1"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="pickup-date" className="text-sm font-medium text-gray-700">
+                              Fecha de devolución
+                              <span className="text-xs text-gray-500 ml-1">(auto-calculada, editable)</span>
+                            </Label>
+                            <Input
+                              id="pickup-date"
+                              type="date"
+                              value={newRental.pickupDate}
+                              onChange={(e) => setNewRental(prev => ({ ...prev, pickupDate: e.target.value }))}
+                              className="mt-1"
+                            />
+                          </div>
                         </div>
                         
                         {/* Addresses */}
