@@ -43,10 +43,13 @@ const displayFormattedRut = (rut: string) => {
 
 const Customers = () => {
   const [searchQuery, setSearchQuery] = useState("")
+  
+  // Rental editing state
+  const [selectedRental, setSelectedRental] = useState(null)
+  const [showRentalDialog, setShowRentalDialog] = useState(false)
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('table')
   const [showNewCustomerDialog, setShowNewCustomerDialog] = useState(false)
   const [showEditDialog, setShowEditDialog] = useState(false)
-  const [showRentalDialog, setShowRentalDialog] = useState(false)
   const [editingCustomer, setEditingCustomer] = useState<any>(null)
   const [selectedCustomerForRental, setSelectedCustomerForRental] = useState<any>(null)
   const [newCustomer, setNewCustomer] = useState({
@@ -95,6 +98,11 @@ const Customers = () => {
   // Fetch rentals to calculate customer status
   const { data: rentals = [] } = useQuery({
     queryKey: ["/api/rentals"],
+  })
+
+  // Fetch drivers for assignment
+  const { data: drivers = [] } = useQuery({
+    queryKey: ["/api/drivers"],
   })
 
   // Fetch inventory to check box availability
@@ -197,6 +205,50 @@ const Customers = () => {
     }
   })
 
+  // Update rental status mutation
+  const updateRentalStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: number; status: string }) => {
+      const res = await apiRequest("PUT", `/api/rentals/${id}/status`, { status })
+      return res.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/rentals"] })
+      toast({
+        title: "Estado actualizado",
+        description: "El estado del arriendo ha sido actualizado y se ha enviado notificación por email"
+      })
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Error al actualizar el estado",
+        variant: "destructive"
+      })
+    }
+  })
+
+  // Update rental driver mutation
+  const updateRentalDriverMutation = useMutation({
+    mutationFn: async ({ id, driverId }: { id: number; driverId: number | null }) => {
+      const res = await apiRequest("PUT", `/api/rentals/${id}/driver`, { driverId })
+      return res.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/rentals"] })
+      toast({
+        title: "Conductor actualizado",
+        description: "El conductor ha sido asignado al arriendo"
+      })
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Error al asignar conductor",
+        variant: "destructive"
+      })
+    }
+  })
+
   const filteredCustomers = (customers as any[]).filter((customer: any) =>
     customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     customer.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -267,6 +319,16 @@ const Customers = () => {
     else baseBoxPrice = basePrice7Days[15] / 15
     
     return Math.round(baseBoxPrice * boxes * (days / 7))
+  }
+
+  // Get customer's most recent rental
+  const getCustomerRental = (customerId: number) => {
+    const customerRentals = (rentals as any[]).filter(
+      (rental: any) => rental.customerId === customerId
+    )
+    return customerRentals.length > 0 
+      ? customerRentals.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0]
+      : null
   }
 
   // Check box availability
@@ -418,9 +480,40 @@ const Customers = () => {
     if (isEditing && editingCustomer) {
       setEditingCustomer({ ...editingCustomer, rut: formatted })
     } else {
-      setFormattedRut(formatted)
       setNewCustomer({ ...newCustomer, rut: formatted })
+      setFormattedRut(formatted)
     }
+  }
+
+  // Open rental dialog for editing
+  const handleEditRental = (customerId: number) => {
+    const rental = getCustomerRental(customerId)
+    if (rental) {
+      setSelectedRental(rental)
+      setShowRentalDialog(true)
+    }
+  }
+
+  if (userLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-red mx-auto mb-4"></div>
+          <p className="text-gray-600">Cargando...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (userLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-red mx-auto mb-4"></div>
+          <p className="text-gray-600">Cargando...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -1082,17 +1175,17 @@ const Customers = () => {
                               >
                                 <Edit2 className="h-4 w-4" />
                               </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => {
-                                  setEditingCustomer(customer)
-                                  setShowEditDialog(true)
-                                }}
-                                title="Editar cliente"
-                              >
-                                <Edit2 className="h-4 w-4" />
-                              </Button>
+                              {rentalInfo.total > 0 && (
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => handleEditRental(customer.id)}
+                                  title="Editar arriendo"
+                                  className="text-blue-600"
+                                >
+                                  <Calendar className="h-4 w-4" />
+                                </Button>
+                              )}
                               <Button 
                                 variant="ghost" 
                                 size="sm" 
@@ -1154,42 +1247,60 @@ const Customers = () => {
                   </div>
                   
                   <div className="flex justify-between items-center mt-4 pt-3 border-t">
-                    <div className="text-sm">
-                      <span className="font-semibold text-brand-blue">0</span> activos
-                      <span className="text-gray-500"> / </span>
-                      <span className="font-semibold">0</span> total
-                    </div>
-                    <div className="flex gap-1">
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => setLocation(`/admin/rental-status?customer=${customer.id}`)}
-                        title="Ver arriendos del cliente"
-                      >
-                        <Package className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => {
-                          setEditingCustomer(customer)
-                          setShowEditDialog(true)
-                        }}
-                        title="Editar cliente"
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="text-red-600"
-                        onClick={() => handleDeleteCustomer(customer.id)}
-                        disabled={deleteCustomerMutation.isPending}
-                        title="Eliminar cliente"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+                    {(() => {
+                      const rentalInfo = getCustomerRentalInfo(customer.id)
+                      return (
+                        <>
+                          <div className="text-sm">
+                            <span className="font-semibold text-brand-blue">{rentalInfo.active}</span> activos
+                            <span className="text-gray-500"> / </span>
+                            <span className="font-semibold">{rentalInfo.total}</span> total
+                          </div>
+                          <div className="flex gap-1">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => setLocation(`/admin/rental-status?customer=${customer.id}`)}
+                              title="Ver arriendos del cliente"
+                            >
+                              <Package className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => {
+                                setEditingCustomer(customer)
+                                setShowEditDialog(true)
+                              }}
+                              title="Editar cliente"
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                            {rentalInfo.total > 0 && (
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handleEditRental(customer.id)}
+                                title="Editar arriendo"
+                                className="text-blue-600"
+                              >
+                                <Calendar className="h-4 w-4" />
+                              </Button>
+                            )}
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="text-red-600"
+                              onClick={() => handleDeleteCustomer(customer.id)}
+                              disabled={deleteCustomerMutation.isPending}
+                              title="Eliminar cliente"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </>
+                      )
+                    })()}
                   </div>
                 </CardContent>
               </Card>
@@ -1197,6 +1308,127 @@ const Customers = () => {
           })}
         </div>
       )}
+
+      {/* Rental Editing Dialog */}
+      <Dialog open={showRentalDialog} onOpenChange={setShowRentalDialog}>
+        <DialogContent className="w-full max-w-md mx-4 sm:mx-auto max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Editar Arriendo</DialogTitle>
+          </DialogHeader>
+          {selectedRental && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <Label className="text-gray-600">Cliente</Label>
+                  <p className="font-medium">{customers.find((c: any) => c.id === selectedRental.customerId)?.name}</p>
+                </div>
+                <div>
+                  <Label className="text-gray-600">Cajas</Label>
+                  <p className="font-medium">{selectedRental.boxQuantity}</p>
+                </div>
+                <div>
+                  <Label className="text-gray-600">Días</Label>
+                  <p className="font-medium">{selectedRental.rentalDays}</p>
+                </div>
+                <div>
+                  <Label className="text-gray-600">Total</Label>
+                  <p className="font-medium">${selectedRental.totalAmount?.toLocaleString('es-CL')}</p>
+                </div>
+              </div>
+              
+              {/* Status Selector */}
+              <div>
+                <Label htmlFor="rental-status">Estado del Arriendo</Label>
+                <Select 
+                  value={selectedRental.status || ""} 
+                  onValueChange={(value) => {
+                    updateRentalStatusMutation.mutate({ id: selectedRental.id, status: value })
+                    setSelectedRental({ ...selectedRental, status: value })
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar estado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pendiente">Pendiente</SelectItem>
+                    <SelectItem value="pagada">Pagada</SelectItem>
+                    <SelectItem value="entregada">Entregada</SelectItem>
+                    <SelectItem value="retirada">Retirada</SelectItem>
+                    <SelectItem value="finalizado">Finalizado</SelectItem>
+                    <SelectItem value="cancelada">Cancelada</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Driver Assignment */}
+              <div>
+                <Label htmlFor="rental-driver">Conductor Asignado</Label>
+                <Select 
+                  value={selectedRental.driverId?.toString() || ""} 
+                  onValueChange={(value) => {
+                    const driverId = value ? parseInt(value) : null
+                    updateRentalDriverMutation.mutate({ id: selectedRental.id, driverId })
+                    setSelectedRental({ ...selectedRental, driverId })
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar conductor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Sin asignar</SelectItem>
+                    {drivers.map((driver: any) => (
+                      <SelectItem key={driver.id} value={driver.id.toString()}>
+                        {driver.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {selectedRental.driverId && (
+                  <p className="text-xs text-gray-600 mt-1">
+                    Conductor actual: {drivers.find((d: any) => d.id === selectedRental.driverId)?.name || 'No encontrado'}
+                  </p>
+                )}
+              </div>
+
+              {/* Delivery Info */}
+              <div className="space-y-2">
+                <div>
+                  <Label className="text-gray-600">Fecha de Entrega</Label>
+                  <p className="text-sm">{new Date(selectedRental.deliveryDate).toLocaleDateString('es-CL')}</p>
+                </div>
+                <div>
+                  <Label className="text-gray-600">Dirección</Label>
+                  <p className="text-sm">{selectedRental.deliveryAddress}</p>
+                </div>
+                {selectedRental.notes && (
+                  <div>
+                    <Label className="text-gray-600">Notas</Label>
+                    <p className="text-sm">{selectedRental.notes}</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-2 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowRentalDialog(false)}
+                  className="flex-1"
+                >
+                  Cerrar
+                </Button>
+                <Button
+                  onClick={() => setLocation(`/admin/rental-status?customer=${selectedRental.customerId}`)}
+                  className="flex-1 bg-brand-blue hover:bg-blue-700 text-white"
+                >
+                  Ver Detalles Completos
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
         </main>
       </div>
     </div>
