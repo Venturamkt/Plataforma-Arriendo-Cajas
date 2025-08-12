@@ -47,7 +47,6 @@ function Router() {
       <Route path="/admin/users" component={UserManagement} />
       <Route path="/admin/users/create" component={CreateUser} />
       <Route path="/admin/new-rental" component={NewRental} />
-      <Route path="/admin/rental-status" component={RentalStatus} />
       <Route path="/admin/emails" component={EmailPreview} />
       <Route path="/admin/reminders" component={Reminders} />
       

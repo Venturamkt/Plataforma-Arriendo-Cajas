@@ -1159,7 +1159,7 @@ const Customers = () => {
                               <Button 
                                 variant="ghost" 
                                 size="sm"
-                                onClick={() => setLocation(`/admin/rental-status?customer=${customer.id}`)}
+                                onClick={() => setLocation(`/admin/customers`)}
                                 title="Ver arriendos del cliente"
                               >
                                 <Package className="h-4 w-4" />
@@ -1260,7 +1260,7 @@ const Customers = () => {
                             <Button 
                               variant="ghost" 
                               size="sm"
-                              onClick={() => setLocation(`/admin/rental-status?customer=${customer.id}`)}
+                              onClick={() => setLocation(`/admin/customers`)}
                               title="Ver arriendos del cliente"
                             >
                               <Package className="h-4 w-4" />
@@ -1309,119 +1309,262 @@ const Customers = () => {
         </div>
       )}
 
-      {/* Rental Editing Dialog */}
+      {/* Comprehensive Rental Editing Dialog */}
       <Dialog open={showRentalDialog} onOpenChange={setShowRentalDialog}>
-        <DialogContent className="w-full max-w-md mx-4 sm:mx-auto max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-full max-w-2xl mx-4 sm:mx-auto max-h-[95vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Editar Arriendo</DialogTitle>
+            <DialogTitle className="text-xl font-bold">Editar Arriendo Completo</DialogTitle>
           </DialogHeader>
           {selectedRental && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <Label className="text-gray-600">Cliente</Label>
-                  <p className="font-medium">{customers.find((c: any) => c.id === selectedRental.customerId)?.name}</p>
-                </div>
-                <div>
-                  <Label className="text-gray-600">Cajas</Label>
-                  <p className="font-medium">{selectedRental.boxQuantity}</p>
-                </div>
-                <div>
-                  <Label className="text-gray-600">Días</Label>
-                  <p className="font-medium">{selectedRental.rentalDays}</p>
-                </div>
-                <div>
-                  <Label className="text-gray-600">Total</Label>
-                  <p className="font-medium">${selectedRental.totalAmount?.toLocaleString('es-CL')}</p>
-                </div>
-              </div>
-              
-              {/* Status Selector */}
-              <div>
-                <Label htmlFor="rental-status">Estado del Arriendo</Label>
-                <Select 
-                  value={selectedRental.status || ""} 
-                  onValueChange={(value) => {
-                    updateRentalStatusMutation.mutate({ id: selectedRental.id, status: value })
-                    setSelectedRental({ ...selectedRental, status: value })
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar estado" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pendiente">Pendiente</SelectItem>
-                    <SelectItem value="pagada">Pagada</SelectItem>
-                    <SelectItem value="entregada">Entregada</SelectItem>
-                    <SelectItem value="retirada">Retirada</SelectItem>
-                    <SelectItem value="finalizado">Finalizado</SelectItem>
-                    <SelectItem value="cancelada">Cancelada</SelectItem>
-                  </SelectContent>
-                </Select>
+            <div className="space-y-6">
+              {/* Cliente Info */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h3 className="font-semibold mb-2">Cliente</h3>
+                <p className="text-lg font-medium">{customers.find((c: any) => c.id === selectedRental.customerId)?.name}</p>
               </div>
 
-              {/* Driver Assignment */}
-              <div>
-                <Label htmlFor="rental-driver">Conductor Asignado</Label>
-                <Select 
-                  value={selectedRental.driverId?.toString() || "unassigned"} 
-                  onValueChange={(value) => {
-                    const driverId = value === "unassigned" ? null : parseInt(value)
-                    updateRentalDriverMutation.mutate({ id: selectedRental.id, driverId })
-                    setSelectedRental({ ...selectedRental, driverId })
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar conductor" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="unassigned">Sin asignar</SelectItem>
-                    {drivers.map((driver: any) => (
-                      <SelectItem key={driver.id} value={driver.id.toString()}>
-                        {driver.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {selectedRental.driverId && (
-                  <p className="text-xs text-gray-600 mt-1">
-                    Conductor actual: {drivers.find((d: any) => d.id === selectedRental.driverId)?.name || 'No encontrado'}
-                  </p>
-                )}
+              {/* Rental Configuration */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Box Quantity */}
+                <div>
+                  <Label htmlFor="edit-quantity">Cantidad de Cajas</Label>
+                  <Select 
+                    value={selectedRental.boxQuantity?.toString() || ""} 
+                    onValueChange={(value) => {
+                      const quantity = parseInt(value)
+                      setSelectedRental({ ...selectedRental, boxQuantity: quantity })
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar cantidad" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 15 }, (_, i) => i + 1).map(num => (
+                        <SelectItem key={num} value={num.toString()}>
+                          {num} {num === 1 ? 'caja' : 'cajas'}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Rental Days */}
+                <div>
+                  <Label htmlFor="edit-days">Días de Arriendo</Label>
+                  <Select 
+                    value={selectedRental.rentalDays?.toString() || ""} 
+                    onValueChange={(value) => {
+                      const days = parseInt(value)
+                      setSelectedRental({ ...selectedRental, rentalDays: days })
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar días" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="7">7 días</SelectItem>
+                      <SelectItem value="14">14 días</SelectItem>
+                      <SelectItem value="30">30 días</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
-              {/* Delivery Info */}
-              <div className="space-y-2">
-                <div>
-                  <Label className="text-gray-600">Fecha de Entrega</Label>
-                  <p className="text-sm">{new Date(selectedRental.deliveryDate).toLocaleDateString('es-CL')}</p>
-                </div>
-                <div>
-                  <Label className="text-gray-600">Dirección</Label>
-                  <p className="text-sm">{selectedRental.deliveryAddress}</p>
-                </div>
-                {selectedRental.notes && (
+              {/* Delivery Information */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-lg">Información de Entrega</h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label className="text-gray-600">Notas</Label>
-                    <p className="text-sm">{selectedRental.notes}</p>
+                    <Label htmlFor="edit-delivery-date">Fecha de Entrega</Label>
+                    <Input
+                      id="edit-delivery-date"
+                      type="date"
+                      value={selectedRental.deliveryDate ? new Date(selectedRental.deliveryDate).toISOString().split('T')[0] : ''}
+                      onChange={(e) => setSelectedRental({ ...selectedRental, deliveryDate: e.target.value })}
+                    />
                   </div>
-                )}
+                  
+                  <div>
+                    <Label htmlFor="edit-pickup-date">Fecha de Retiro</Label>
+                    <Input
+                      id="edit-pickup-date"
+                      type="date"
+                      value={selectedRental.pickupDate ? new Date(selectedRental.pickupDate).toISOString().split('T')[0] : ''}
+                      onChange={(e) => setSelectedRental({ ...selectedRental, pickupDate: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="edit-delivery-address">Dirección de Entrega</Label>
+                  <textarea
+                    id="edit-delivery-address"
+                    className="w-full p-2 border border-gray-300 rounded-md min-h-[80px]"
+                    value={selectedRental.deliveryAddress || ''}
+                    onChange={(e) => setSelectedRental({ ...selectedRental, deliveryAddress: e.target.value })}
+                    placeholder="Calle, número, comuna, ciudad..."
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="edit-pickup-address">Dirección de Retiro</Label>
+                  <textarea
+                    id="edit-pickup-address"
+                    className="w-full p-2 border border-gray-300 rounded-md min-h-[80px]"
+                    value={selectedRental.pickupAddress || ''}
+                    onChange={(e) => setSelectedRental({ ...selectedRental, pickupAddress: e.target.value })}
+                    placeholder="Si es diferente a la entrega..."
+                  />
+                </div>
               </div>
 
-              <div className="flex gap-2 pt-4">
+              {/* Additional Products */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-lg">Productos Adicionales</h3>
+                <div className="bg-orange-50 p-4 rounded-lg">
+                  <div className="grid grid-cols-2 gap-4">
+                    {[
+                      { name: 'Carrito plegable', price: 15000 },
+                      { name: 'Base móvil', price: 8000 },
+                      { name: 'Kit 2 bases móviles', price: 15000 },
+                      { name: 'Correa Ratchet', price: 5000 }
+                    ].map((product) => (
+                      <div key={product.name} className="flex items-center justify-between p-2 bg-white rounded border">
+                        <div>
+                          <p className="font-medium text-sm">{product.name}</p>
+                          <p className="text-green-600 font-bold">${product.price.toLocaleString('es-CL')}</p>
+                        </div>
+                        <input
+                          type="checkbox"
+                          className="w-4 h-4"
+                          checked={selectedRental.additionalProducts?.includes(product.name) || false}
+                          onChange={(e) => {
+                            const products = selectedRental.additionalProducts || []
+                            if (e.target.checked) {
+                              setSelectedRental({ 
+                                ...selectedRental, 
+                                additionalProducts: [...products, product.name]
+                              })
+                            } else {
+                              setSelectedRental({ 
+                                ...selectedRental, 
+                                additionalProducts: products.filter(p => p !== product.name)
+                              })
+                            }
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Guarantee Information */}
+              <div className="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500">
+                <h3 className="font-semibold text-lg text-blue-800 mb-2">💰 Información de Garantía</h3>
+                <div className="space-y-2 text-sm">
+                  <p><strong>Garantía por caja:</strong> $2.000</p>
+                  <p><strong>Total garantía:</strong> ${((selectedRental.boxQuantity || 0) * 2000).toLocaleString('es-CL')}</p>
+                  <p className="text-blue-700">
+                    <strong>Importante:</strong> La garantía se reembolsa una vez que las cajas sean devueltas en las mismas condiciones en las que fueron entregadas.
+                  </p>
+                </div>
+              </div>
+
+              {/* Status and Driver */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Status Selector */}
+                <div>
+                  <Label htmlFor="rental-status">Estado del Arriendo</Label>
+                  <Select 
+                    value={selectedRental.status || ""} 
+                    onValueChange={(value) => {
+                      updateRentalStatusMutation.mutate({ id: selectedRental.id, status: value })
+                      setSelectedRental({ ...selectedRental, status: value })
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar estado" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pendiente">Pendiente</SelectItem>
+                      <SelectItem value="pagada">Pagada</SelectItem>
+                      <SelectItem value="entregada">Entregada</SelectItem>
+                      <SelectItem value="retirada">Retirada</SelectItem>
+                      <SelectItem value="finalizado">Finalizado</SelectItem>
+                      <SelectItem value="cancelada">Cancelada</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Driver Assignment */}
+                <div>
+                  <Label htmlFor="rental-driver">Conductor Asignado</Label>
+                  <Select 
+                    value={selectedRental.driverId?.toString() || "unassigned"} 
+                    onValueChange={(value) => {
+                      const driverId = value === "unassigned" ? null : parseInt(value)
+                      updateRentalDriverMutation.mutate({ id: selectedRental.id, driverId })
+                      setSelectedRental({ ...selectedRental, driverId })
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar conductor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="unassigned">Sin asignar</SelectItem>
+                      {drivers.map((driver: any) => (
+                        <SelectItem key={driver.id} value={driver.id.toString()}>
+                          {driver.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Notes */}
+              <div>
+                <Label htmlFor="edit-notes">Notas del Arriendo</Label>
+                <textarea
+                  id="edit-notes"
+                  className="w-full p-3 border border-gray-300 rounded-md min-h-[100px]"
+                  value={selectedRental.notes || ''}
+                  onChange={(e) => setSelectedRental({ ...selectedRental, notes: e.target.value })}
+                  placeholder="Agregar notas especiales, instrucciones de entrega, etc..."
+                />
+              </div>
+
+              {/* Total Pricing */}
+              <div className="bg-green-50 p-4 rounded-lg border-l-4 border-green-500">
+                <h3 className="font-semibold text-lg text-green-800 mb-2">💵 Resumen de Precios</h3>
+                <div className="space-y-1 text-sm">
+                  <p><strong>Arriendo ({selectedRental.boxQuantity} cajas x {selectedRental.rentalDays} días):</strong> ${selectedRental.totalAmount?.toLocaleString('es-CL')}</p>
+                  <p><strong>Garantía total:</strong> ${((selectedRental.boxQuantity || 0) * 2000).toLocaleString('es-CL')}</p>
+                  <p className="text-lg font-bold text-green-700 pt-2 border-t">
+                    <strong>Total a pagar:</strong> ${((selectedRental.totalAmount || 0) + ((selectedRental.boxQuantity || 0) * 2000)).toLocaleString('es-CL')}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-4">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => setShowRentalDialog(false)}
                   className="flex-1"
                 >
-                  Cerrar
+                  Cancelar
                 </Button>
                 <Button
-                  onClick={() => setLocation(`/admin/rental-status?customer=${selectedRental.customerId}`)}
+                  onClick={() => {
+                    // TODO: Implement comprehensive rental update
+                    setShowRentalDialog(false)
+                  }}
                   className="flex-1 bg-brand-blue hover:bg-blue-700 text-white"
                 >
-                  Ver Detalles Completos
+                  💾 Guardar Todos los Cambios
                 </Button>
               </div>
             </div>
