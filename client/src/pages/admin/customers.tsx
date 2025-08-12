@@ -434,27 +434,23 @@ const Customers = () => {
 
   // Handle status change from customers table
   const handleStatusChangeFromCustomers = async (customerId: string, newStatus: string) => {
-    // Find the most recent active rental for this customer
+    console.log(`Attempting to change status to: ${newStatus} for customer: ${customerId}`)
+    
+    // Find the most recent rental for this customer (including all statuses)
     const customerRentals = Array.isArray(rentals) ? rentals.filter((r: any) => r.customerId === customerId) : []
-    const activeRentals = customerRentals.filter((r: any) => 
-      r.status && ['pendiente', 'pagada', 'entregada', 'retirada'].includes(r.status)
-    )
+    console.log(`Found ${customerRentals.length} rentals for customer`)
     
-    // Allow changing to finalizado from retirada status
-    if (newStatus === 'finalizado' && activeRentals.length === 0) {
-      const retiradaRentals = customerRentals.filter((r: any) => 
-        r.status === 'retirada'
-      )
-      if (retiradaRentals.length > 0) {
-        activeRentals.push(...retiradaRentals)
-      }
+    if (customerRentals.length === 0) {
+      console.log('No rentals found for customer')
+      return
     }
-    
-    if (activeRentals.length === 0) return
 
-    const mostRecentRental = activeRentals.sort((a: any, b: any) => 
+    // Get the most recent rental (sort by delivery date)
+    const mostRecentRental = customerRentals.sort((a: any, b: any) => 
       new Date(b.deliveryDate).getTime() - new Date(a.deliveryDate).getTime()
     )[0]
+
+    console.log(`Most recent rental ID: ${mostRecentRental.id}, current status: ${mostRecentRental.status}`)
 
     try {
       const response = await fetch(`/api/rentals/${mostRecentRental.id}`, {
@@ -465,8 +461,12 @@ const Customers = () => {
       })
 
       if (!response.ok) {
-        throw new Error("Failed to update status")
+        const errorText = await response.text()
+        console.error(`API Error: ${response.status} - ${errorText}`)
+        throw new Error(`Failed to update status: ${response.status}`)
       }
+
+      console.log(`Successfully updated status to: ${newStatus}`)
 
       // Refresh both customers and rentals data
       queryClient.invalidateQueries({ queryKey: ["/api/rentals"] })
@@ -477,6 +477,7 @@ const Customers = () => {
         description: `Estado del arriendo cambiado a ${newStatus}`
       })
     } catch (error) {
+      console.error('Error updating status:', error)
       toast({
         title: "Error",
         description: "No se pudo actualizar el estado",
