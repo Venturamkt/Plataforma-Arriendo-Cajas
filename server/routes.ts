@@ -433,12 +433,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const processedBody = {
         ...req.body,
         deliveryDate: new Date(req.body.deliveryDate),
-        returnDate: req.body.returnDate ? new Date(req.body.returnDate) : undefined
+        returnDate: req.body.returnDate ? new Date(req.body.returnDate) : undefined,
+        // Calculate guarantee automatically: $2,000 per box
+        guaranteeAmount: (req.body.totalBoxes || 0) * 2000
       };
       
-      console.log("Processed body:", JSON.stringify(processedBody, null, 2));
-      console.log("DeliveryDate type:", typeof processedBody.deliveryDate);
-      console.log("ReturnDate type:", typeof processedBody.returnDate);
+      console.log("Processed body with guarantee:", JSON.stringify(processedBody, null, 2));
+      console.log("Guarantee calculation: ", req.body.totalBoxes, "boxes x $2,000 = $", processedBody.guaranteeAmount);
       
       const rentalData = insertRentalSchema.parse(processedBody);
       const rental = await storage.createRental(rentalData);
@@ -446,7 +447,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error creating rental:", error);
       console.error("Error details:", error);
-      res.status(400).json({ message: "Failed to create rental" });
+      if (error instanceof Error) {
+        console.error("Error message:", error.message);
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(400).json({ message: "Failed to create rental" });
+      }
     }
   });
 

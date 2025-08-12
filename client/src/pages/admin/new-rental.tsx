@@ -16,7 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Search, User, Package, Calendar, MapPin, DollarSign, ArrowLeft } from "lucide-react";
+import { Plus, Search, User, Package, Calendar, MapPin, DollarSign, ArrowLeft, Calculator } from "lucide-react";
 
 export default function NewRental() {
   const { toast } = useToast();
@@ -166,11 +166,11 @@ export default function NewRental() {
 
     const rentalData = {
       customerId: selectedCustomer.id,
-      boxIds: selectedBoxes.map(box => box.id),
-      deliveryDate: new Date(deliveryDate).toISOString(),
-      deliveryAddress,
-      rentalDays: parseInt(rentalDays),
+      totalBoxes: selectedBoxes.length,
+      dailyRate: calculateTotal() / parseInt(rentalDays),
       totalAmount: calculateTotal(),
+      deliveryDate: deliveryDate,
+      deliveryAddress,
       notes,
       status: 'pendiente'
     };
@@ -623,6 +623,54 @@ export default function NewRental() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Summary Card with Guarantee Info */}
+            {selectedBoxes.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Calculator className="h-5 w-5 text-brand-blue" />
+                    Resumen del Arriendo
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex justify-between">
+                    <span>Cajas seleccionadas:</span>
+                    <span className="font-medium">{selectedBoxes.length}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Días de arriendo:</span>
+                    <span className="font-medium">{rentalDays} días</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Total arriendo:</span>
+                    <span className="font-medium">${calculateTotal().toLocaleString('es-CL')}</span>
+                  </div>
+                  <div className="border-t pt-3 mt-3">
+                    <div className="flex justify-between text-amber-600">
+                      <span>Garantía (${(2000).toLocaleString('es-CL')} por caja):</span>
+                      <span className="font-bold">${(selectedBoxes.length * 2000).toLocaleString('es-CL')}</span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      La garantía se reembolsa cuando las cajas sean devueltas en las mismas condiciones
+                    </p>
+                  </div>
+                  <div className="border-t pt-3 mt-3">
+                    <div className="flex justify-between text-lg font-bold">
+                      <span>Total a cobrar:</span>
+                      <span>${(calculateTotal() + selectedBoxes.length * 2000).toLocaleString('es-CL')}</span>
+                    </div>
+                  </div>
+                  <Button 
+                    onClick={handleSubmit}
+                    disabled={createRentalMutation.isPending || !selectedCustomer || selectedBoxes.length === 0 || !deliveryDate || !deliveryAddress}
+                    className="w-full mt-4 bg-brand-blue hover:bg-brand-blue/90"
+                  >
+                    {createRentalMutation.isPending ? "Creando..." : "Crear Arriendo"}
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </main>
       </div>
