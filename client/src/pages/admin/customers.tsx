@@ -207,8 +207,8 @@ const Customers = () => {
 
   // Update rental status mutation
   const updateRentalStatusMutation = useMutation({
-    mutationFn: async ({ id, status }: { id: number; status: string }) => {
-      const res = await apiRequest("PUT", `/api/rentals/${id}/status`, { status })
+    mutationFn: async ({ id, data }: { id: string; data: { status: string } }) => {
+      const res = await apiRequest("PUT", `/api/rentals/${id}`, data)
       return res.json()
     },
     onSuccess: () => {
@@ -229,8 +229,8 @@ const Customers = () => {
 
   // Update rental driver mutation
   const updateRentalDriverMutation = useMutation({
-    mutationFn: async ({ id, driverId }: { id: number; driverId: number | null }) => {
-      const res = await apiRequest("PUT", `/api/rentals/${id}/driver`, { driverId })
+    mutationFn: async ({ id, data }: { id: string; data: { assignedDriver: string | null } }) => {
+      const res = await apiRequest("PUT", `/api/rentals/${id}`, data)
       return res.json()
     },
     onSuccess: () => {
