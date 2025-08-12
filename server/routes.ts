@@ -7,7 +7,7 @@ import { setupTaskRoutes } from "./taskRoutes";
 import { emailService } from "./emailService";
 import { generateTrackingUrl } from "./emailTemplates";
 import { reminderService } from "./reminderService";
-import { insertCustomerSchema, insertBoxSchema, insertRentalSchema, insertDeliveryTaskSchema, insertBoxMovementSchema } from "@shared/schema";
+import { insertCustomerSchema, insertBoxSchema, insertRentalSchema, updateRentalSchema, insertDeliveryTaskSchema, insertBoxMovementSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -475,7 +475,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put('/api/rentals/:id', requireAdminSession, async (req, res) => {
     try {
-      const rentalData = insertRentalSchema.partial().parse(req.body);
+      const rentalData = updateRentalSchema.parse(req.body);
       const rental = await storage.updateRental(req.params.id, rentalData);
       if (!rental) {
         return res.status(404).json({ message: "Rental not found" });

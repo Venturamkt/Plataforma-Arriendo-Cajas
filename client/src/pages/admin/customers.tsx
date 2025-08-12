@@ -1687,8 +1687,11 @@ const Customers = () => {
                   <Select 
                     value={selectedRental.status || ""} 
                     onValueChange={(value) => {
-                      updateRentalStatusMutation.mutate({ id: selectedRental.id, status: value })
                       setSelectedRental({ ...selectedRental, status: value })
+                      updateRentalStatusMutation.mutate({ 
+                        id: selectedRental.id, 
+                        data: { status: value }
+                      })
                     }}
                   >
                     <SelectTrigger>
@@ -1712,8 +1715,11 @@ const Customers = () => {
                     value={selectedRental.driverId?.toString() || "unassigned"} 
                     onValueChange={(value) => {
                       const driverId = value === "unassigned" ? null : parseInt(value)
-                      updateRentalDriverMutation.mutate({ id: selectedRental.id, driverId })
                       setSelectedRental({ ...selectedRental, driverId })
+                      updateRentalDriverMutation.mutate({ 
+                        id: selectedRental.id, 
+                        data: { assignedDriver: driverId?.toString() || null }
+                      })
                     }}
                   >
                     <SelectTrigger>
@@ -1804,7 +1810,7 @@ const Customers = () => {
                           additionalProducts: JSON.stringify(selectedRental.additionalProducts || []),
                           status: selectedRental.status,
                           totalAmount: Math.round(selectedRental.totalAmount || 0).toString(),
-                          guaranteeAmount: (selectedRental.boxQuantity || 0) * 2000
+                          guaranteeAmount: ((selectedRental.boxQuantity || 0) * 2000).toString()
                         }
                       })
                       setShowRentalDialog(false)

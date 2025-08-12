@@ -239,6 +239,14 @@ export const insertRentalSchema = createInsertSchema(rentals).omit({
   returnDate: z.coerce.date().optional(),
 });
 
+export const updateRentalSchema = insertRentalSchema.partial().extend({
+  totalAmount: z.string().optional(),
+  guaranteeAmount: z.string().optional(),
+  deliveryDate: z.string().optional(),
+  returnDate: z.string().optional(),
+  additionalProducts: z.string().optional(),
+});
+
 export const insertRentalBoxSchema = createInsertSchema(rentalBoxes).omit({
   id: true,
   createdAt: true,
@@ -262,6 +270,7 @@ export type Customer = typeof customers.$inferSelect;
 export type InsertBox = z.infer<typeof insertBoxSchema>;
 export type Box = typeof boxes.$inferSelect;
 export type InsertRental = z.infer<typeof insertRentalSchema>;
+export type UpdateRental = z.infer<typeof updateRentalSchema>;
 export type Rental = typeof rentals.$inferSelect;
 export type InsertRentalBox = z.infer<typeof insertRentalBoxSchema>;
 export type RentalBox = typeof rentalBoxes.$inferSelect;
