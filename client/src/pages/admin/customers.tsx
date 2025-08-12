@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { 
-  Search, Plus, User, MapPin, Calendar, Package, Edit, Trash2, Grid3X3,
+  Search, Plus, User, MapPin, Calendar, Package, Edit, Edit2, Trash2, Grid3X3,
   Table as TableIcon, Eye, Phone, Mail, CheckCircle, AlertTriangle, 
   Download, QrCode, MessageSquare, Trash, ShoppingCart, Building2, UserPlus
 } from "lucide-react"
@@ -1072,15 +1072,26 @@ const Customers = () => {
                                 <Package className="h-4 w-4" />
                               </Button>
                               <Button 
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setEditingCustomer(customer);
+                                  setShowEditDialog(true);
+                                }}
+                                title="Editar cliente"
+                              >
+                                <Edit2 className="h-4 w-4" />
+                              </Button>
+                              <Button 
                                 variant="ghost" 
                                 size="sm"
                                 onClick={() => {
                                   setEditingCustomer(customer)
                                   setShowEditDialog(true)
                                 }}
-                                title="Editar información del cliente"
+                                title="Editar cliente"
                               >
-                                <Edit className="h-4 w-4" />
+                                <Edit2 className="h-4 w-4" />
                               </Button>
                               <Button 
                                 variant="ghost" 
@@ -1164,9 +1175,9 @@ const Customers = () => {
                           setEditingCustomer(customer)
                           setShowEditDialog(true)
                         }}
-                        title="Editar información del cliente"
+                        title="Editar cliente"
                       >
-                        <Edit className="h-4 w-4" />
+                        <Edit2 className="h-4 w-4" />
                       </Button>
                       <Button 
                         variant="ghost" 
