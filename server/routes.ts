@@ -475,7 +475,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put('/api/rentals/:id', requireAdminSession, async (req, res) => {
     try {
-      const rentalData = updateRentalSchema.parse(req.body);
+      const parsedData = updateRentalSchema.parse(req.body);
+      
+      // Convert string dates to Date objects if needed
+      const rentalData = {
+        ...parsedData,
+        deliveryDate: parsedData.deliveryDate ? 
+          (typeof parsedData.deliveryDate === 'string' ? new Date(parsedData.deliveryDate) : parsedData.deliveryDate) 
+          : undefined,
+        returnDate: parsedData.returnDate ? 
+          (typeof parsedData.returnDate === 'string' ? new Date(parsedData.returnDate) : parsedData.returnDate) 
+          : undefined,
+      };
+      
       const rental = await storage.updateRental(req.params.id, rentalData);
       if (!rental) {
         return res.status(404).json({ message: "Rental not found" });
@@ -523,7 +535,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               trackingCode: updatedRental.trackingCode,
               trackingUrl: trackingUrl,
               totalBoxes: updatedRental.totalBoxes,
-              rentalDays: updatedRental.rentalDays,
+              rentalDays: 7, // Default rental days
               deliveryDate: updatedRental.deliveryDate.toLocaleDateString('es-CL', { 
                 year: 'numeric', 
                 month: 'long', 
@@ -603,7 +615,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                       customerName: customer.name,
                       customerAddress: rental.deliveryAddress || '',
                       customerPhone: customer.phone || '',
-                      trackingCode: rental.trackingCode,
+                      trackingCode: rental.trackingCode || 'N/A',
                       totalBoxes: rental.totalBoxes,
                       deliveryDate: rental.deliveryDate.toLocaleDateString('es-CL', { 
                         year: 'numeric', 
@@ -640,7 +652,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`Email not sent - conditions not met. Status: ${rentalData.status}, Email configured: ${emailService.isEmailConfigured()}`);
       }
 
-      res.json(updatedRental || rental);
+      res.json(rental);
     } catch (error) {
       console.error("Error updating rental:", error);
       res.status(400).json({ message: "Failed to update rental" });
