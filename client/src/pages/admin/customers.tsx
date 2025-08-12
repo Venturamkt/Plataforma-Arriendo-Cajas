@@ -1753,7 +1753,45 @@ const Customers = () => {
               <div className="bg-green-50 p-4 rounded-lg border-l-4 border-green-500">
                 <h3 className="font-semibold text-lg text-green-800 mb-2">💵 Resumen de Precios</h3>
                 <div className="space-y-1 text-sm">
-                  <p><strong>Arriendo ({selectedRental.boxQuantity} cajas x {selectedRental.rentalDays} días):</strong> ${Math.round(selectedRental.totalAmount || 0).toLocaleString('es-CL')}</p>
+                  <div className="flex items-center justify-between">
+                    <span><strong>Arriendo ({selectedRental.boxQuantity} cajas x {selectedRental.rentalDays} días):</strong></span>
+                    <div className="flex items-center gap-2">
+                      <span>${Math.round(selectedRental.manualPrice ? selectedRental.customPrice || 0 : selectedRental.totalAmount || 0).toLocaleString('es-CL')}</span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSelectedRental({ 
+                          ...selectedRental, 
+                          manualPrice: !selectedRental.manualPrice,
+                          customPrice: selectedRental.manualPrice ? undefined : selectedRental.totalAmount
+                        })}
+                        className="h-6 px-2 text-xs"
+                      >
+                        {selectedRental.manualPrice ? "Auto" : "Manual"}
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  {/* Manual Price Input */}
+                  {selectedRental.manualPrice && (
+                    <div className="flex justify-between items-center bg-blue-50 p-2 rounded mt-2">
+                      <span className="text-blue-700 font-medium text-xs">Precio manual del arriendo:</span>
+                      <div className="flex items-center gap-1">
+                        <span className="text-sm">$</span>
+                        <Input
+                          type="number"
+                          min="0"
+                          step="1000"
+                          value={selectedRental.customPrice || Math.round(selectedRental.totalAmount || 0)}
+                          onChange={(e) => setSelectedRental({ 
+                            ...selectedRental, 
+                            customPrice: parseInt(e.target.value) || 0 
+                          })}
+                          className="w-28 h-6 text-xs text-right"
+                        />
+                      </div>
+                    </div>
+                  )}
                   
                   {/* Additional Products */}
                   {selectedRental.additionalProducts && selectedRental.additionalProducts.length > 0 && (
@@ -1772,7 +1810,9 @@ const Customers = () => {
                   <p><strong>Garantía total:</strong> ${((selectedRental.boxQuantity || 0) * 2000).toLocaleString('es-CL')}</p>
                   <p className="text-lg font-bold text-green-700 pt-2 border-t">
                     <strong>Total a pagar:</strong> ${(() => {
-                      const rentalAmount = Math.round(selectedRental.totalAmount || 0);
+                      const rentalAmount = selectedRental.manualPrice ? 
+                        Math.round(selectedRental.customPrice || 0) : 
+                        Math.round(selectedRental.totalAmount || 0);
                       const guaranteeAmount = (selectedRental.boxQuantity || 0) * 2000;
                       const additionalProductsTotal = (selectedRental.additionalProducts || []).reduce((sum: number, product: any) => {
                         const price = typeof product === 'object' ? product.price : 0;
@@ -1809,7 +1849,7 @@ const Customers = () => {
                           notes: selectedRental.notes,
                           additionalProducts: JSON.stringify(selectedRental.additionalProducts || []),
                           status: selectedRental.status,
-                          totalAmount: Math.round(selectedRental.totalAmount || 0).toString(),
+                          totalAmount: Math.round(selectedRental.manualPrice ? selectedRental.customPrice || 0 : selectedRental.totalAmount || 0).toString(),
                           guaranteeAmount: ((selectedRental.boxQuantity || 0) * 2000).toString()
                         }
                       })
