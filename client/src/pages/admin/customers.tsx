@@ -1592,11 +1592,15 @@ const Customers = () => {
                         if (Array.isArray(selectedRental.additionalProducts)) {
                           return selectedRental.additionalProducts;
                         }
-                        try {
-                          return JSON.parse(selectedRental.additionalProducts);
-                        } catch {
-                          return [];
+                        if (typeof selectedRental.additionalProducts === 'string') {
+                          try {
+                            const parsed = JSON.parse(selectedRental.additionalProducts);
+                            return Array.isArray(parsed) ? parsed : [];
+                          } catch {
+                            return [];
+                          }
                         }
+                        return [];
                       })();
                       
                       const isSelected = parsedProducts.some((p: any) => 
@@ -1803,11 +1807,15 @@ const Customers = () => {
                       if (Array.isArray(selectedRental.additionalProducts)) {
                         return selectedRental.additionalProducts;
                       }
-                      try {
-                        return JSON.parse(selectedRental.additionalProducts);
-                      } catch {
-                        return [];
+                      if (typeof selectedRental.additionalProducts === 'string') {
+                        try {
+                          const parsed = JSON.parse(selectedRental.additionalProducts);
+                          return Array.isArray(parsed) ? parsed : [];
+                        } catch {
+                          return [];
+                        }
                       }
+                      return [];
                     })();
                     
                     return parsedProductsForDisplay.length > 0 && (
@@ -1837,11 +1845,15 @@ const Customers = () => {
                           if (Array.isArray(selectedRental.additionalProducts)) {
                             return selectedRental.additionalProducts;
                           }
-                          try {
-                            return JSON.parse(selectedRental.additionalProducts);
-                          } catch {
-                            return [];
+                          if (typeof selectedRental.additionalProducts === 'string') {
+                            try {
+                              const parsed = JSON.parse(selectedRental.additionalProducts);
+                              return Array.isArray(parsed) ? parsed : [];
+                            } catch {
+                              return [];
+                            }
                           }
+                          return [];
                         })();
                         
                         return parsedProductsForTotal.reduce((sum: number, product: any) => {
