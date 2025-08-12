@@ -435,7 +435,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         deliveryDate: new Date(req.body.deliveryDate),
         returnDate: req.body.returnDate ? new Date(req.body.returnDate) : undefined,
         // Calculate guarantee automatically: $2,000 per box
-        guaranteeAmount: (req.body.totalBoxes || 0) * 2000
+        guaranteeAmount: ((req.body.totalBoxes || 0) * 2000).toString()
       };
       
       console.log("Processed body with guarantee:", JSON.stringify(processedBody, null, 2));

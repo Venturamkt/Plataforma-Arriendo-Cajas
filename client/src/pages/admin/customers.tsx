@@ -1350,7 +1350,7 @@ const Customers = () => {
                             <span className="text-sm font-bold">{rentalInfo.total}</span>
                           </TableCell>
                           <TableCell className="text-center">
-                            {rentalInfo.total > 0 && (rentalInfo.active > 0 || rentalInfo.mostRecentStatus) ? (
+                            {rentalInfo.total > 0 ? (
                               <Select 
                                 value={rentalInfo.mostRecentStatus || ""}
                                 onValueChange={(newStatus) => handleStatusChangeFromCustomers(customer.id, newStatus)}
