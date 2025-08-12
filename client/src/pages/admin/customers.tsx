@@ -1364,9 +1364,9 @@ const Customers = () => {
               <div>
                 <Label htmlFor="rental-driver">Conductor Asignado</Label>
                 <Select 
-                  value={selectedRental.driverId?.toString() || ""} 
+                  value={selectedRental.driverId?.toString() || "unassigned"} 
                   onValueChange={(value) => {
-                    const driverId = value ? parseInt(value) : null
+                    const driverId = value === "unassigned" ? null : parseInt(value)
                     updateRentalDriverMutation.mutate({ id: selectedRental.id, driverId })
                     setSelectedRental({ ...selectedRental, driverId })
                   }}
@@ -1375,7 +1375,7 @@ const Customers = () => {
                     <SelectValue placeholder="Seleccionar conductor" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Sin asignar</SelectItem>
+                    <SelectItem value="unassigned">Sin asignar</SelectItem>
                     {drivers.map((driver: any) => (
                       <SelectItem key={driver.id} value={driver.id.toString()}>
                         {driver.name}
