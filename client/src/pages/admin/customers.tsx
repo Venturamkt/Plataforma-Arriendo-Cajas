@@ -249,6 +249,28 @@ const Customers = () => {
     }
   })
 
+  // Comprehensive rental update mutation
+  const updateRentalMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number, data: any }) => {
+      const response = await apiRequest("PUT", `/api/rentals/${id}`, data)
+      return response.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/rentals"] })
+      toast({
+        title: "Arriendo actualizado",
+        description: "Los cambios han sido guardados exitosamente.",
+      })
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error al guardar",
+        description: "No se pudieron guardar los cambios del arriendo.",
+        variant: "destructive",
+      })
+    },
+  })
+
   const filteredCustomers = (customers as any[]).filter((customer: any) =>
     customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     customer.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -1323,50 +1345,179 @@ const Customers = () => {
                 <p className="text-lg font-medium">{customers.find((c: any) => c.id === selectedRental.customerId)?.name}</p>
               </div>
 
+              {/* Quick Presets */}
+              <div className="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-500">
+                <h3 className="font-semibold text-lg text-yellow-800 mb-3">⚡ Configuraciones Rápidas</h3>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      setSelectedRental({ 
+                        ...selectedRental, 
+                        boxQuantity: 10, 
+                        rentalDays: 7,
+                        pickupDate: new Date(new Date(selectedRental.deliveryDate).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+                      })
+                    }}
+                    className="h-auto py-2 text-left"
+                  >
+                    <div>
+                      <p className="font-bold">10 cajas</p>
+                      <p className="text-xs text-gray-600">7 días</p>
+                    </div>
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      setSelectedRental({ 
+                        ...selectedRental, 
+                        boxQuantity: 15, 
+                        rentalDays: 7,
+                        pickupDate: new Date(new Date(selectedRental.deliveryDate).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+                      })
+                    }}
+                    className="h-auto py-2 text-left"
+                  >
+                    <div>
+                      <p className="font-bold">15 cajas</p>
+                      <p className="text-xs text-gray-600">7 días</p>
+                    </div>
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      setSelectedRental({ 
+                        ...selectedRental, 
+                        boxQuantity: 10, 
+                        rentalDays: 14,
+                        pickupDate: new Date(new Date(selectedRental.deliveryDate).getTime() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+                      })
+                    }}
+                    className="h-auto py-2 text-left"
+                  >
+                    <div>
+                      <p className="font-bold">10 cajas</p>
+                      <p className="text-xs text-gray-600">14 días</p>
+                    </div>
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      setSelectedRental({ 
+                        ...selectedRental, 
+                        boxQuantity: 15, 
+                        rentalDays: 14,
+                        pickupDate: new Date(new Date(selectedRental.deliveryDate).getTime() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+                      })
+                    }}
+                    className="h-auto py-2 text-left"
+                  >
+                    <div>
+                      <p className="font-bold">15 cajas</p>
+                      <p className="text-xs text-gray-600">14 días</p>
+                    </div>
+                  </Button>
+                </div>
+              </div>
+
               {/* Rental Configuration */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Box Quantity */}
                 <div>
                   <Label htmlFor="edit-quantity">Cantidad de Cajas</Label>
-                  <Select 
-                    value={selectedRental.boxQuantity?.toString() || ""} 
-                    onValueChange={(value) => {
-                      const quantity = parseInt(value)
-                      setSelectedRental({ ...selectedRental, boxQuantity: quantity })
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar cantidad" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Array.from({ length: 15 }, (_, i) => i + 1).map(num => (
-                        <SelectItem key={num} value={num.toString()}>
-                          {num} {num === 1 ? 'caja' : 'cajas'}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="space-y-2">
+                    <Select 
+                      value={selectedRental.boxQuantity?.toString() || ""} 
+                      onValueChange={(value) => {
+                        if (value === "custom") {
+                          // Allow custom input
+                          return;
+                        }
+                        const quantity = parseInt(value)
+                        setSelectedRental({ ...selectedRental, boxQuantity: quantity })
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccionar cantidad" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="2">2 cajas</SelectItem>
+                        <SelectItem value="5">5 cajas</SelectItem>
+                        <SelectItem value="10">10 cajas</SelectItem>
+                        <SelectItem value="15">15 cajas</SelectItem>
+                        <SelectItem value="custom">Otras (personalizar)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Input
+                      type="number"
+                      min="1"
+                      max="50"
+                      placeholder="Cantidad personalizada"
+                      value={selectedRental.boxQuantity || ""}
+                      onChange={(e) => {
+                        const quantity = parseInt(e.target.value) || 0
+                        setSelectedRental({ ...selectedRental, boxQuantity: quantity })
+                      }}
+                      className="text-sm"
+                    />
+                  </div>
                 </div>
 
                 {/* Rental Days */}
                 <div>
                   <Label htmlFor="edit-days">Días de Arriendo</Label>
-                  <Select 
-                    value={selectedRental.rentalDays?.toString() || ""} 
-                    onValueChange={(value) => {
-                      const days = parseInt(value)
-                      setSelectedRental({ ...selectedRental, rentalDays: days })
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar días" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="7">7 días</SelectItem>
-                      <SelectItem value="14">14 días</SelectItem>
-                      <SelectItem value="30">30 días</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div className="space-y-2">
+                    <Select 
+                      value={selectedRental.rentalDays?.toString() || ""} 
+                      onValueChange={(value) => {
+                        if (value === "custom") {
+                          return;
+                        }
+                        const days = parseInt(value)
+                        setSelectedRental({ 
+                          ...selectedRental, 
+                          rentalDays: days,
+                          // Auto-calculate pickup date
+                          pickupDate: selectedRental.deliveryDate ? 
+                            new Date(new Date(selectedRental.deliveryDate).getTime() + days * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : 
+                            selectedRental.pickupDate
+                        })
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccionar días" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="7">7 días</SelectItem>
+                        <SelectItem value="14">14 días</SelectItem>
+                        <SelectItem value="30">30 días</SelectItem>
+                        <SelectItem value="custom">Otros (personalizar)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Input
+                      type="number"
+                      min="1"
+                      max="90"
+                      placeholder="Días personalizados"
+                      value={selectedRental.rentalDays || ""}
+                      onChange={(e) => {
+                        const days = parseInt(e.target.value) || 0
+                        setSelectedRental({ 
+                          ...selectedRental, 
+                          rentalDays: days,
+                          // Auto-calculate pickup date
+                          pickupDate: selectedRental.deliveryDate ? 
+                            new Date(new Date(selectedRental.deliveryDate).getTime() + days * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : 
+                            selectedRental.pickupDate
+                        })
+                      }}
+                      className="text-sm"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -1381,18 +1532,31 @@ const Customers = () => {
                       id="edit-delivery-date"
                       type="date"
                       value={selectedRental.deliveryDate ? new Date(selectedRental.deliveryDate).toISOString().split('T')[0] : ''}
-                      onChange={(e) => setSelectedRental({ ...selectedRental, deliveryDate: e.target.value })}
+                      onChange={(e) => {
+                        const newDeliveryDate = e.target.value
+                        const days = selectedRental.rentalDays || 7
+                        const newPickupDate = new Date(new Date(newDeliveryDate).getTime() + days * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+                        setSelectedRental({ 
+                          ...selectedRental, 
+                          deliveryDate: newDeliveryDate,
+                          pickupDate: newPickupDate
+                        })
+                      }}
                     />
                   </div>
                   
                   <div>
-                    <Label htmlFor="edit-pickup-date">Fecha de Retiro</Label>
+                    <Label htmlFor="edit-pickup-date">Fecha de Retiro (Auto-calculada)</Label>
                     <Input
                       id="edit-pickup-date"
                       type="date"
                       value={selectedRental.pickupDate ? new Date(selectedRental.pickupDate).toISOString().split('T')[0] : ''}
                       onChange={(e) => setSelectedRental({ ...selectedRental, pickupDate: e.target.value })}
+                      className="bg-blue-50"
                     />
+                    <p className="text-xs text-blue-600 mt-1">
+                      Se calcula automáticamente sumando los días de arriendo a la fecha de entrega
+                    </p>
                   </div>
                 </div>
 
@@ -1558,13 +1722,32 @@ const Customers = () => {
                   Cancelar
                 </Button>
                 <Button
-                  onClick={() => {
-                    // TODO: Implement comprehensive rental update
-                    setShowRentalDialog(false)
+                  onClick={async () => {
+                    try {
+                      // Update rental with comprehensive changes
+                      await updateRentalMutation.mutateAsync({
+                        id: selectedRental.id,
+                        data: {
+                          boxQuantity: selectedRental.boxQuantity,
+                          rentalDays: selectedRental.rentalDays,
+                          deliveryDate: selectedRental.deliveryDate,
+                          pickupDate: selectedRental.pickupDate,
+                          deliveryAddress: selectedRental.deliveryAddress,
+                          pickupAddress: selectedRental.pickupAddress,
+                          notes: selectedRental.notes,
+                          additionalProducts: selectedRental.additionalProducts || [],
+                          status: selectedRental.status
+                        }
+                      })
+                      setShowRentalDialog(false)
+                    } catch (error) {
+                      console.error('Error updating rental:', error)
+                    }
                   }}
-                  className="flex-1 bg-brand-blue hover:bg-blue-700 text-white"
+                  disabled={updateRentalMutation.isPending}
+                  className="flex-1 bg-brand-blue hover:bg-blue-700 text-white disabled:opacity-50"
                 >
-                  💾 Guardar Todos los Cambios
+                  {updateRentalMutation.isPending ? '⏳ Guardando...' : '💾 Guardar Todos los Cambios'}
                 </Button>
               </div>
             </div>
