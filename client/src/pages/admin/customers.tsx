@@ -1594,11 +1594,24 @@ const Customers = () => {
                       { name: 'Kit 2 bases móviles', defaultPrice: 15000 },
                       { name: 'Correa Ratchet', defaultPrice: 5000 }
                     ].map((product) => {
-                      const isSelected = selectedRental.additionalProducts?.some((p: any) => 
+                      // Parse additionalProducts if it's a string
+                      const parsedProducts = (() => {
+                        if (!selectedRental.additionalProducts) return [];
+                        if (Array.isArray(selectedRental.additionalProducts)) {
+                          return selectedRental.additionalProducts;
+                        }
+                        try {
+                          return JSON.parse(selectedRental.additionalProducts);
+                        } catch {
+                          return [];
+                        }
+                      })();
+                      
+                      const isSelected = parsedProducts.some((p: any) => 
                         typeof p === 'string' ? p === product.name : p.name === product.name
                       ) || false
                       
-                      const currentProduct = selectedRental.additionalProducts?.find((p: any) => 
+                      const currentProduct = parsedProducts.find((p: any) => 
                         typeof p === 'string' ? p === product.name : p.name === product.name
                       )
                       
@@ -1611,9 +1624,8 @@ const Customers = () => {
                             className="w-4 h-4"
                             checked={isSelected}
                             onChange={(e) => {
-                              const products = selectedRental.additionalProducts || []
                               if (e.target.checked) {
-                                const newProducts = products.filter((p: any) => 
+                                const newProducts = parsedProducts.filter((p: any) => 
                                   typeof p === 'string' ? p !== product.name : p.name !== product.name
                                 )
                                 setSelectedRental({ 
@@ -1623,7 +1635,7 @@ const Customers = () => {
                               } else {
                                 setSelectedRental({ 
                                   ...selectedRental, 
-                                  additionalProducts: products.filter((p: any) => 
+                                  additionalProducts: parsedProducts.filter((p: any) => 
                                     typeof p === 'string' ? p !== product.name : p.name !== product.name
                                   )
                                 })
@@ -1642,8 +1654,7 @@ const Customers = () => {
                               value={currentPrice}
                               onChange={(e) => {
                                 const newPrice = parseInt(e.target.value) || 0
-                                const products = selectedRental.additionalProducts || []
-                                const updatedProducts = products.map((p: any) => {
+                                const updatedProducts = parsedProducts.map((p: any) => {
                                   if (typeof p === 'string' && p === product.name) {
                                     return { name: product.name, price: newPrice }
                                   } else if (typeof p === 'object' && p.name === product.name) {
@@ -1794,18 +1805,32 @@ const Customers = () => {
                   )}
                   
                   {/* Additional Products */}
-                  {selectedRental.additionalProducts && selectedRental.additionalProducts.length > 0 && (
-                    <div className="pt-1">
-                      <p className="font-medium text-gray-700">Productos Adicionales:</p>
-                      {selectedRental.additionalProducts.map((product: any, index: number) => {
-                        const productName = typeof product === 'string' ? product : product.name;
-                        const productPrice = typeof product === 'object' ? product.price : 0;
-                        return (
-                          <p key={index} className="ml-2 text-sm">• {productName}: ${productPrice.toLocaleString('es-CL')}</p>
-                        );
-                      })}
-                    </div>
-                  )}
+                  {(() => {
+                    const parsedProductsForDisplay = (() => {
+                      if (!selectedRental.additionalProducts) return [];
+                      if (Array.isArray(selectedRental.additionalProducts)) {
+                        return selectedRental.additionalProducts;
+                      }
+                      try {
+                        return JSON.parse(selectedRental.additionalProducts);
+                      } catch {
+                        return [];
+                      }
+                    })();
+                    
+                    return parsedProductsForDisplay.length > 0 && (
+                      <div className="pt-1">
+                        <p className="font-medium text-gray-700">Productos Adicionales:</p>
+                        {parsedProductsForDisplay.map((product: any, index: number) => {
+                          const productName = typeof product === 'string' ? product : product.name;
+                          const productPrice = typeof product === 'object' ? product.price : 0;
+                          return (
+                            <p key={index} className="ml-2 text-sm">• {productName}: ${productPrice.toLocaleString('es-CL')}</p>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
                   
                   <p><strong>Garantía total:</strong> ${((selectedRental.boxQuantity || 0) * 2000).toLocaleString('es-CL')}</p>
                   <p className="text-lg font-bold text-green-700 pt-2 border-t">
@@ -1814,10 +1839,24 @@ const Customers = () => {
                         Math.round(selectedRental.customPrice || 0) : 
                         Math.round(selectedRental.totalAmount || 0);
                       const guaranteeAmount = (selectedRental.boxQuantity || 0) * 2000;
-                      const additionalProductsTotal = (selectedRental.additionalProducts || []).reduce((sum: number, product: any) => {
-                        const price = typeof product === 'object' ? product.price : 0;
-                        return sum + price;
-                      }, 0);
+                      const additionalProductsTotal = (() => {
+                        const parsedProductsForTotal = (() => {
+                          if (!selectedRental.additionalProducts) return [];
+                          if (Array.isArray(selectedRental.additionalProducts)) {
+                            return selectedRental.additionalProducts;
+                          }
+                          try {
+                            return JSON.parse(selectedRental.additionalProducts);
+                          } catch {
+                            return [];
+                          }
+                        })();
+                        
+                        return parsedProductsForTotal.reduce((sum: number, product: any) => {
+                          const price = typeof product === 'object' ? product.price : 0;
+                          return sum + price;
+                        }, 0);
+                      })();
                       return (rentalAmount + guaranteeAmount + additionalProductsTotal).toLocaleString('es-CL');
                     })()}
                   </p>
