@@ -376,23 +376,42 @@ export default function TrackRental() {
               </div>
 
               {/* Additional Products */}
-              {rental.additionalProducts && JSON.parse(rental.additionalProducts).length > 0 && (
-                <div className="border-t pt-4">
-                  <h4 className="font-semibold mb-2">Productos Adicionales</h4>
-                  <div className="bg-green-50 p-3 rounded-lg">
-                    {JSON.parse(rental.additionalProducts).map((product: any, index: number) => (
-                      <div key={index} className="flex justify-between items-center py-1">
-                        <span className="text-sm">{product.name} x{product.quantity}</span>
-                        <span className="font-medium">${(product.price * product.quantity).toLocaleString()}</span>
+              {(() => {
+                if (!rental.additionalProducts) return null;
+                
+                let parsedProducts = [];
+                try {
+                  if (typeof rental.additionalProducts === 'string') {
+                    const parsed = JSON.parse(rental.additionalProducts);
+                    parsedProducts = Array.isArray(parsed) ? parsed : [];
+                  } else if (Array.isArray(rental.additionalProducts)) {
+                    parsedProducts = rental.additionalProducts;
+                  }
+                } catch (error) {
+                  console.error('Error parsing additional products:', error);
+                  return null;
+                }
+                
+                if (parsedProducts.length === 0) return null;
+                
+                return (
+                  <div className="border-t pt-4">
+                    <h4 className="font-semibold mb-2">Productos Adicionales</h4>
+                    <div className="bg-green-50 p-3 rounded-lg">
+                      {parsedProducts.map((product: any, index: number) => (
+                        <div key={index} className="flex justify-between items-center py-1">
+                          <span className="text-sm">{product.name} {product.quantity ? `x${product.quantity}` : ''}</span>
+                          <span className="font-medium">${(product.price * (product.quantity || 1)).toLocaleString()}</span>
+                        </div>
+                      ))}
+                      <div className="border-t mt-2 pt-2 flex justify-between font-semibold">
+                        <span>Total Productos:</span>
+                        <span>${Number(rental.additionalProductsTotal || 0).toLocaleString()}</span>
                       </div>
-                    ))}
-                    <div className="border-t mt-2 pt-2 flex justify-between font-semibold">
-                      <span>Total Productos:</span>
-                      <span>${Number(rental.additionalProductsTotal).toLocaleString()}</span>
                     </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
 
               {/* Notes */}
               {rental.notes && (
