@@ -522,7 +522,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
               if (updatedRental.additionalProducts) {
                 additionalProducts = typeof updatedRental.additionalProducts === 'string' 
                   ? JSON.parse(updatedRental.additionalProducts)
-                  : updatedRental.additionalProducts;
+                  : Array.isArray(updatedRental.additionalProducts) 
+                    ? updatedRental.additionalProducts 
+                    : [];
               }
             } catch (e) {
               console.log('Error parsing additional products:', e);

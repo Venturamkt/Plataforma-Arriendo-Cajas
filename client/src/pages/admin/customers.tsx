@@ -3,7 +3,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { 
   Search, Plus, User, MapPin, Calendar, Package, Edit, Edit2, Trash2, Grid3X3,
   Table as TableIcon, Eye, Phone, Mail, CheckCircle, AlertTriangle, 
-  Download, QrCode, MessageSquare, Trash, ShoppingCart, Building2, UserPlus
+  Download, QrCode, MessageSquare, Trash, ShoppingCart, Building2, UserPlus,
+  ShieldCheck
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -250,7 +251,7 @@ const Customers = () => {
         boxSize: "mediano",
         customPrice: 2775,
         discount: 0,
-        additionalProducts: [],
+        additionalProducts: [] as Array<{name: string, price: number, quantity: number, manualPrice?: boolean, originalPrice?: number}>,
         manualPrice: false
       })
     },
@@ -897,8 +898,8 @@ const Customers = () => {
                           </div>
                         </div>
 
-                        {/* Price and Availability */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Price, Availability, and Guarantee */}
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                           {/* Availability Status */}
                           <div className={`p-4 rounded-lg border-2 ${getAvailabilityStatus(newRental.boxQuantity).className}`}>
                             <div className="flex items-center gap-3">
@@ -944,6 +945,23 @@ const Customers = () => {
                                 ${newRental.customPrice.toLocaleString('es-CL')}
                               </div>
                             )}
+                          </div>
+
+                          {/* Guarantee Information */}
+                          <div className="p-4 bg-amber-50 rounded-lg border-2 border-amber-200">
+                            <div className="flex items-center gap-2 mb-2">
+                              <ShieldCheck className="h-5 w-5 text-amber-600" />
+                              <Label className="text-sm font-medium text-amber-800">Garantía</Label>
+                            </div>
+                            <div className="text-lg font-bold text-amber-700">
+                              ${(newRental.boxQuantity * 2000).toLocaleString('es-CL')}
+                            </div>
+                            <div className="text-xs text-amber-600">
+                              $2.000 por caja ({newRental.boxQuantity} cajas)
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1">
+                              Se devuelve al finalizar
+                            </div>
                           </div>
                         </div>
                         
