@@ -342,7 +342,7 @@ export const emailTemplates = {
               <div class="rating">
                 <h3>⭐ ¿Cómo fue tu experiencia?</h3>
                 <p>Nos encantaría conocer tu opinión para seguir mejorando nuestro servicio.</p>
-                <p>Escríbenos a: <strong>jalarcon@arriendocajas.cl</strong></p>
+                <p><a href="https://g.page/r/CUv8pKvyA5WbEAE/review" style="color: #28a745; font-weight: bold;">¡Déjanos una reseña en Google!</a></p>
               </div>
               
               <h3>🔄 ¿Necesitas cajas otra vez?</h3>

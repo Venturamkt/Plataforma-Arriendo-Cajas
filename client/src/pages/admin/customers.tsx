@@ -378,20 +378,32 @@ const Customers = () => {
       return sum + amount
     }, 0)
     
-    // Determine status based on active rentals
+    // Determine status based on active rentals or most recent rental
     let status = 'Sin arriendos activos'
     let statusColor = 'secondary'
+    let mostRecentRental = null
     
     if (activeRentals.length > 0) {
-      const mostRecentRental = activeRentals.sort((a: any, b: any) => 
+      mostRecentRental = activeRentals.sort((a: any, b: any) => 
         new Date(b.deliveryDate).getTime() - new Date(a.deliveryDate).getTime()
       )[0]
-      
+    } else {
+      // If no active rentals, look for most recent rental including finalizado
+      const allRentals = customerRentals.sort((a: any, b: any) => 
+        new Date(b.deliveryDate).getTime() - new Date(a.deliveryDate).getTime()
+      )
+      if (allRentals.length > 0) {
+        mostRecentRental = allRentals[0]
+      }
+    }
+    
+    if (mostRecentRental) {
       const statusMap: Record<string, { label: string; color: string }> = {
         pendiente: { label: 'Pendiente', color: 'outline' },
         pagada: { label: 'Pagada', color: 'default' },
         entregada: { label: 'Entregada', color: 'secondary' },
-        retirada: { label: 'Retirada', color: 'destructive' }
+        retirada: { label: 'Retirada', color: 'destructive' },
+        finalizado: { label: 'Finalizado', color: 'default' }
       }
       
       const statusInfo = statusMap[mostRecentRental.status as string]
@@ -407,12 +419,8 @@ const Customers = () => {
       totalSpent,
       status,
       statusColor,
-      mostRecentStatus: activeRentals.length > 0 ? activeRentals.sort((a: any, b: any) => 
-        new Date(b.deliveryDate).getTime() - new Date(a.deliveryDate).getTime()
-      )[0].status : null,
-      mostRecentRentalId: activeRentals.length > 0 ? activeRentals.sort((a: any, b: any) => 
-        new Date(b.deliveryDate).getTime() - new Date(a.deliveryDate).getTime()
-      )[0].id : null
+      mostRecentStatus: mostRecentRental?.status || null,
+      mostRecentRentalId: mostRecentRental?.id || null
     }
   }
 
@@ -431,6 +439,16 @@ const Customers = () => {
     const activeRentals = customerRentals.filter((r: any) => 
       r.status && ['pendiente', 'pagada', 'entregada', 'retirada'].includes(r.status)
     )
+    
+    // Allow changing to finalizado from retirada status
+    if (newStatus === 'finalizado' && activeRentals.length === 0) {
+      const retiradaRentals = customerRentals.filter((r: any) => 
+        r.status === 'retirada'
+      )
+      if (retiradaRentals.length > 0) {
+        activeRentals.push(...retiradaRentals)
+      }
+    }
     
     if (activeRentals.length === 0) return
 
@@ -1151,7 +1169,7 @@ const Customers = () => {
                             <span className="text-sm font-bold">{rentalInfo.total}</span>
                           </TableCell>
                           <TableCell className="text-center">
-                            {rentalInfo.total > 0 && rentalInfo.active > 0 ? (
+                            {rentalInfo.total > 0 && (rentalInfo.active > 0 || rentalInfo.mostRecentStatus) ? (
                               <Select 
                                 value={rentalInfo.mostRecentStatus || ""}
                                 onValueChange={(newStatus) => handleStatusChangeFromCustomers(customer.id, newStatus)}
