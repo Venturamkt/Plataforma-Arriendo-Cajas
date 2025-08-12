@@ -405,9 +405,19 @@ const Customers = () => {
       if (includeRental && customer) {
         // Create rental for the new customer
         const rentalData = {
-          ...newRental,
           customerId: customer.id,
-          totalPrice: newRental.customPrice - (newRental.customPrice * newRental.discount / 100)
+          totalBoxes: newRental.boxQuantity,
+          dailyRate: (newRental.manualPrice ? newRental.customPrice : getPriceByPeriod(newRental.boxQuantity, newRental.rentalDays)).toString(),
+          totalAmount: (newRental.manualPrice ? newRental.customPrice : getPriceByPeriod(newRental.boxQuantity, newRental.rentalDays)).toString(),
+          guaranteeAmount: (newRental.boxQuantity * 2000).toString(),
+          additionalProducts: JSON.stringify(newRental.additionalProducts),
+          additionalProductsTotal: newRental.additionalProducts.reduce((sum, product) => sum + (product.price * product.quantity), 0).toString(),
+          deliveryDate: new Date(newRental.deliveryDate),
+          returnDate: newRental.pickupDate ? new Date(newRental.pickupDate) : null,
+          deliveryAddress: newRental.deliveryAddress,
+          pickupAddress: newRental.pickupAddress || newRental.deliveryAddress,
+          notes: newRental.notes,
+          status: "pendiente"
         }
         
         await createRentalMutation.mutateAsync(rentalData)
