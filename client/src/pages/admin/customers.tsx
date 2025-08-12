@@ -1179,14 +1179,6 @@ const Customers = () => {
                           <TableCell className="text-center">
                             <div className="flex items-center justify-center gap-1">
                               <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => setLocation(`/admin/customers`)}
-                                title="Ver arriendos del cliente"
-                              >
-                                <Package className="h-4 w-4" />
-                              </Button>
-                              <Button 
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => {

@@ -481,18 +481,35 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getRentalByTracking(rutDigits: string, trackingCode: string): Promise<Rental | undefined> {
-    const [rental] = await db
-      .select()
+    console.log(`Looking for rental with RUT digits: ${rutDigits}, tracking code: ${trackingCode}`);
+    
+    const result = await db
+      .select({
+        rental: rentals,
+        customer: customers
+      })
       .from(rentals)
       .innerJoin(customers, eq(rentals.customerId, customers.id))
-      .where(
-        and(
-          eq(rentals.trackingCode, trackingCode.toUpperCase()),
-          sql`RIGHT(LEFT(${customers.rut}, LENGTH(${customers.rut}) - 1), 4) = ${rutDigits}`
-        )
-      );
+      .where(eq(rentals.trackingCode, trackingCode.toUpperCase()));
     
-    return rental?.rentals;
+    console.log(`Found ${result.length} rentals with tracking code ${trackingCode}`);
+    
+    // Filter by RUT digits manually (more reliable than SQL functions)
+    for (const item of result) {
+      if (item.customer.rut) {
+        // Extract last 4 digits before verification digit
+        const extractedRutDigits = item.customer.rut.replace(/[.-]/g, '').slice(0, -1).slice(-4).padStart(4, '0');
+        console.log(`Customer RUT: ${item.customer.rut}, extracted digits: ${extractedRutDigits}, looking for: ${rutDigits}`);
+        
+        if (extractedRutDigits === rutDigits) {
+          console.log(`Match found! Returning rental ID: ${item.rental.id}`);
+          return item.rental;
+        }
+      }
+    }
+    
+    console.log(`No matching rental found for RUT digits: ${rutDigits}, tracking code: ${trackingCode}`);
+    return undefined;
   }
 
   // Rental box operations
