@@ -76,6 +76,109 @@ const Customers = () => {
   const { toast } = useToast()
   const [, setLocation] = useLocation()
 
+  // Download rental history function
+  const handleDownloadHistory = () => {
+    try {
+      // Prepare data for CSV
+      const rentalHistory = Array.isArray(rentals) ? rentals : []
+      const customersMap = Array.isArray(customers) ? customers.reduce((acc: any, c: any) => {
+        acc[c.id] = c
+        return acc
+      }, {}) : {}
+
+      // Create CSV headers
+      const headers = [
+        'Fecha Creación',
+        'Cliente',
+        'RUT',
+        'Email',
+        'Teléfono',
+        'Cantidad Cajas',
+        'Días Arriendo',
+        'Fecha Entrega',
+        'Dirección Entrega',
+        'Dirección Retiro',
+        'Estado',
+        'Monto Total',
+        'Garantía',
+        'Código Seguimiento',
+        'Productos Adicionales',
+        'Notas'
+      ]
+
+      // Create CSV rows
+      const rows = rentalHistory.map((rental: any) => {
+        const customer = customersMap[rental.customerId] || {}
+        
+        // Parse additional products safely
+        let additionalProductsText = ''
+        try {
+          if (rental.additionalProducts) {
+            let parsedProducts = []
+            if (typeof rental.additionalProducts === 'string') {
+              const parsed = JSON.parse(rental.additionalProducts)
+              parsedProducts = Array.isArray(parsed) ? parsed : []
+            } else if (Array.isArray(rental.additionalProducts)) {
+              parsedProducts = rental.additionalProducts
+            }
+            additionalProductsText = parsedProducts.map((p: any) => 
+              `${p.name} x${p.quantity || 1} ($${p.price.toLocaleString()})`
+            ).join('; ')
+          }
+        } catch (error) {
+          additionalProductsText = 'Error al procesar'
+        }
+
+        return [
+          new Date(rental.createdAt || '').toLocaleDateString('es-CL'),
+          customer.name || 'N/A',
+          customer.rut || 'N/A',
+          customer.email || 'N/A',
+          customer.phone || 'N/A',
+          rental.boxQuantity || 0,
+          rental.rentalDays || 0,
+          new Date(rental.deliveryDate || '').toLocaleDateString('es-CL'),
+          rental.deliveryAddress || 'N/A',
+          rental.pickupAddress || rental.deliveryAddress || 'N/A',
+          rental.status || 'N/A',
+          `$${(rental.totalAmount || 0).toLocaleString()}`,
+          `$${(rental.guaranteeAmount || 0).toLocaleString()}`,
+          rental.trackingCode || 'N/A',
+          additionalProductsText || 'Ninguno',
+          rental.notes || 'N/A'
+        ]
+      })
+
+      // Combine headers and rows
+      const csvContent = [headers, ...rows]
+        .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+        .join('\n')
+
+      // Create and download file
+      const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' })
+      const link = document.createElement('a')
+      const url = URL.createObjectURL(blob)
+      link.setAttribute('href', url)
+      link.setAttribute('download', `historico_arriendos_${new Date().toISOString().split('T')[0]}.csv`)
+      link.style.visibility = 'hidden'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+
+      toast({
+        title: "Descarga completada",
+        description: `Se descargó el histórico de ${rentalHistory.length} arriendos`
+      })
+    } catch (error) {
+      console.error('Error downloading history:', error)
+      toast({
+        title: "Error en descarga",
+        description: "No se pudo descargar el histórico",
+        variant: "destructive"
+      })
+    }
+  }
+
   // Check authentication - SIMPLIFIED FOR MOBILE COMPATIBILITY
   const { data: user, isLoading: userLoading, error: userError } = useQuery({
     queryKey: ["/api/auth/user"],
@@ -546,17 +649,6 @@ const Customers = () => {
     )
   }
 
-  if (userLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-red mx-auto mb-4"></div>
-          <p className="text-gray-600">Cargando...</p>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
@@ -609,22 +701,31 @@ const Customers = () => {
                 </Button>
               </div>
               
-              {/* Add Customer Button */}
-              <Dialog open={showNewCustomerDialog} onOpenChange={setShowNewCustomerDialog}>
-                <DialogTrigger asChild>
-                  <Button className="bg-brand-red hover:bg-red-700 text-white flex items-center gap-2 w-full sm:w-auto">
-                    <Plus className="h-4 w-4" />
-                    Nuevo Cliente
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="w-full max-w-2xl mx-4 sm:mx-auto max-h-[90vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>Crear Nuevo Cliente</DialogTitle>
-                  </DialogHeader>
-                  <form onSubmit={handleCreateCustomer} className="space-y-6">
-                    {/* Customer Information Section */}
-                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border border-blue-200">
-                      <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+              {/* Actions Buttons */}
+              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                <Button 
+                  onClick={handleDownloadHistory}
+                  variant="outline"
+                  className="flex items-center gap-2 w-full sm:w-auto"
+                >
+                  <Download className="h-4 w-4" />
+                  Descargar Histórico
+                </Button>
+                <Dialog open={showNewCustomerDialog} onOpenChange={setShowNewCustomerDialog}>
+                  <DialogTrigger asChild>
+                    <Button className="bg-brand-red hover:bg-red-700 text-white flex items-center gap-2 w-full sm:w-auto">
+                      <Plus className="h-4 w-4" />
+                      Nuevo Cliente
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="w-full max-w-2xl mx-4 sm:mx-auto max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>Crear Nuevo Cliente</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleCreateCustomer} className="space-y-6">
+                      {/* Customer Information Section */}
+                      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border border-blue-200">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
                         <User className="h-5 w-5 text-blue-600" />
                         Información del Cliente
                       </h3>
@@ -1022,9 +1123,10 @@ const Customers = () => {
                         {createCustomerMutation.isPending ? "Creando..." : (includeRental ? "Crear y Agendar" : "Crear Cliente")}
                       </Button>
                     </div>
-                  </form>
-                </DialogContent>
-              </Dialog>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+              </div>
             </div>
           </div>
         </CardHeader>

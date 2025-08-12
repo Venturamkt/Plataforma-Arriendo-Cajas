@@ -580,7 +580,7 @@ export const emailTemplates = {
               </div>
               
               <div class="refund-info">
-                <h3>💸 Información de Reembolso</h3>
+                <h3>💰 Información de Reembolso</h3>
                 <p><strong>Monto pagado:</strong> $${data.totalAmount.toLocaleString()}</p>
                 <p>Estamos procesando tu reembolso completo. Será devuelto por el mismo medio de pago en los próximos días hábiles.</p>
               </div>
