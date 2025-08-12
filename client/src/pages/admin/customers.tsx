@@ -1357,7 +1357,7 @@ const Customers = () => {
                         ...selectedRental, 
                         boxQuantity: 10, 
                         rentalDays: 7,
-                        pickupDate: new Date(new Date(selectedRental.deliveryDate).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+                        pickupDate: new Date(new Date(selectedRental.deliveryDate).getTime() + (7 - 1) * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
                       })
                     }}
                     className="h-auto py-2 text-left"
@@ -1375,7 +1375,7 @@ const Customers = () => {
                         ...selectedRental, 
                         boxQuantity: 15, 
                         rentalDays: 7,
-                        pickupDate: new Date(new Date(selectedRental.deliveryDate).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+                        pickupDate: new Date(new Date(selectedRental.deliveryDate).getTime() + (7 - 1) * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
                       })
                     }}
                     className="h-auto py-2 text-left"
@@ -1393,7 +1393,7 @@ const Customers = () => {
                         ...selectedRental, 
                         boxQuantity: 10, 
                         rentalDays: 14,
-                        pickupDate: new Date(new Date(selectedRental.deliveryDate).getTime() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+                        pickupDate: new Date(new Date(selectedRental.deliveryDate).getTime() + (14 - 1) * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
                       })
                     }}
                     className="h-auto py-2 text-left"
@@ -1411,7 +1411,7 @@ const Customers = () => {
                         ...selectedRental, 
                         boxQuantity: 15, 
                         rentalDays: 14,
-                        pickupDate: new Date(new Date(selectedRental.deliveryDate).getTime() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+                        pickupDate: new Date(new Date(selectedRental.deliveryDate).getTime() + (14 - 1) * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
                       })
                     }}
                     className="h-auto py-2 text-left"
@@ -1481,9 +1481,9 @@ const Customers = () => {
                         setSelectedRental({ 
                           ...selectedRental, 
                           rentalDays: days,
-                          // Auto-calculate pickup date
+                          // Auto-calculate pickup date (rental days minus 1 because if you rent for 30 days starting Aug 15, you return on Sept 14)
                           pickupDate: selectedRental.deliveryDate ? 
-                            new Date(new Date(selectedRental.deliveryDate).getTime() + days * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : 
+                            new Date(new Date(selectedRental.deliveryDate).getTime() + (days - 1) * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : 
                             selectedRental.pickupDate
                         })
                       }}
@@ -1509,9 +1509,9 @@ const Customers = () => {
                         setSelectedRental({ 
                           ...selectedRental, 
                           rentalDays: days,
-                          // Auto-calculate pickup date
+                          // Auto-calculate pickup date (rental days minus 1 because if you rent for 30 days starting Aug 15, you return on Sept 14)
                           pickupDate: selectedRental.deliveryDate ? 
-                            new Date(new Date(selectedRental.deliveryDate).getTime() + days * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : 
+                            new Date(new Date(selectedRental.deliveryDate).getTime() + (days - 1) * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : 
                             selectedRental.pickupDate
                         })
                       }}
@@ -1535,7 +1535,7 @@ const Customers = () => {
                       onChange={(e) => {
                         const newDeliveryDate = e.target.value
                         const days = selectedRental.rentalDays || 7
-                        const newPickupDate = new Date(new Date(newDeliveryDate).getTime() + days * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+                        const newPickupDate = new Date(new Date(newDeliveryDate).getTime() + (days - 1) * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
                         setSelectedRental({ 
                           ...selectedRental, 
                           deliveryDate: newDeliveryDate,
@@ -1587,39 +1587,82 @@ const Customers = () => {
               <div className="space-y-4">
                 <h3 className="font-semibold text-lg">Productos Adicionales</h3>
                 <div className="bg-orange-50 p-4 rounded-lg">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-3">
                     {[
-                      { name: 'Carrito plegable', price: 15000 },
-                      { name: 'Base móvil', price: 8000 },
-                      { name: 'Kit 2 bases móviles', price: 15000 },
-                      { name: 'Correa Ratchet', price: 5000 }
-                    ].map((product) => (
-                      <div key={product.name} className="flex items-center justify-between p-2 bg-white rounded border">
-                        <div>
-                          <p className="font-medium text-sm">{product.name}</p>
-                          <p className="text-green-600 font-bold">${product.price.toLocaleString('es-CL')}</p>
+                      { name: 'Carrito plegable', defaultPrice: 15000 },
+                      { name: 'Base móvil', defaultPrice: 8000 },
+                      { name: 'Kit 2 bases móviles', defaultPrice: 15000 },
+                      { name: 'Correa Ratchet', defaultPrice: 5000 }
+                    ].map((product) => {
+                      const isSelected = selectedRental.additionalProducts?.some((p: any) => 
+                        typeof p === 'string' ? p === product.name : p.name === product.name
+                      ) || false
+                      
+                      const currentProduct = selectedRental.additionalProducts?.find((p: any) => 
+                        typeof p === 'string' ? p === product.name : p.name === product.name
+                      )
+                      
+                      const currentPrice = typeof currentProduct === 'object' ? currentProduct.price : product.defaultPrice
+                      
+                      return (
+                        <div key={product.name} className="flex items-center gap-3 p-3 bg-white rounded border">
+                          <input
+                            type="checkbox"
+                            className="w-4 h-4"
+                            checked={isSelected}
+                            onChange={(e) => {
+                              const products = selectedRental.additionalProducts || []
+                              if (e.target.checked) {
+                                const newProducts = products.filter((p: any) => 
+                                  typeof p === 'string' ? p !== product.name : p.name !== product.name
+                                )
+                                setSelectedRental({ 
+                                  ...selectedRental, 
+                                  additionalProducts: [...newProducts, { name: product.name, price: product.defaultPrice }]
+                                })
+                              } else {
+                                setSelectedRental({ 
+                                  ...selectedRental, 
+                                  additionalProducts: products.filter((p: any) => 
+                                    typeof p === 'string' ? p !== product.name : p.name !== product.name
+                                  )
+                                })
+                              }
+                            }}
+                          />
+                          <div className="flex-1">
+                            <p className="font-medium text-sm">{product.name}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm">$</span>
+                            <input
+                              type="number"
+                              min="0"
+                              step="1000"
+                              value={currentPrice}
+                              onChange={(e) => {
+                                const newPrice = parseInt(e.target.value) || 0
+                                const products = selectedRental.additionalProducts || []
+                                const updatedProducts = products.map((p: any) => {
+                                  if (typeof p === 'string' && p === product.name) {
+                                    return { name: product.name, price: newPrice }
+                                  } else if (typeof p === 'object' && p.name === product.name) {
+                                    return { ...p, price: newPrice }
+                                  }
+                                  return p
+                                })
+                                setSelectedRental({ 
+                                  ...selectedRental, 
+                                  additionalProducts: updatedProducts
+                                })
+                              }}
+                              disabled={!isSelected}
+                              className={`w-20 text-sm p-1 border rounded ${!isSelected ? 'bg-gray-100' : ''}`}
+                            />
+                          </div>
                         </div>
-                        <input
-                          type="checkbox"
-                          className="w-4 h-4"
-                          checked={selectedRental.additionalProducts?.includes(product.name) || false}
-                          onChange={(e) => {
-                            const products = selectedRental.additionalProducts || []
-                            if (e.target.checked) {
-                              setSelectedRental({ 
-                                ...selectedRental, 
-                                additionalProducts: [...products, product.name]
-                              })
-                            } else {
-                              setSelectedRental({ 
-                                ...selectedRental, 
-                                additionalProducts: products.filter(p => p !== product.name)
-                              })
-                            }
-                          }}
-                        />
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 </div>
               </div>
@@ -1704,10 +1747,10 @@ const Customers = () => {
               <div className="bg-green-50 p-4 rounded-lg border-l-4 border-green-500">
                 <h3 className="font-semibold text-lg text-green-800 mb-2">💵 Resumen de Precios</h3>
                 <div className="space-y-1 text-sm">
-                  <p><strong>Arriendo ({selectedRental.boxQuantity} cajas x {selectedRental.rentalDays} días):</strong> ${selectedRental.totalAmount?.toLocaleString('es-CL')}</p>
+                  <p><strong>Arriendo ({selectedRental.boxQuantity} cajas x {selectedRental.rentalDays} días):</strong> ${Math.round(selectedRental.totalAmount || 0).toLocaleString('es-CL')}</p>
                   <p><strong>Garantía total:</strong> ${((selectedRental.boxQuantity || 0) * 2000).toLocaleString('es-CL')}</p>
                   <p className="text-lg font-bold text-green-700 pt-2 border-t">
-                    <strong>Total a pagar:</strong> ${((selectedRental.totalAmount || 0) + ((selectedRental.boxQuantity || 0) * 2000)).toLocaleString('es-CL')}
+                    <strong>Total a pagar:</strong> ${(Math.round(selectedRental.totalAmount || 0) + ((selectedRental.boxQuantity || 0) * 2000)).toLocaleString('es-CL')}
                   </p>
                 </div>
               </div>
@@ -1728,15 +1771,17 @@ const Customers = () => {
                       await updateRentalMutation.mutateAsync({
                         id: selectedRental.id,
                         data: {
-                          boxQuantity: selectedRental.boxQuantity,
+                          totalBoxes: selectedRental.boxQuantity,
                           rentalDays: selectedRental.rentalDays,
                           deliveryDate: selectedRental.deliveryDate,
-                          pickupDate: selectedRental.pickupDate,
+                          returnDate: selectedRental.pickupDate,
                           deliveryAddress: selectedRental.deliveryAddress,
                           pickupAddress: selectedRental.pickupAddress,
                           notes: selectedRental.notes,
-                          additionalProducts: selectedRental.additionalProducts || [],
-                          status: selectedRental.status
+                          additionalProducts: JSON.stringify(selectedRental.additionalProducts || []),
+                          status: selectedRental.status,
+                          totalAmount: Math.round(selectedRental.totalAmount || 0).toString(),
+                          guaranteeAmount: (selectedRental.boxQuantity || 0) * 2000
                         }
                       })
                       setShowRentalDialog(false)
