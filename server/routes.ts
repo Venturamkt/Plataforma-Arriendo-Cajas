@@ -504,12 +504,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
               customer.rut.replace(/[.-]/g, '').slice(0, -1).slice(-4).padStart(4, '0') : "0000";
             const trackingUrl = generateTrackingUrl(rutDigits, updatedRental.trackingCode);
             
+            // Parse additional products if they exist
+            let additionalProducts = [];
+            try {
+              if (updatedRental.additionalProducts) {
+                additionalProducts = typeof updatedRental.additionalProducts === 'string' 
+                  ? JSON.parse(updatedRental.additionalProducts)
+                  : updatedRental.additionalProducts;
+              }
+            } catch (e) {
+              console.log('Error parsing additional products:', e);
+              additionalProducts = [];
+            }
+
             const emailData = {
               customerName: customer.name,
               rentalId: updatedRental.id,
               trackingCode: updatedRental.trackingCode,
               trackingUrl: trackingUrl,
               totalBoxes: updatedRental.totalBoxes,
+              rentalDays: updatedRental.rentalDays,
               deliveryDate: updatedRental.deliveryDate.toLocaleDateString('es-CL', { 
                 year: 'numeric', 
                 month: 'long', 
@@ -518,6 +532,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               deliveryAddress: updatedRental.deliveryAddress || '',
               totalAmount: parseInt(updatedRental.totalAmount || '0'),
               guaranteeAmount: updatedRental.totalBoxes * 2000,
+              additionalProducts: additionalProducts,
             };
 
             console.log(`Sending email with data:`, JSON.stringify(emailData, null, 2));

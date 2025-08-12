@@ -16,6 +16,8 @@ export interface RentalEmailData {
   deliveryAddress: string;
   totalAmount: number;
   guaranteeAmount: number;
+  additionalProducts?: Array<{name: string; price: number}>;
+  rentalDays?: number;
 }
 
 export const emailTemplates = {
@@ -54,9 +56,26 @@ export const emailTemplates = {
               <div class="details">
                 <h3>📦 Detalles de tu Solicitud</h3>
                 <p><strong>Número de cajas:</strong> ${data.totalBoxes}</p>
+                <p><strong>Duración:</strong> ${data.rentalDays || 'No especificado'} días</p>
                 <p><strong>Dirección de entrega:</strong> ${data.deliveryAddress}</p>
-                <p><strong>Total:</strong> $${data.totalAmount.toLocaleString()}</p>
-                <p><strong>Garantía:</strong> $${data.guaranteeAmount.toLocaleString()} (reembolsable)</p>
+                
+                <div style="margin: 15px 0; padding: 10px; background: #ffffff; border: 1px solid #ddd;">
+                  <h4 style="margin: 0 0 10px 0; color: #2E5CA6;">💰 Desglose de Precios</h4>
+                  <p><strong>Arriendo (${data.totalBoxes} cajas x ${data.rentalDays || 'N/A'} días):</strong> $${data.totalAmount.toLocaleString()}</p>
+                  ${data.additionalProducts && data.additionalProducts.length > 0 ? `
+                    <p><strong>Productos Adicionales:</strong></p>
+                    <ul style="margin: 5px 0; padding-left: 20px;">
+                      ${data.additionalProducts.map(product => `<li>${product.name}: $${product.price.toLocaleString()}</li>`).join('')}
+                    </ul>
+                  ` : ''}
+                  <p><strong>Garantía:</strong> $${data.guaranteeAmount.toLocaleString()} (reembolsable)</p>
+                  <hr style="margin: 10px 0;">
+                  <p style="font-size: 16px;"><strong>Total a Pagar: $${(
+                    data.totalAmount + 
+                    data.guaranteeAmount + 
+                    (data.additionalProducts || []).reduce((sum, product) => sum + product.price, 0)
+                  ).toLocaleString()}</strong></p>
+                </div>
               </div>
               
               <p>Te contactaremos pronto para coordinar los detalles y confirmar el pago.</p>
@@ -112,10 +131,27 @@ export const emailTemplates = {
               <div class="details">
                 <h3>📦 Detalles de tu Arriendo</h3>
                 <p><strong>Número de cajas:</strong> ${data.totalBoxes}</p>
+                <p><strong>Duración:</strong> ${data.rentalDays || 'No especificado'} días</p>
                 <p><strong>Fecha de entrega:</strong> ${data.deliveryDate}</p>
                 <p><strong>Dirección:</strong> ${data.deliveryAddress}</p>
-                <p><strong>Total pagado:</strong> $${data.totalAmount.toLocaleString()}</p>
-                <p><strong>Garantía:</strong> $${data.guaranteeAmount.toLocaleString()} (se devuelve al finalizar)</p>
+                
+                <div style="margin: 15px 0; padding: 10px; background: #ffffff; border: 1px solid #ddd;">
+                  <h4 style="margin: 0 0 10px 0; color: #2E5CA6;">💰 Desglose de Precios</h4>
+                  <p><strong>Arriendo (${data.totalBoxes} cajas x ${data.rentalDays || 'N/A'} días):</strong> $${data.totalAmount.toLocaleString()}</p>
+                  ${data.additionalProducts && data.additionalProducts.length > 0 ? `
+                    <p><strong>Productos Adicionales:</strong></p>
+                    <ul style="margin: 5px 0; padding-left: 20px;">
+                      ${data.additionalProducts.map(product => `<li>${product.name}: $${product.price.toLocaleString()}</li>`).join('')}
+                    </ul>
+                  ` : ''}
+                  <p><strong>Garantía:</strong> $${data.guaranteeAmount.toLocaleString()} (se devuelve al finalizar)</p>
+                  <hr style="margin: 10px 0;">
+                  <p style="font-size: 16px;"><strong>Total Pagado: $${(
+                    data.totalAmount + 
+                    data.guaranteeAmount + 
+                    (data.additionalProducts || []).reduce((sum, product) => sum + product.price, 0)
+                  ).toLocaleString()}</strong></p>
+                </div>
               </div>
               
               <h3>📋 Próximos Pasos:</h3>

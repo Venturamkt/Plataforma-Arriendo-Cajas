@@ -1748,9 +1748,32 @@ const Customers = () => {
                 <h3 className="font-semibold text-lg text-green-800 mb-2">💵 Resumen de Precios</h3>
                 <div className="space-y-1 text-sm">
                   <p><strong>Arriendo ({selectedRental.boxQuantity} cajas x {selectedRental.rentalDays} días):</strong> ${Math.round(selectedRental.totalAmount || 0).toLocaleString('es-CL')}</p>
+                  
+                  {/* Additional Products */}
+                  {selectedRental.additionalProducts && selectedRental.additionalProducts.length > 0 && (
+                    <div className="pt-1">
+                      <p className="font-medium text-gray-700">Productos Adicionales:</p>
+                      {selectedRental.additionalProducts.map((product: any, index: number) => {
+                        const productName = typeof product === 'string' ? product : product.name;
+                        const productPrice = typeof product === 'object' ? product.price : 0;
+                        return (
+                          <p key={index} className="ml-2 text-sm">• {productName}: ${productPrice.toLocaleString('es-CL')}</p>
+                        );
+                      })}
+                    </div>
+                  )}
+                  
                   <p><strong>Garantía total:</strong> ${((selectedRental.boxQuantity || 0) * 2000).toLocaleString('es-CL')}</p>
                   <p className="text-lg font-bold text-green-700 pt-2 border-t">
-                    <strong>Total a pagar:</strong> ${(Math.round(selectedRental.totalAmount || 0) + ((selectedRental.boxQuantity || 0) * 2000)).toLocaleString('es-CL')}
+                    <strong>Total a pagar:</strong> ${(() => {
+                      const rentalAmount = Math.round(selectedRental.totalAmount || 0);
+                      const guaranteeAmount = (selectedRental.boxQuantity || 0) * 2000;
+                      const additionalProductsTotal = (selectedRental.additionalProducts || []).reduce((sum: number, product: any) => {
+                        const price = typeof product === 'object' ? product.price : 0;
+                        return sum + price;
+                      }, 0);
+                      return (rentalAmount + guaranteeAmount + additionalProductsTotal).toLocaleString('es-CL');
+                    })()}
                   </p>
                 </div>
               </div>
