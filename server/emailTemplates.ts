@@ -227,7 +227,7 @@ export const emailTemplates = {
             
             <div class="footer">
               <p>Arriendo Cajas - Más espacio, más orden</p>
-              <p>¿Necesitas ayuda? Escríbenos: jalarcon@arriendocajas.cl</p>
+              <p>¿Necesitas ayuda? Escríbenos: contacto@arriendocajas.cl</p>
               <p><small>Recibiste este email porque tienes un arriendo activo con nosotros. Para darse de baja, responde con "STOP".</small></p>
             </div>
           </div>
@@ -288,7 +288,7 @@ export const emailTemplates = {
             
             <div class="footer">
               <p>Arriendo Cajas - Siempre a tu servicio</p>
-              <p>¿Cómo fue tu experiencia? Cuéntanos: jalarcon@arriendocajas.cl</p>
+              <p>¿Cómo fue tu experiencia? Cuéntanos: contacto@arriendocajas.cl</p>
             </div>
           </div>
         </body>
@@ -419,7 +419,7 @@ export const emailTemplates = {
               
               <h3>📞 ¿Necesitas ayuda?</h3>
               <p>Si tienes alguna consulta o necesitas coordinar un horario específico, no dudes en contactarnos:</p>
-              <p><strong>Email:</strong> jalarcon@arriendocajas.cl</p>
+              <p><strong>Email:</strong> contacto@arriendocajas.cl</p>
               
               <p>¡Gracias por mantener todo en orden!</p>
             </div>
@@ -532,7 +532,7 @@ export const emailTemplates = {
               
               <h3>📞 Contacto</h3>
               <p>WhatsApp/Teléfono: +56987290995</p>
-              <p>Email: jalarcon@arriendocajas.cl</p>
+              <p>Email: contacto@arriendocajas.cl</p>
             </div>
             
             <div class="footer">
@@ -546,7 +546,7 @@ export const emailTemplates = {
   }),
 
   cancelada: (data: RentalEmailData): EmailTemplate => ({
-    subject: `Arriendo cancelado - Reembolso en proceso - ${data.trackingCode}`,
+    subject: `Arriendo cancelado - ${data.trackingCode}`,
     html: `
       <!DOCTYPE html>
       <html>
@@ -558,7 +558,6 @@ export const emailTemplates = {
             .content { padding: 20px; }
             .cancellation-box { background: #f8f9fa; border: 2px solid #dc3545; padding: 15px; margin: 20px 0; text-align: center; }
             .tracking-link { background: #C8201D !important; color: white !important; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 0; }
-            .refund-info { background: #fff3cd; padding: 15px; margin: 15px 0; border-left: 4px solid #ffc107; }
             .support { background: #e7f3ff; padding: 15px; margin: 15px 0; border-left: 4px solid #007bff; }
             .footer { background: #2E5CA6; color: white; padding: 15px; text-align: center; font-size: 12px; }
           </style>
@@ -579,17 +578,11 @@ export const emailTemplates = {
                 <a href="${data.trackingUrl}" class="tracking-link" style="background: #C8201D !important; color: white !important; text-decoration: none;">Ver Detalles</a>
               </div>
               
-              <div class="refund-info">
-                <h3>💰 Información de Reembolso</h3>
-                <p><strong>Monto pagado:</strong> $${data.totalAmount.toLocaleString()}</p>
-                <p>Estamos procesando tu reembolso completo. Será devuelto por el mismo medio de pago en los próximos días hábiles.</p>
-              </div>
-              
               <div class="support">
                 <h3>🤝 ¿Necesitas Ayuda?</h3>
-                <p>Si tienes preguntas sobre la cancelación o el reembolso, no dudes en contactarnos:</p>
+                <p>Si tienes preguntas sobre la cancelación, no dudes en contactarnos:</p>
                 <ul>
-                  <li>Email: <strong>jalarcon@arriendocajas.cl</strong></li>
+                  <li>Email: <strong>contacto@arriendocajas.cl</strong></li>
                   <li>Te responderemos a la brevedad</li>
                 </ul>
               </div>
@@ -602,13 +595,13 @@ export const emailTemplates = {
             
             <div class="footer">
               <p>Arriendo Cajas - Siempre buscando mejorar</p>
-              <p>Tu feedback es importante: jalarcon@arriendocajas.cl</p>
+              <p>Tu feedback es importante: contacto@arriendocajas.cl</p>
             </div>
           </div>
         </body>
       </html>
     `,
-    text: `Hola ${data.customerName}, tu arriendo ${data.trackingCode} ha sido cancelado. Reembolso de $${data.totalAmount.toLocaleString()} en proceso. Detalles: ${data.trackingUrl}. Consultas: jalarcon@arriendocajas.cl`
+    text: `Hola ${data.customerName}! Tu arriendo ha sido cancelado según tu solicitud. Código: ${data.trackingCode}. Seguimiento: ${data.trackingUrl}. Contacto: contacto@arriendocajas.cl. Lamentamos no haber podido completar el servicio.`
   })
 };
 
