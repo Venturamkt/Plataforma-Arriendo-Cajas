@@ -661,7 +661,29 @@ const Customers = () => {
   const handleEditRental = (customerId: number) => {
     const rental = getCustomerRental(customerId)
     if (rental) {
-      setSelectedRental(rental)
+      // Parse additionalProducts if it's a JSON string
+      let parsedAdditionalProducts = []
+      try {
+        if (rental.additionalProducts) {
+          if (typeof rental.additionalProducts === 'string') {
+            const parsed = JSON.parse(rental.additionalProducts)
+            parsedAdditionalProducts = Array.isArray(parsed) ? parsed : []
+          } else if (Array.isArray(rental.additionalProducts)) {
+            parsedAdditionalProducts = rental.additionalProducts
+          }
+        }
+      } catch (error) {
+        console.error('Error parsing additionalProducts:', error)
+        parsedAdditionalProducts = []
+      }
+
+      // Set the rental with properly parsed additionalProducts
+      setSelectedRental({
+        ...rental,
+        additionalProducts: parsedAdditionalProducts,
+        boxQuantity: parseInt(rental.totalBoxes) || 2,
+        rentalDays: rental.rentalDays || 7
+      })
       setShowRentalDialog(true)
     }
   }
