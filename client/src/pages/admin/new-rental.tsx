@@ -602,46 +602,56 @@ export default function NewRental() {
                 </div>
 
                 {/* Manual Pricing Option */}
-                <div className="border-t pt-4 space-y-3">
+                <div className="border-t pt-4 space-y-3 bg-blue-50 p-4 rounded-lg">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="manualPricing" className="text-sm font-medium">
-                      Precio manual por caja/día
-                    </Label>
+                    <div>
+                      <Label htmlFor="manualPricing" className="text-sm font-medium text-blue-900">
+                        💰 Precio manual por caja/día
+                      </Label>
+                      <p className="text-xs text-blue-700 mt-1">
+                        Activa esta opción para establecer un precio personalizado
+                      </p>
+                    </div>
                     <div className="flex items-center gap-2">
                       <input
                         type="checkbox"
                         id="manualPricing"
                         checked={useManualPrice}
                         onChange={(e) => {
+                          console.log("Manual pricing toggle:", e.target.checked);
                           setUseManualPrice(e.target.checked);
                           if (!e.target.checked) {
                             setManualBoxPrice("");
                           }
                         }}
-                        className="rounded border-gray-300"
+                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                       />
-                      <label htmlFor="manualPricing" className="text-sm">
+                      <label htmlFor="manualPricing" className="text-sm font-medium text-blue-900">
                         Activar
                       </label>
                     </div>
                   </div>
                   
                   {useManualPrice && (
-                    <div>
-                      <Label htmlFor="manualBoxPrice">Precio por caja por día (CLP)</Label>
+                    <div className="bg-white p-3 rounded border">
+                      <Label htmlFor="manualBoxPrice" className="text-sm font-medium text-gray-900">
+                        Precio por caja por día (CLP)
+                      </Label>
                       <Input
                         id="manualBoxPrice"
                         type="text"
-                        placeholder="1,000"
+                        placeholder="Ej: 1,500"
                         value={manualBoxPrice}
                         onChange={(e) => {
+                          console.log("Manual price change:", e.target.value);
                           const value = e.target.value.replace(/[^\d]/g, '');
                           const formattedValue = value ? parseInt(value).toLocaleString('es-CL') : '';
                           setManualBoxPrice(formattedValue);
                         }}
+                        className="mt-1"
                       />
-                      <p className="text-xs text-gray-500 mt-1">
-                        Este precio se aplicará por cada caja por día
+                      <p className="text-xs text-gray-600 mt-2">
+                        Este precio se aplicará a cada caja por cada día de arriendo
                       </p>
                     </div>
                   )}
