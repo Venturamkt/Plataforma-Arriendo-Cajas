@@ -94,7 +94,7 @@ export const boxes = pgTable("boxes", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   barcode: varchar("barcode").unique().notNull(),
   status: varchar("status", { 
-    enum: ["available", "rented", "maintenance", "damaged"] 
+    enum: ["available", "no_disponible", "maintenance", "damaged"] 
   }).default("available"),
   size: varchar("size", { enum: ["small", "medium", "large"] }).notNull(),
   condition: varchar("condition", { enum: ["excellent", "good", "fair", "needs_repair"] }).default("excellent"),

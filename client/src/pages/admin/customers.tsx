@@ -366,12 +366,19 @@ export default function Customers() {
         : 0
       return sum + amount
     }, 0)
-    
+
+    // Get latest active rental for driver info
+    const latestActiveRental = activeRentals.length > 0 
+      ? activeRentals.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0] 
+      : null
+
     return {
       active: activeRentals.length,
       total: customerRentals.length,
       totalSpent,
-      status: activeRentals.length > 0 ? activeRentals[0].status : 'Sin arriendos activos'
+      status: activeRentals.length > 0 ? activeRentals[0].status : 'Sin arriendos activos',
+      driverName: latestActiveRental?.driverName || null,
+      driverEmail: latestActiveRental?.driverEmail || null
     }
   }
 
@@ -583,6 +590,7 @@ export default function Customers() {
                         <TableHead>RUT</TableHead>
                         <TableHead>Arriendos</TableHead>
                         <TableHead>Estado</TableHead>
+                        <TableHead>Repartidor</TableHead>
                         <TableHead className="text-center">Acciones</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -628,6 +636,18 @@ export default function Customers() {
                                 <Badge variant="secondary">
                                   Sin arriendos activos
                                 </Badge>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {rentalInfo.driverName ? (
+                                <div className="text-sm">
+                                  <div className="font-medium">{rentalInfo.driverName}</div>
+                                  {rentalInfo.driverEmail && (
+                                    <div className="text-xs text-gray-500">{rentalInfo.driverEmail}</div>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-sm text-gray-400">Sin asignar</span>
                               )}
                             </TableCell>
                             <TableCell className="text-center">

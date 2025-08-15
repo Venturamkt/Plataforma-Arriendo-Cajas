@@ -448,11 +448,11 @@ export class DatabaseStorage implements IStorage {
       .where(eq(rentals.id, rentalId))
       .returning();
 
-    // Marcar las cajas como rentadas
+    // Marcar las cajas como no disponibles
     for (const box of availableBoxes) {
       await db
         .update(boxes)
-        .set({ status: 'rented' })
+        .set({ status: 'no_disponible' })
         .where(eq(boxes.id, box.id));
     }
 
@@ -485,11 +485,11 @@ export class DatabaseStorage implements IStorage {
       .where(eq(rentalBoxes.rentalId, rentalId));
 
     for (const assignment of assignments) {
-      let newBoxStatus: "available" | "rented" | "maintenance" | "damaged" = "available";
+      let newBoxStatus: "available" | "no_disponible" | "maintenance" | "damaged" = "available";
       
-      // Only mark as rented if rental is "pagada" or "entregada"
+      // Only mark as no_disponible if rental is "pagada" or "entregada"
       if (rentalStatus === 'pagada' || rentalStatus === 'entregada') {
-        newBoxStatus = "rented";
+        newBoxStatus = "no_disponible";
       }
       // For "finalizado", "cancelada", "pendiente", "retirada" - boxes go back to available
       

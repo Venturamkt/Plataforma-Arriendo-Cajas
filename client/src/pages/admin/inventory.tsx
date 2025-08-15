@@ -7,7 +7,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import Header from "@/components/layout/header";
 import Sidebar from "@/components/layout/sidebar";
 import MobileNav from "@/components/layout/mobile-nav";
-import BoxStatusBadge from "@/components/box-status-badge";
+import InventoryStatusBadge from "@/components/inventory-status-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +16,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { Search, Plus, QrCode, Package, Grid3X3, List, Filter } from "lucide-react";
+import { Search, Plus, QrCode, Package, Grid3X3, List, Filter, Tabs as TabsIcon } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import BarcodeScanner from "@/components/barcode-scanner";
 
 export default function AdminInventory() {
@@ -269,9 +270,23 @@ export default function AdminInventory() {
               </p>
             </div>
 
-            {/* Filters and Actions */}
-            <Card className="mb-6">
-              <CardHeader>
+            {/* Tabs */}
+            <Tabs defaultValue="boxes" className="mb-6">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="boxes" className="flex items-center gap-2">
+                  <Package className="h-4 w-4" />
+                  Cajas
+                </TabsTrigger>
+                <TabsTrigger value="codes" className="flex items-center gap-2">
+                  <QrCode className="h-4 w-4" />
+                  Códigos de Cajas
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="boxes">
+                {/* Filters and Actions */}
+                <Card className="mb-6">
+                  <CardHeader>
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                   <div className="flex flex-col sm:flex-row gap-4 flex-1">
                     {/* Search */}
@@ -479,7 +494,7 @@ export default function AdminInventory() {
                     <Card key={box.id || `box-${Math.random()}`} className="hover:shadow-md transition-shadow">
                       <CardContent className="p-3">
                         <div className="flex items-center justify-between mb-2">
-                          <BoxStatusBadge status={box.status} />
+                          <InventoryStatusBadge status={box.status as "available" | "no_disponible" | "maintenance" | "damaged"} />
                         </div>
                         
                         <div className="mb-3">
@@ -566,7 +581,7 @@ export default function AdminInventory() {
                       filteredAndSortedBoxes.map((box) => (
                         <TableRow key={box.id}>
                           <TableCell>
-                            <BoxStatusBadge status={box.status} />
+                            <InventoryStatusBadge status={box.status as "available" | "no_disponible" | "maintenance" | "damaged"} />
                           </TableCell>
                           <TableCell className="font-mono text-sm">{box.barcode}</TableCell>
                           <TableCell>
@@ -630,7 +645,7 @@ export default function AdminInventory() {
                       </div>
                       <div className="flex items-center gap-1">
                         <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                        <span>Arrendadas: {boxes?.filter(b => b.status === 'rented').length || 0}</span>
+                        <span>No Disponible: {boxes?.filter(b => b.status === 'no_disponible').length || 0}</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
@@ -641,11 +656,30 @@ export default function AdminInventory() {
                 </CardContent>
               </Card>
             )}
+              </TabsContent>
+              
+              <TabsContent value="codes">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Códigos de Cajas</CardTitle>
+                    <CardDescription>
+                      Gestión de códigos de barras y códigos maestros para arriendos
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-center py-8">
+                      <QrCode className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-600">Funcionalidad de códigos de cajas disponible aquí</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
           </main>
         </div>
-        
-        <MobileNav role={'admin'} />
       </div>
+      
+      <MobileNav role={user.role} />
 
       {showScanner && (
         <BarcodeScanner

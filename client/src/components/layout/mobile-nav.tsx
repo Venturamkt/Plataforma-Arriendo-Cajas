@@ -23,8 +23,6 @@ export default function MobileNav({ role }: MobileNavProps) {
           { href: "/admin/inventory", icon: Package, label: "Inventario" },
           { href: "/admin/customers", icon: Users, label: "Clientes" },
           { href: "/admin/deliveries", icon: Truck, label: "Entregas" },
-          { href: "/admin/box-codes", icon: QrCode, label: "Códigos" },
-          { href: "/admin/box-codes", icon: QrCode, label: "Códigos" },
         ];
       case 'driver':
         return [
