@@ -248,7 +248,7 @@ export const updateRentalSchema = insertRentalSchema.partial().extend({
   dailyRate: z.union([z.string(), z.number()]).optional(),
   additionalProductsTotal: z.union([z.string(), z.number()]).optional(),
   deliveryDate: z.union([z.string(), z.date()]).optional(),
-  returnDate: z.union([z.string(), z.date()]).optional(),
+  returnDate: z.union([z.string(), z.date(), z.null()]).optional(),
   additionalProducts: z.string().optional(),
 });
 

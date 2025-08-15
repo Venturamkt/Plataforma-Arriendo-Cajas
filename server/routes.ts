@@ -687,7 +687,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         deliveryDate: parsedData.deliveryDate ? 
           (typeof parsedData.deliveryDate === 'string' ? new Date(parsedData.deliveryDate) : parsedData.deliveryDate) 
           : undefined,
-        returnDate: parsedData.returnDate ? 
+        returnDate: parsedData.returnDate && parsedData.returnDate !== null ? 
           (typeof parsedData.returnDate === 'string' ? new Date(parsedData.returnDate) : parsedData.returnDate) 
           : undefined,
       };
