@@ -64,12 +64,19 @@ interface Rental {
   status: string
   trackingCode: string
   assignedDriver: string | null
+  driverId?: string | null
   assignedBoxCodes: string[] | null
   masterCode: string | null
   createdAt: string
   updatedAt: string
   driverName?: string | null
   driverEmail?: string | null
+}
+
+interface Driver {
+  id: string
+  name: string
+  email: string
 }
 
 interface NewCustomer {
@@ -191,7 +198,7 @@ export default function CustomersPageNew() {
     refetchInterval: 5000,
   })
 
-  const { data: drivers = [] } = useQuery({
+  const { data: drivers = [] } = useQuery<Driver[]>({
     queryKey: ["/api/drivers"],
     refetchInterval: 5000,
   })
@@ -419,7 +426,7 @@ export default function CustomersPageNew() {
             onChange={e => setFormData(prev => ({ ...prev, address: e.target.value }))}
           />
         </div>
-        <Button type="submit" className="w-full" disabled={createCustomerMutation.isPending || updateCustomerMutation.isPending}>
+        <Button type="submit" className="w-full">
           {customer ? 'Actualizar Cliente' : 'Crear Cliente'}
         </Button>
       </form>
@@ -626,24 +633,25 @@ export default function CustomersPageNew() {
           </div>
         </div>
 
-        <div>
-          <Label htmlFor="deliveryAddress">Dirección de Entrega</Label>
-          <Textarea
-            id="deliveryAddress"
-            placeholder="Dirección completa de entrega"
-            value={formData.deliveryAddress}
-            onChange={e => setFormData(prev => ({ ...prev, deliveryAddress: e.target.value }))}
-          />
-        </div>
-
-        <div>
-          <Label htmlFor="pickupAddress">Dirección de Retiro</Label>
-          <Textarea
-            id="pickupAddress"
-            placeholder="Dirección completa de retiro"
-            value={formData.pickupAddress}
-            onChange={e => setFormData(prev => ({ ...prev, pickupAddress: e.target.value }))}
-          />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="deliveryAddress">Dirección de Entrega</Label>
+            <Input
+              id="deliveryAddress"
+              placeholder="Dirección completa de entrega"
+              value={formData.deliveryAddress}
+              onChange={e => setFormData(prev => ({ ...prev, deliveryAddress: e.target.value }))}
+            />
+          </div>
+          <div>
+            <Label htmlFor="pickupAddress">Dirección de Retiro</Label>
+            <Input
+              id="pickupAddress"
+              placeholder="Dirección completa de retiro"
+              value={formData.pickupAddress}
+              onChange={e => setFormData(prev => ({ ...prev, pickupAddress: e.target.value }))}
+            />
+          </div>
         </div>
 
         <div>
@@ -699,26 +707,51 @@ export default function CustomersPageNew() {
           {formData.additionalProducts.length > 0 && (
             <div className="space-y-2 mb-4">
               {formData.additionalProducts.map((product, index) => (
-                <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                <div key={index} className="flex items-center justify-between p-3 bg-white rounded border">
                   <div className="flex-1">
-                    <p className="font-medium">{product.name}</p>
-                    <p className="text-sm text-gray-500">
-                      {formatPrice(product.price)} × {product.quantity} = {formatPrice(product.price * product.quantity)}
-                    </p>
+                    <span className="font-medium">{product.name}</span>
                   </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setFormData(prev => ({
-                        ...prev,
-                        additionalProducts: prev.additionalProducts.filter((_, i) => i !== index)
-                      }))
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="text"
+                      value={product.price.toString()}
+                      onChange={e => {
+                        const value = e.target.value.replace(/[^0-9]/g, '')
+                        const newProducts = [...formData.additionalProducts]
+                        newProducts[index] = { ...product, price: parseInt(value) || 0 }
+                        setFormData(prev => ({ ...prev, additionalProducts: newProducts }))
+                      }}
+                      className="w-20 text-center"
+                      placeholder="0"
+                    />
+                    <span>×</span>
+                    <Input
+                      type="text"
+                      value={product.quantity.toString()}
+                      onChange={e => {
+                        const value = e.target.value.replace(/[^0-9]/g, '')
+                        const newProducts = [...formData.additionalProducts]
+                        newProducts[index] = { ...product, quantity: parseInt(value) || 1 }
+                        setFormData(prev => ({ ...prev, additionalProducts: newProducts }))
+                      }}
+                      className="w-16 text-center"
+                      placeholder="1"
+                    />
+                    <span>= {formatPrice(product.price * product.quantity)}</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setFormData(prev => ({
+                          ...prev,
+                          additionalProducts: prev.additionalProducts.filter((_, i) => i !== index)
+                        }))
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -1036,10 +1069,30 @@ export default function CustomersPageNew() {
                           )}
                         </TableCell>
                         <TableCell>
-                          <Button variant="ghost" size="sm" onClick={() => {
-                            setSelectedCustomer(customer)
-                            setShowCreateRentalDialog(true)
-                          }}>Asignar repartidor</Button>
+                          {lastRental && lastRental.status === 'pagada' ? (
+                            <Select 
+                              value={lastRental.driverId || ""} 
+                              onValueChange={(driverId) => {
+                                updateRentalMutation.mutate({
+                                  id: lastRental.id,
+                                  data: { ...lastRental, driverId }
+                                })
+                              }}
+                            >
+                              <SelectTrigger className="w-40">
+                                <SelectValue placeholder="Asignar repartidor" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {drivers.map(driver => (
+                                  <SelectItem key={driver.id} value={driver.id}>
+                                    {driver.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <span className="text-gray-400 text-sm">Sin arriendos pagados</span>
+                          )}
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-1">
