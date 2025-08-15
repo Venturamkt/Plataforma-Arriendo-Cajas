@@ -383,7 +383,7 @@ export default function Customers() {
       setSelectedRental({
         ...rental,
         additionalProducts: parsedAdditionalProducts,
-        boxQuantity: parseInt(rental.totalBoxes) || 2,
+        boxQuantity: rental.totalBoxes || 2,
         rentalDays: rental.rentalDays || 7
       })
       setShowRentalDialog(true)
@@ -1382,28 +1382,109 @@ export default function Customers() {
                     </div>
                   </div>
 
-                  {/* Additional Products */}
+                  {/* Additional Products - Fully Editable */}
                   <div className="bg-orange-50 p-4 rounded-lg">
-                    <Label className="text-sm font-medium text-gray-700">Productos adicionales</Label>
-                    <div className="space-y-2 mt-2">
+                    <div className="flex items-center justify-between mb-3">
+                      <Label className="text-sm font-medium text-gray-700">Productos adicionales</Label>
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => {
+                          const newProduct = { name: 'Nuevo Producto', price: 0, quantity: 1 }
+                          setSelectedRental({ 
+                            ...selectedRental, 
+                            additionalProducts: [...(selectedRental.additionalProducts || []), newProduct] 
+                          })
+                        }}
+                        className="bg-orange-600 hover:bg-orange-700"
+                      >
+                        <Plus className="h-4 w-4 mr-1" />
+                        Agregar
+                      </Button>
+                    </div>
+                    
+                    <div className="space-y-3">
                       {selectedRental.additionalProducts?.map((product: any, index: number) => (
-                        <div key={index} className="flex items-center gap-2 p-2 bg-white rounded">
-                          <span className="flex-1">{product.name}</span>
-                          <span>${product.price?.toLocaleString()}</span>
-                          <span>x{product.quantity || 1}</span>
-                          <Button 
-                            size="sm" 
-                            variant="destructive"
-                            onClick={() => {
-                              const newProducts = [...selectedRental.additionalProducts]
-                              newProducts.splice(index, 1)
-                              setSelectedRental({ ...selectedRental, additionalProducts: newProducts })
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                        <div key={index} className="grid grid-cols-12 gap-2 p-3 bg-white rounded border">
+                          {/* Product Name */}
+                          <div className="col-span-4">
+                            <Input
+                              placeholder="Nombre del producto"
+                              value={product.name || ''}
+                              onChange={(e) => {
+                                const newProducts = [...selectedRental.additionalProducts]
+                                newProducts[index] = { ...newProducts[index], name: e.target.value }
+                                setSelectedRental({ ...selectedRental, additionalProducts: newProducts })
+                              }}
+                              className="text-sm"
+                            />
+                          </div>
+                          
+                          {/* Price */}
+                          <div className="col-span-3">
+                            <div className="relative">
+                              <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">$</span>
+                              <Input
+                                type="number"
+                                min="0"
+                                placeholder="Precio"
+                                value={product.price || ''}
+                                onChange={(e) => {
+                                  const newProducts = [...selectedRental.additionalProducts]
+                                  newProducts[index] = { ...newProducts[index], price: parseInt(e.target.value) || 0 }
+                                  setSelectedRental({ ...selectedRental, additionalProducts: newProducts })
+                                }}
+                                className="pl-6 text-sm"
+                              />
+                            </div>
+                          </div>
+                          
+                          {/* Quantity */}
+                          <div className="col-span-2">
+                            <Input
+                              type="number"
+                              min="1"
+                              placeholder="Cant."
+                              value={product.quantity || 1}
+                              onChange={(e) => {
+                                const newProducts = [...selectedRental.additionalProducts]
+                                newProducts[index] = { ...newProducts[index], quantity: parseInt(e.target.value) || 1 }
+                                setSelectedRental({ ...selectedRental, additionalProducts: newProducts })
+                              }}
+                              className="text-sm"
+                            />
+                          </div>
+                          
+                          {/* Total */}
+                          <div className="col-span-2 flex items-center justify-center">
+                            <span className="text-sm font-medium text-gray-600">
+                              ${((product.price || 0) * (product.quantity || 1)).toLocaleString()}
+                            </span>
+                          </div>
+                          
+                          {/* Delete Button */}
+                          <div className="col-span-1 flex items-center justify-center">
+                            <Button 
+                              type="button"
+                              size="sm" 
+                              variant="destructive"
+                              onClick={() => {
+                                const newProducts = [...selectedRental.additionalProducts]
+                                newProducts.splice(index, 1)
+                                setSelectedRental({ ...selectedRental, additionalProducts: newProducts })
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
                       ))}
+                      
+                      {(!selectedRental.additionalProducts || selectedRental.additionalProducts.length === 0) && (
+                        <div className="text-center py-4 text-gray-500 text-sm">
+                          No hay productos adicionales. Haz clic en "Agregar" para añadir uno.
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -1424,8 +1505,8 @@ export default function Customers() {
                       
                       {selectedRental.additionalProducts?.map((product: any, index: number) => (
                         <div key={index} className="flex justify-between items-center text-sm">
-                          <span>{product.name}:</span>
-                          <span>${(product.price || 0).toLocaleString()}</span>
+                          <span>{product.name} x{product.quantity || 1}:</span>
+                          <span>${((product.price || 0) * (product.quantity || 1)).toLocaleString()}</span>
                         </div>
                       ))}
                       
@@ -1440,7 +1521,7 @@ export default function Customers() {
                           ${(
                             getPriceByPeriod(selectedRental.boxQuantity, selectedRental.rentalDays) + 
                             (selectedRental.boxQuantity * 2000) +
-                            (selectedRental.additionalProducts || []).reduce((sum: number, product: any) => sum + (product.price || 0), 0)
+                            (selectedRental.additionalProducts || []).reduce((sum: number, product: any) => sum + ((product.price || 0) * (product.quantity || 1)), 0)
                           ).toLocaleString()}
                         </span>
                       </div>
