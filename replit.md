@@ -35,6 +35,8 @@ Preferred communication style: Simple, everyday language.
 - ✅ **Rental status changes**: Fully functional with automatic email notifications to customers
 - ✅ **Complete rental editing form**: Enhanced edit form with status selection, matching creation form functionality
 - ✅ **Email system verification**: Confirmed working with jalarcon@arriendocajas.cl for all rental lifecycle events
+- ✅ **Manual pricing functionality**: Implemented checkbox-based manual pricing option in rental creation form within customers page
+- ✅ **Price validation fix**: Removed restrictive step validation allowing flexible pricing in Chilean pesos for all products
 
 ### Key Features
 - **Authentication**: Replit Auth (OpenID Connect), PostgreSQL-backed sessions, role-based access control (Admin, Driver, Customer), HTTP-only cookies, CSRF protection.

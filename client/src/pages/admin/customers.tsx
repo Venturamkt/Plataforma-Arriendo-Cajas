@@ -1189,7 +1189,6 @@ export default function Customers() {
                                   <Input
                                     type="number"
                                     min="0"
-                                    step="1000"
                                     value={currentPrice}
                                     onChange={(e) => {
                                       const newPrice = parseInt(e.target.value) || 0
@@ -1201,6 +1200,7 @@ export default function Customers() {
                                       })
                                     }}
                                     className="w-24 h-8 text-sm"
+                                    placeholder="Precio"
                                   />
                                 </div>
                               )}
