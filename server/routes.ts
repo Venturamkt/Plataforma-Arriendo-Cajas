@@ -20,9 +20,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize default admin user and seed data
   await storage.initializeDefaultAdmin();
   
-  // Import and run seed data
-  const { seedInitialData } = await import("./seedData");
-  await seedInitialData();
+  // Import and run seed data - DISABLED FOR PRODUCTION
+  // const { seedInitialData } = await import("./seedData");
+  // await seedInitialData();
 
   // Legacy auth middleware (disabled for public access)
   // await setupAuth(app);
