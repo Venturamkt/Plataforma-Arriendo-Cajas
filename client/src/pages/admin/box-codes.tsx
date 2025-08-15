@@ -12,6 +12,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Loader2, QrCode, Package, Search, CheckCircle, AlertCircle, Scan, Copy } from 'lucide-react';
 import { queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import Sidebar from '@/components/layout/sidebar';
+import MobileNav from '@/components/layout/mobile-nav';
 import type { Rental } from '@shared/schema';
 
 function BoxCodesPage() {
@@ -78,7 +80,10 @@ function BoxCodesPage() {
   const paidRentals = rentals?.filter(r => r.status === 'pagada' && r.assignedBoxCodes) || [];
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="flex min-h-screen bg-gray-50">
+      <Sidebar role="admin" />
+      <div className="flex-1">
+        <div className="container mx-auto p-6">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Sistema de Códigos de Cajas</h1>
         <p className="text-gray-600">
@@ -339,6 +344,9 @@ function BoxCodesPage() {
           </Card>
         </TabsContent>
       </Tabs>
+        </div>
+      </div>
+      <MobileNav role="admin" />
     </div>
   );
 }
