@@ -43,6 +43,7 @@ function Router() {
       <Route path="/admin/dashboard" component={AdminDashboard} />
       <Route path="/admin/inventory" component={AdminInventory} />
       <Route path="/admin/customers" component={AdminCustomers} />
+      <Route path="/admin/customers-new" component={() => import("@/pages/admin/customers-new").then(m => m.default)} />
       <Route path="/admin/deliveries" component={AdminDeliveries} />
       <Route path="/admin/reports" component={AdminReports} />
       <Route path="/admin/users" component={UserManagement} />

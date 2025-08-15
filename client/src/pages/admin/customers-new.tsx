@@ -442,11 +442,14 @@ export default function CustomersPageNew() {
       status: rental?.status || 'pendiente',
       manualPrice: false,
       customPrice: 0,
+      discount: 0,
       additionalProducts: parseAdditionalProducts(rental?.additionalProducts || '[]')
     })
 
     const [calculatedPrice, setCalculatedPrice] = useState(0)
     const [rentalDays, setRentalDays] = useState(7)
+    const [showAddProductDialog, setShowAddProductDialog] = useState(false)
+    const [newProduct, setNewProduct] = useState({ name: '', price: 0, quantity: 1 })
 
     useEffect(() => {
       if (formData.deliveryDate && formData.returnDate) {
@@ -467,14 +470,20 @@ export default function CustomersPageNew() {
     const handleSubmit = (e: React.FormEvent) => {
       e.preventDefault()
       
+      const basePrice = formData.manualPrice ? formData.customPrice : calculatedPrice
+      const discountAmount = (basePrice * formData.discount) / 100
+      const finalPrice = basePrice - discountAmount
+      
       const rentalData = {
         ...formData,
-        totalAmount: formData.manualPrice ? formData.customPrice : calculatedPrice,
+        totalAmount: finalPrice,
         guaranteeAmount: formData.totalBoxes * 2000, // $2,000 per box
         additionalProducts: JSON.stringify(formData.additionalProducts),
         additionalProductsTotal: formData.additionalProducts.reduce((sum, product) => sum + (product.price * product.quantity), 0),
         deliveryDate: new Date(formData.deliveryDate).toISOString(),
         returnDate: formData.returnDate ? new Date(formData.returnDate).toISOString() : null,
+        rentalDays: rentalDays,
+        discount: formData.discount
       }
       
       onSubmit(rentalData)
@@ -565,6 +574,121 @@ export default function CustomersPageNew() {
           />
         </div>
 
+        {/* Productos Adicionales */}
+        <div>
+          <div className="flex justify-between items-center mb-2">
+            <Label>Productos Adicionales</Label>
+            <Button 
+              type="button" 
+              variant="outline" 
+              size="sm"
+              onClick={() => setShowAddProductDialog(true)}
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Agregar Producto
+            </Button>
+          </div>
+          
+          {formData.additionalProducts.length > 0 && (
+            <div className="space-y-2 mb-4">
+              {formData.additionalProducts.map((product, index) => (
+                <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex-1">
+                    <p className="font-medium">{product.name}</p>
+                    <p className="text-sm text-gray-500">
+                      {formatPrice(product.price)} × {product.quantity} = {formatPrice(product.price * product.quantity)}
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setFormData(prev => ({
+                        ...prev,
+                        additionalProducts: prev.additionalProducts.filter((_, i) => i !== index)
+                      }))
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Add Product Dialog */}
+          <Dialog open={showAddProductDialog} onOpenChange={setShowAddProductDialog}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Agregar Producto</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="productName">Nombre del Producto</Label>
+                  <Input
+                    id="productName"
+                    value={newProduct.name}
+                    onChange={e => setNewProduct(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="Ej: Candado, Etiquetas, etc."
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="productPrice">Precio</Label>
+                    <Input
+                      id="productPrice"
+                      type="number"
+                      min="0"
+                      value={newProduct.price}
+                      onChange={e => setNewProduct(prev => ({ ...prev, price: parseInt(e.target.value) || 0 }))}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="productQuantity">Cantidad</Label>
+                    <Input
+                      id="productQuantity"
+                      type="number"
+                      min="1"
+                      value={newProduct.quantity}
+                      onChange={e => setNewProduct(prev => ({ ...prev, quantity: parseInt(e.target.value) || 1 }))}
+                    />
+                  </div>
+                </div>
+                <Button 
+                  onClick={() => {
+                    if (newProduct.name && newProduct.price > 0) {
+                      setFormData(prev => ({
+                        ...prev,
+                        additionalProducts: [...prev.additionalProducts, newProduct]
+                      }))
+                      setNewProduct({ name: '', price: 0, quantity: 1 })
+                      setShowAddProductDialog(false)
+                    }
+                  }}
+                  className="w-full"
+                >
+                  Agregar Producto
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        {/* Descuento */}
+        <div>
+          <Label htmlFor="discount">Descuento (%)</Label>
+          <Input
+            id="discount"
+            type="number"
+            min="0"
+            max="100"
+            value={formData.discount}
+            onChange={e => setFormData(prev => ({ ...prev, discount: parseInt(e.target.value) || 0 }))}
+          />
+        </div>
+
+        {/* Pricing Section */}
         <div className="space-y-3">
           <div className="flex items-center space-x-2">
             <Checkbox
@@ -598,11 +722,24 @@ export default function CustomersPageNew() {
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <p><strong>Período:</strong> {rentalDays} días</p>
-                <p><strong>Precio:</strong> {formatPrice(formData.manualPrice ? formData.customPrice : calculatedPrice)}</p>
+                <p><strong>Precio base:</strong> {formatPrice(formData.manualPrice ? formData.customPrice : calculatedPrice)}</p>
+                {formData.discount > 0 && (
+                  <p><strong>Descuento:</strong> -{formData.discount}%</p>
+                )}
               </div>
               <div>
+                <p><strong>Productos adicionales:</strong> {formatPrice(formData.additionalProducts.reduce((sum, p) => sum + (p.price * p.quantity), 0))}</p>
                 <p><strong>Garantía:</strong> {formatPrice(formData.totalBoxes * 2000)}</p>
-                <p><strong>Total:</strong> {formatPrice((formData.manualPrice ? formData.customPrice : calculatedPrice) + (formData.totalBoxes * 2000))}</p>
+                {(() => {
+                  const basePrice = formData.manualPrice ? formData.customPrice : calculatedPrice
+                  const discountAmount = (basePrice * formData.discount) / 100
+                  const finalPrice = basePrice - discountAmount
+                  const additionalTotal = formData.additionalProducts.reduce((sum, p) => sum + (p.price * p.quantity), 0)
+                  const guaranteeTotal = formData.totalBoxes * 2000
+                  return (
+                    <p className="font-bold"><strong>Total:</strong> {formatPrice(finalPrice + additionalTotal + guaranteeTotal)}</p>
+                  )
+                })()}
               </div>
             </div>
           </div>
@@ -635,8 +772,8 @@ export default function CustomersPageNew() {
     <div className="min-h-screen bg-gray-50">
       <Header />
       <div className="flex">
-        <Sidebar />
-        <MobileNav />
+        <Sidebar role="admin" />
+        <MobileNav role="admin" />
         <main className="flex-1 p-6">
           <div className="space-y-6">
             {/* Header */}
