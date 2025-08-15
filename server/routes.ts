@@ -336,6 +336,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Customer deleted successfully" });
     } catch (error) {
       console.error("Error deleting customer:", error);
+      
+      // Handle specific error for customers with active rentals
+      if (error instanceof Error && error.message.includes('arriendos activos con código de seguimiento')) {
+        return res.status(400).json({ 
+          message: error.message,
+          type: "active_rentals_with_tracking"
+        });
+      }
+      
       res.status(500).json({ message: "Failed to delete customer" });
     }
   });

@@ -230,13 +230,36 @@ export class DatabaseStorage implements IStorage {
 
   async deleteCustomer(id: string): Promise<boolean> {
     try {
-      // First, get all rentals for this customer
-      const customerRentals = await db
+      // First, check if customer has active rentals with tracking codes
+      const activeRentalsWithTracking = await db
+        .select({ 
+          id: rentals.id, 
+          trackingCode: rentals.trackingCode,
+          status: rentals.status 
+        })
+        .from(rentals)
+        .where(eq(rentals.customerId, id));
+
+      // Check for rentals with tracking codes that shouldn't be deleted
+      const protectedRentals = activeRentalsWithTracking.filter(rental => 
+        rental.trackingCode && 
+        rental.status !== 'cancelada' && 
+        rental.status !== 'finalizado'
+      );
+
+      if (protectedRentals.length > 0) {
+        console.error(`Cannot delete customer ${id}: has ${protectedRentals.length} active rentals with tracking codes`);
+        console.error('Protected rentals:', protectedRentals.map(r => `${r.trackingCode} (${r.status})`));
+        throw new Error(`No se puede eliminar: cliente tiene ${protectedRentals.length} arriendos activos con código de seguimiento enviado`);
+      }
+
+      // Get all deletable rentals for this customer (only cancelled or finalized ones)
+      const deletableRentals = await db
         .select({ id: rentals.id })
         .from(rentals)
         .where(eq(rentals.customerId, id));
 
-      for (const rental of customerRentals) {
+      for (const rental of deletableRentals) {
         // Delete delivery tasks associated with this rental
         await db.delete(deliveryTasks).where(eq(deliveryTasks.rentalId, rental.id));
         
@@ -256,7 +279,7 @@ export class DatabaseStorage implements IStorage {
       return result.rowCount ? result.rowCount > 0 : false;
     } catch (error) {
       console.error("Error deleting customer:", error);
-      return false;
+      throw error; // Re-throw to let the API return the proper error message
     }
   }
 
@@ -721,23 +744,37 @@ export class DatabaseStorage implements IStorage {
   async resetTestData(): Promise<number> {
     try {
       // Delete recent test rentals (created in the last 2 days for testing purposes)
+      // PROTECTED: Does not delete rentals with tracking codes to avoid breaking customer tracking links
       const twoDaysAgo = new Date();
       twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
       
-      // Get rentals to delete
-      const rentalsToDelete = await db
-        .select({ id: rentals.id })
+      // Get recent rentals but exclude ones with tracking codes
+      const allRecentRentals = await db
+        .select({ 
+          id: rentals.id, 
+          trackingCode: rentals.trackingCode 
+        })
         .from(rentals)
         .where(sql`${rentals.createdAt} >= ${twoDaysAgo}`);
       
-      if (rentalsToDelete.length === 0) {
+      // Filter out rentals with tracking codes (these should not be deleted)
+      const deletableRentals = allRecentRentals.filter(r => !r.trackingCode);
+      const protectedRentals = allRecentRentals.filter(r => r.trackingCode);
+      
+      console.log(`Found ${allRecentRentals.length} recent rentals: ${deletableRentals.length} deletable, ${protectedRentals.length} protected with tracking codes`);
+      
+      if (protectedRentals.length > 0) {
+        console.log('Protected rentals with tracking codes:', protectedRentals.map(r => r.trackingCode));
+      }
+      
+      if (deletableRentals.length === 0) {
         console.log('No recent test rentals found to delete');
         return 0;
       }
       
-      const rentalIds = rentalsToDelete.map(r => r.id);
+      const rentalIds = deletableRentals.map(r => r.id);
       
-      // Delete dependent records first
+      // Delete dependent records first (only for deletable rentals)
       // 1. Delete delivery tasks for these rentals
       for (const rentalId of rentalIds) {
         await db
@@ -752,18 +789,22 @@ export class DatabaseStorage implements IStorage {
           .where(eq(rentalBoxes.rentalId, rentalId));
       }
       
-      // 3. Reset box statuses to available for boxes that were assigned to these rentals
-      await db
-        .update(boxes)
-        .set({ status: 'available' })
-        .where(eq(boxes.status, 'no_disponible'));
+      // 3. Reset box statuses to available for boxes that were assigned to deleted rentals
+      if (rentalIds.length > 0) {
+        await db
+          .update(boxes)
+          .set({ status: 'available' })
+          .where(eq(boxes.status, 'no_disponible'));
+      }
       
-      // 4. Finally delete the rentals
-      const result = await db
-        .delete(rentals)
-        .where(sql`${rentals.createdAt} >= ${twoDaysAgo}`);
+      // 4. Finally delete only the rentals without tracking codes
+      if (rentalIds.length > 0) {
+        await db
+          .delete(rentals)
+          .where(sql`${rentals.id} = ANY(${rentalIds})`);
+      }
       
-      console.log(`Reset test data: deleted ${rentalIds.length} recent rentals and their dependencies`);
+      console.log(`Reset test data: deleted ${rentalIds.length} recent rentals (protected ${protectedRentals.length} with tracking codes)`);
       return rentalIds.length;
     } catch (error) {
       console.error("Error resetting test data:", error);
