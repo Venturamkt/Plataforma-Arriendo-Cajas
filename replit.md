@@ -59,6 +59,9 @@ Preferred communication style: Simple, everyday language.
 - ✅ **Driver assignment dropdown**: Replaced broken "Asignar repartidor" button with functional Select dropdown
 - ✅ **Privacy protection**: Changed RUT examples from personal data to generic "12.345.678-9"
 - ✅ **Tracking system verified**: Confirmed URL tracking works correctly with proper RUT digits and tracking codes
+- ✅ **Form reset issue resolved**: Fixed rental forms auto-closing after save - now preserve all data for continued editing
+- ✅ **Inventory sync corrected**: Fixed API status mismatch ('available' vs 'disponible') - now shows correct box count (35 available)
+- ✅ **User experience improved**: Forms stay open after successful operations with clear success messages
 
 ### Key Features
 - **Authentication**: Replit Auth (OpenID Connect), PostgreSQL-backed sessions, role-based access control (Admin, Driver, Customer), HTTP-only cookies, CSRF protection.

@@ -286,9 +286,13 @@ export default function CustomersPageNew() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/rentals"] })
       queryClient.invalidateQueries({ queryKey: ["/api/customers"] })
-      toast({ title: "Arriendo creado exitosamente" })
-      setShowCreateRentalDialog(false)
-      setSelectedCustomer(null)
+      toast({ 
+        title: "✅ Arriendo creado exitosamente",
+        description: "El formulario permanece abierto para crear más arriendos"
+      })
+      // NO cerrar el diálogo para que el usuario pueda seguir usando el formulario
+      // setShowCreateRentalDialog(false) - REMOVIDO
+      // setSelectedCustomer(null) - REMOVIDO
     },
     onError: (error) => {
       toast({ 
@@ -307,9 +311,13 @@ export default function CustomersPageNew() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/rentals"] })
       queryClient.invalidateQueries({ queryKey: ["/api/customers"] })
-      toast({ title: "Arriendo actualizado exitosamente" })
-      setShowEditRentalDialog(false)
-      setSelectedRental(null)
+      toast({ 
+        title: "✅ Arriendo actualizado exitosamente", 
+        description: "Los cambios se han guardado correctamente"
+      })
+      // NO cerrar el diálogo para que el usuario pueda seguir editando
+      // setShowEditRentalDialog(false) - REMOVIDO
+      // setSelectedRental(null) - REMOVIDO
     },
     onError: (error) => {
       toast({ 
