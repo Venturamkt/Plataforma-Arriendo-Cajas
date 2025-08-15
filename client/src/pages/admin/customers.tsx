@@ -179,11 +179,19 @@ export default function Customers() {
   })
 
   const { data: customers = [], isLoading: customersLoading } = useQuery<Customer[]>({
-    queryKey: ["/api/customers"]
+    queryKey: ["/api/customers"],
+    refetchInterval: 3000, // Auto-refresh every 3 seconds  
+    refetchIntervalInBackground: true,
+    staleTime: 0, // Always consider data stale
+    cacheTime: 1000 // Keep cache for only 1 second
   })
 
   const { data: rentals = [] } = useQuery<Rental[]>({
-    queryKey: ["/api/rentals"]
+    queryKey: ["/api/rentals"],
+    refetchInterval: 3000, // Auto-refresh every 3 seconds
+    refetchIntervalInBackground: true,
+    staleTime: 0, // Always consider data stale
+    cacheTime: 1000 // Keep cache for only 1 second
   })
 
   const { data: drivers = [] } = useQuery({
@@ -318,7 +326,12 @@ export default function Customers() {
       return res.json()
     },
     onSuccess: () => {
+      // Force complete cache refresh for both environments
       queryClient.invalidateQueries({ queryKey: ["/api/rentals"] })
+      queryClient.invalidateQueries({ queryKey: ["/api/customers"] })
+      queryClient.refetchQueries({ queryKey: ["/api/rentals"] })
+      queryClient.refetchQueries({ queryKey: ["/api/customers"] })
+      
       toast({
         title: "Arriendo actualizado",
         description: "El arriendo ha sido actualizado exitosamente"
