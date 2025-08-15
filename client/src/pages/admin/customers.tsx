@@ -179,19 +179,11 @@ export default function Customers() {
   })
 
   const { data: customers = [], isLoading: customersLoading } = useQuery<Customer[]>({
-    queryKey: ["/api/customers"],
-    refetchInterval: 3000, // Auto-refresh every 3 seconds  
-    refetchIntervalInBackground: true,
-    staleTime: 0, // Always consider data stale
-    cacheTime: 1000 // Keep cache for only 1 second
+    queryKey: ["/api/customers"]
   })
 
   const { data: rentals = [] } = useQuery<Rental[]>({
-    queryKey: ["/api/rentals"],
-    refetchInterval: 3000, // Auto-refresh every 3 seconds
-    refetchIntervalInBackground: true,
-    staleTime: 0, // Always consider data stale
-    cacheTime: 1000 // Keep cache for only 1 second
+    queryKey: ["/api/rentals"]
   })
 
   const { data: drivers = [] } = useQuery({
@@ -325,12 +317,18 @@ export default function Customers() {
       const res = await apiRequest("PUT", `/api/rentals/${id}`, data)
       return res.json()
     },
-    onSuccess: () => {
-      // Force complete cache refresh for both environments
-      queryClient.invalidateQueries({ queryKey: ["/api/rentals"] })
-      queryClient.invalidateQueries({ queryKey: ["/api/customers"] })
-      queryClient.refetchQueries({ queryKey: ["/api/rentals"] })
-      queryClient.refetchQueries({ queryKey: ["/api/customers"] })
+    onSuccess: async () => {
+      // Force immediate refresh with cache removal
+      queryClient.removeQueries({ queryKey: ["/api/rentals"] })
+      queryClient.removeQueries({ queryKey: ["/api/customers"] })
+      await queryClient.refetchQueries({ queryKey: ["/api/rentals"] })
+      await queryClient.refetchQueries({ queryKey: ["/api/customers"] })
+      
+      // Add small delay to ensure update is visible
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["/api/rentals"] })
+        queryClient.invalidateQueries({ queryKey: ["/api/customers"] })
+      }, 500)
       
       toast({
         title: "Arriendo actualizado",
