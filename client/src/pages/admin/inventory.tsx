@@ -187,7 +187,8 @@ export default function AdminInventory() {
       data: {
         barcode: editingBox.barcode,
         size: sizeMapping[currentDisplaySize as keyof typeof sizeMapping] as "small" | "medium" | "large",
-        condition: conditionMapping[currentDisplayCondition as keyof typeof conditionMapping] as "excellent" | "good" | "fair" | "needs_repair"
+        condition: conditionMapping[currentDisplayCondition as keyof typeof conditionMapping] as "excellent" | "good" | "fair" | "needs_repair",
+        status: editingBox.status
       }
     });
   };
@@ -308,7 +309,7 @@ export default function AdminInventory() {
                       <SelectContent>
                         <SelectItem value="all">Todos los estados</SelectItem>
                         <SelectItem value="available">🟢 Disponible</SelectItem>
-                        <SelectItem value="rented">🔵 Arrendadas</SelectItem>
+                        <SelectItem value="no_disponible">🔵 No Disponible</SelectItem>
                         <SelectItem value="maintenance">🟡 Mantenimiento</SelectItem>
                         <SelectItem value="damaged">🔴 Con Problemas</SelectItem>
                       </SelectContent>
@@ -742,6 +743,26 @@ export default function AdminInventory() {
                     <SelectItem value="nuevo">Nuevo</SelectItem>
                     <SelectItem value="usado">Usado</SelectItem>
                     <SelectItem value="dañado">Dañado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-status">Estado</Label>
+                <Select 
+                  value={editingBox.status} 
+                  onValueChange={(value) => {
+                    setEditingBox({ ...editingBox, status: value as any });
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="available">Disponible</SelectItem>
+                    <SelectItem value="no_disponible">No Disponible</SelectItem>
+                    <SelectItem value="maintenance">Mantenimiento</SelectItem>
+                    <SelectItem value="damaged">Con Problemas</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

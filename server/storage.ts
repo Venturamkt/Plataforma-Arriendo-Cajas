@@ -723,12 +723,43 @@ export class DatabaseStorage implements IStorage {
       const twoDaysAgo = new Date();
       twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
       
-      const result = await db
-        .delete(rentals)
+      // Get rentals to delete
+      const rentalsToDelete = await db
+        .select({ id: rentals.id })
+        .from(rentals)
         .where(sql`${rentals.createdAt} >= ${twoDaysAgo}`);
       
-      console.log(`Reset test data: deleted ${result.rowCount || 0} recent rentals`);
-      return result.rowCount || 0;
+      if (rentalsToDelete.length === 0) {
+        console.log('No recent test rentals found to delete');
+        return 0;
+      }
+      
+      const rentalIds = rentalsToDelete.map(r => r.id);
+      
+      // Delete dependent records first
+      // 1. Delete delivery tasks for these rentals
+      await db
+        .delete(deliveryTasks)
+        .where(sql`${deliveryTasks.rentalId} = ANY(${sql.placeholder('rentalIds', rentalIds)})`);
+      
+      // 2. Delete rental boxes
+      await db
+        .delete(rentalBoxes)
+        .where(sql`${rentalBoxes.rentalId} = ANY(${sql.placeholder('rentalIds', rentalIds)})`);
+      
+      // 3. Reset box statuses to available for boxes that were assigned to these rentals
+      await db
+        .update(boxes)
+        .set({ status: 'available' })
+        .where(sql`${boxes.status} = 'no_disponible'`);
+      
+      // 4. Finally delete the rentals
+      const result = await db
+        .delete(rentals)
+        .where(sql`${rentals.id} = ANY(${sql.placeholder('rentalIds', rentalIds)})`);
+      
+      console.log(`Reset test data: deleted ${rentalIds.length} recent rentals and their dependencies`);
+      return rentalIds.length;
     } catch (error) {
       console.error("Error resetting test data:", error);
       return 0;

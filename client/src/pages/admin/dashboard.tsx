@@ -245,12 +245,22 @@ export default function AdminDashboard() {
                 onClick={async () => {
                   try {
                     const response = await fetch('/api/rentals/reset-test-data', { method: 'DELETE' });
+                    const data = await response.json();
+                    
                     if (response.ok) {
                       toast({
                         title: "Datos reseteados",
-                        description: "Los datos de prueba han sido eliminados exitosamente",
+                        description: `Se eliminaron ${data.deletedCount} registros de prueba exitosamente`,
                       });
                       refetch();
+                      // Also refresh other data
+                      window.location.reload();
+                    } else {
+                      toast({
+                        title: "Error",
+                        description: data.message || "No se pudieron resetear los datos",
+                        variant: "destructive",
+                      });
                     }
                   } catch (error) {
                     toast({
@@ -284,7 +294,7 @@ export default function AdminDashboard() {
             />
             
             <MetricCard
-              title="Ingresos del Mes"
+              title="Ingresos del Período"
               value={formatCurrency(metrics.monthlyRevenue)}
               icon={DollarSign}
               iconColor="bg-green-100"
