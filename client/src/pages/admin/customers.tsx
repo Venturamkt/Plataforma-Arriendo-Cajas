@@ -153,6 +153,10 @@ export default function Customers() {
   
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null)
   const [selectedRental, setSelectedRental] = useState<any>(null)
+  const [showCustomerDetails, setShowCustomerDetails] = useState(false)
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
+  const [showDriverEditDialog, setShowDriverEditDialog] = useState(false)
+  const [editingDriverRental, setEditingDriverRental] = useState<any>(null)
   
   const [newRental, setNewRental] = useState<NewRental>({
     boxQuantity: 2,
@@ -279,6 +283,29 @@ export default function Customers() {
       toast({
         title: "Error",
         description: error.message || "No se pudo crear el arriendo",
+        variant: "destructive"
+      })
+    }
+  })
+
+  const updateDriverMutation = useMutation({
+    mutationFn: async ({ rentalId, driverId }: { rentalId: string, driverId: string }) => {
+      const res = await apiRequest("PATCH", `/api/rentals/${rentalId}`, { driverId })
+      return res.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/rentals"] })
+      toast({
+        title: "Repartidor actualizado",
+        description: "El repartidor ha sido asignado exitosamente"
+      })
+      setShowDriverEditDialog(false)
+      setEditingDriverRental(null)
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo actualizar el repartidor",
         variant: "destructive"
       })
     }
@@ -608,7 +635,15 @@ export default function Customers() {
                                     {initials}
                                   </AvatarFallback>
                                 </Avatar>
-                                <span className="font-medium">{customer.name}</span>
+                                <button 
+                                  className="font-medium text-blue-600 hover:text-blue-800 cursor-pointer"
+                                  onClick={() => {
+                                    setSelectedCustomer(customer)
+                                    setShowCustomerDetails(true)
+                                  }}
+                                >
+                                  {customer.name}
+                                </button>
                               </div>
                             </TableCell>
                             <TableCell>
@@ -645,9 +680,28 @@ export default function Customers() {
                                   {rentalInfo.driverEmail && (
                                     <div className="text-xs text-gray-500">{rentalInfo.driverEmail}</div>
                                   )}
+                                  <button
+                                    className="text-xs text-blue-600 hover:text-blue-800"
+                                    onClick={() => {
+                                      const rental = getCustomerRental(customer.id)
+                                      setEditingDriverRental(rental)
+                                      setShowDriverEditDialog(true)
+                                    }}
+                                  >
+                                    Cambiar repartidor
+                                  </button>
                                 </div>
                               ) : (
-                                <span className="text-sm text-gray-400">Sin asignar</span>
+                                <button
+                                  className="text-sm text-blue-600 hover:text-blue-800"
+                                  onClick={() => {
+                                    const rental = getCustomerRental(customer.id)
+                                    setEditingDriverRental(rental)
+                                    setShowDriverEditDialog(true)
+                                  }}
+                                >
+                                  Asignar repartidor
+                                </button>
                               )}
                             </TableCell>
                             <TableCell className="text-center">
@@ -1591,6 +1645,153 @@ export default function Customers() {
               )}
             </DialogContent>
           </Dialog>
+
+          {/* Customer Details Dialog */}
+          {selectedCustomer && (
+            <Dialog open={showCustomerDetails} onOpenChange={setShowCustomerDetails}>
+              <DialogContent className="max-w-4xl">
+                <DialogHeader>
+                  <DialogTitle>Detalles del Cliente</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-6">
+                  {/* Customer Info */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-sm font-medium">Nombre</Label>
+                      <p className="text-lg">{selectedCustomer.name}</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium">RUT</Label>
+                      <p className="text-lg">{selectedCustomer.rut}</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium">Email</Label>
+                      <p className="text-lg">{selectedCustomer.email}</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium">Teléfono</Label>
+                      <p className="text-lg">{selectedCustomer.phone || 'No especificado'}</p>
+                    </div>
+                  </div>
+
+                  {/* Active Rental Info */}
+                  {(() => {
+                    const rental = getCustomerRental(selectedCustomer.id)
+                    if (!rental) return <p className="text-gray-500">No tiene arriendos activos</p>
+                    
+                    return (
+                      <div>
+                        <h3 className="text-lg font-semibold mb-3">Arriendo Activo</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+                          <div>
+                            <Label>Estado</Label>
+                            <p className="font-medium">{rental.status}</p>
+                          </div>
+                          <div>
+                            <Label>Cajas</Label>
+                            <p className="font-medium">{rental.totalBoxes}</p>
+                          </div>
+                          <div>
+                            <Label>Código de Seguimiento</Label>
+                            <p className="font-medium font-mono">{rental.trackingCode}</p>
+                          </div>
+                          <div>
+                            <Label>Repartidor</Label>
+                            <p className="font-medium">{rental.driverName || 'Sin asignar'}</p>
+                          </div>
+                          <div>
+                            <Label>Dirección de Entrega</Label>
+                            <p className="font-medium">{rental.deliveryAddress}</p>
+                          </div>
+                          <div>
+                            <Label>Total</Label>
+                            <p className="font-medium">${rental.totalAmount}</p>
+                          </div>
+                        </div>
+                        
+                        {/* Box Codes */}
+                        {rental.boxCodes && rental.boxCodes.length > 0 && (
+                          <div className="mt-4">
+                            <Label>Códigos de Cajas</Label>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2">
+                              {rental.boxCodes.map((code: string, index: number) => (
+                                <div key={index} className="bg-gray-100 p-2 rounded text-center font-mono text-sm">
+                                  {code}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Master Code */}
+                        {rental.masterCode && (
+                          <div className="mt-4">
+                            <Label>Código Maestro</Label>
+                            <div className="bg-blue-100 p-3 rounded text-center font-mono text-lg font-bold">
+                              {rental.masterCode}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })()}
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
+
+          {/* Driver Edit Dialog */}
+          {editingDriverRental && (
+            <Dialog open={showDriverEditDialog} onOpenChange={setShowDriverEditDialog}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Asignar Repartidor</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label>Repartidor Actual</Label>
+                    <p className="text-sm text-gray-600">
+                      {editingDriverRental.driverName || 'Sin asignar'}
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="driver-select">Nuevo Repartidor</Label>
+                    <Select onValueChange={(driverId) => {
+                      updateDriverMutation.mutate({
+                        rentalId: editingDriverRental.id,
+                        driverId
+                      })
+                    }}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccionar repartidor..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {drivers.map((driver: any) => (
+                          <SelectItem key={driver.id} value={driver.id}>
+                            {driver.name} - {driver.email}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="flex gap-2 pt-4">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setShowDriverEditDialog(false)
+                        setEditingDriverRental(null)
+                      }}
+                      className="flex-1"
+                    >
+                      Cancelar
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
         </main>
       </div>
     </div>
