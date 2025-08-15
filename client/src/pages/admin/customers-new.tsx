@@ -451,6 +451,29 @@ export default function CustomersPageNew() {
     const [showAddProductDialog, setShowAddProductDialog] = useState(false)
     const [newProduct, setNewProduct] = useState({ name: '', price: 0, quantity: 1 })
 
+    // Función para calcular cajas disponibles
+    const getAvailableBoxes = () => {
+      if (!formData.deliveryDate || !formData.returnDate) return 'Selecciona fechas'
+      
+      const deliveryDate = new Date(formData.deliveryDate)
+      const returnDate = new Date(formData.returnDate)
+      
+      // Por simplicidad, calculamos cajas disponibles básicamente
+      const totalBoxes = 100 // Total de cajas en inventario
+      const rentalsInPeriod = rentals.filter(r => {
+        if (r.status === 'cancelada' || r.status === 'completada') return false
+        
+        const rDelivery = new Date(r.deliveryDate)
+        const rReturn = r.returnDate ? new Date(r.returnDate) : new Date(rDelivery.getTime() + (r.rentalDays * 24 * 60 * 60 * 1000))
+        
+        // Verificar si hay solapamiento de fechas
+        return (deliveryDate <= rReturn && returnDate >= rDelivery)
+      })
+      
+      const boxesInUse = rentalsInPeriod.reduce((sum, r) => sum + r.totalBoxes, 0)
+      return totalBoxes - boxesInUse
+    }
+
     useEffect(() => {
       if (formData.deliveryDate && formData.returnDate) {
         const delivery = new Date(formData.deliveryDate)
@@ -496,13 +519,22 @@ export default function CustomersPageNew() {
             <Label htmlFor="totalBoxes">Cantidad de Cajas</Label>
             <Input
               id="totalBoxes"
-              type="number"
-              min="1"
-              max="50"
-              value={formData.totalBoxes}
-              onChange={e => setFormData(prev => ({ ...prev, totalBoxes: parseInt(e.target.value) }))}
+              type="text"
+              value={formData.totalBoxes.toString()}
+              onChange={e => {
+                const value = e.target.value.replace(/[^0-9]/g, '')
+                const numValue = parseInt(value) || 1
+                setFormData(prev => ({ ...prev, totalBoxes: numValue }))
+              }}
+              placeholder="5"
               required
             />
+            <p className="text-xs text-gray-500 mt-1">
+              Cajas disponibles: {getAvailableBoxes()} 
+              {formData.deliveryDate && formData.returnDate && (
+                ` (del ${formData.deliveryDate} al ${formData.returnDate})`
+              )}
+            </p>
           </div>
           <div>
             <Label htmlFor="status">Estado</Label>
@@ -638,10 +670,13 @@ export default function CustomersPageNew() {
                     <Label htmlFor="productPrice">Precio</Label>
                     <Input
                       id="productPrice"
-                      type="number"
-                      min="0"
-                      value={newProduct.price}
-                      onChange={e => setNewProduct(prev => ({ ...prev, price: parseInt(e.target.value) || 0 }))}
+                      type="text"
+                      value={newProduct.price.toString()}
+                      onChange={e => {
+                        const value = e.target.value.replace(/[^0-9]/g, '')
+                        setNewProduct(prev => ({ ...prev, price: parseInt(value) || 0 }))
+                      }}
+                      placeholder="20000"
                     />
                   </div>
                   <div>
@@ -680,11 +715,15 @@ export default function CustomersPageNew() {
           <Label htmlFor="discount">Descuento (%)</Label>
           <Input
             id="discount"
-            type="number"
-            min="0"
-            max="100"
-            value={formData.discount}
-            onChange={e => setFormData(prev => ({ ...prev, discount: parseInt(e.target.value) || 0 }))}
+            type="text"
+            value={formData.discount.toString()}
+            onChange={e => {
+              const value = e.target.value.replace(/[^0-9]/g, '')
+              const numValue = parseInt(value) || 0
+              const finalValue = numValue > 100 ? 100 : numValue
+              setFormData(prev => ({ ...prev, discount: finalValue }))
+            }}
+            placeholder="10"
           />
         </div>
 
@@ -710,10 +749,13 @@ export default function CustomersPageNew() {
               <Label htmlFor="customPrice">Precio Personalizado</Label>
               <Input
                 id="customPrice"
-                type="number"
-                min="0"
-                value={formData.customPrice}
-                onChange={e => setFormData(prev => ({ ...prev, customPrice: parseInt(e.target.value) || 0 }))}
+                type="text"
+                value={formData.customPrice.toString()}
+                onChange={e => {
+                  const value = e.target.value.replace(/[^0-9]/g, '')
+                  setFormData(prev => ({ ...prev, customPrice: parseInt(value) || 0 }))
+                }}
+                placeholder="25000"
               />
             </div>
           )}
