@@ -451,6 +451,37 @@ export default function CustomersPageNew() {
     const [showAddProductDialog, setShowAddProductDialog] = useState(false)
     const [newProduct, setNewProduct] = useState({ name: '', price: 0, quantity: 1 })
 
+    // Productos predefinidos
+    const predefinedProducts = [
+      { name: 'Carrito plegable', price: 15000 },
+      { name: 'Base móvil', price: 8000 },
+      { name: 'Kit 2 bases móviles', price: 15000 },
+      { name: 'Correa Ratchet', price: 3000 },
+    ]
+
+    // Shortcuts comunes
+    const commonShortcuts = [
+      { boxes: 5, days: 7, label: '5 cajas × 7 días' },
+      { boxes: 10, days: 7, label: '10 cajas × 7 días' },
+      { boxes: 15, days: 7, label: '15 cajas × 7 días' },
+      { boxes: 15, days: 14, label: '15 cajas × 14 días' },
+    ]
+
+    // Función para aplicar shortcut
+    const applyShortcut = (boxes: number, days: number) => {
+      const today = new Date()
+      const deliveryDate = new Date(today)
+      const returnDate = new Date(today)
+      returnDate.setDate(today.getDate() + days)
+      
+      setFormData(prev => ({
+        ...prev,
+        totalBoxes: boxes,
+        deliveryDate: deliveryDate.toISOString().split('T')[0],
+        returnDate: returnDate.toISOString().split('T')[0]
+      }))
+    }
+
     // Función para calcular cajas disponibles
     const getAvailableBoxes = () => {
       if (!formData.deliveryDate || !formData.returnDate) return 'Selecciona fechas'
@@ -513,7 +544,26 @@ export default function CustomersPageNew() {
     }
 
     return (
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Shortcuts Rápidos */}
+        <div className="bg-blue-50 p-4 rounded-lg border">
+          <Label className="text-sm font-medium text-gray-700 mb-3 block">Configuraciones Rápidas</Label>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            {commonShortcuts.map((shortcut, index) => (
+              <Button
+                key={index}
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => applyShortcut(shortcut.boxes, shortcut.days)}
+                className="text-xs hover:bg-blue-100 border-blue-200"
+              >
+                {shortcut.label}
+              </Button>
+            ))}
+          </div>
+        </div>
+
         <div className="grid grid-cols-2 gap-4">
           <div>
             <Label htmlFor="totalBoxes">Cantidad de Cajas</Label>
@@ -607,9 +657,9 @@ export default function CustomersPageNew() {
         </div>
 
         {/* Productos Adicionales */}
-        <div>
-          <div className="flex justify-between items-center mb-2">
-            <Label>Productos Adicionales</Label>
+        <div className="bg-gray-50 p-4 rounded-lg border">
+          <div className="flex justify-between items-center mb-4">
+            <Label className="text-base font-semibold">Productos Adicionales</Label>
             <Button 
               type="button" 
               variant="outline" 
@@ -619,6 +669,31 @@ export default function CustomersPageNew() {
               <Plus className="h-4 w-4 mr-1" />
               Agregar Producto
             </Button>
+          </div>
+
+          {/* Productos Predefinidos */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
+            {predefinedProducts.map((product, index) => (
+              <Button
+                key={index}
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  const exists = formData.additionalProducts.find(p => p.name === product.name)
+                  if (!exists) {
+                    setFormData(prev => ({
+                      ...prev,
+                      additionalProducts: [...prev.additionalProducts, { ...product, quantity: 1 }]
+                    }))
+                  }
+                }}
+                className="text-xs bg-white hover:bg-blue-50 border text-left p-2 h-auto flex flex-col items-start"
+              >
+                <span className="font-medium">{product.name}</span>
+                <span className="text-gray-500">{formatPrice(product.price)}</span>
+              </Button>
+            ))}
           </div>
           
           {formData.additionalProducts.length > 0 && (
@@ -728,50 +803,70 @@ export default function CustomersPageNew() {
         </div>
 
         {/* Pricing Section */}
-        <div className="space-y-3">
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="manualPrice"
-              checked={formData.manualPrice}
-              onCheckedChange={(checked) => {
-                setFormData(prev => ({ 
-                  ...prev, 
-                  manualPrice: checked as boolean,
-                  customPrice: checked ? prev.customPrice : calculatedPrice
-                }))
-              }}
-            />
-            <Label htmlFor="manualPrice">Precio manual</Label>
+        <div className="bg-green-50 p-6 rounded-lg border border-green-200">
+          <Label className="text-lg font-semibold text-green-800 mb-4 block">Configuración de Precios</Label>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="manualPrice"
+                checked={formData.manualPrice}
+                onCheckedChange={(checked) => {
+                  setFormData(prev => ({ 
+                    ...prev, 
+                    manualPrice: checked as boolean,
+                    customPrice: checked ? prev.customPrice : calculatedPrice
+                  }))
+                }}
+              />
+              <Label htmlFor="manualPrice" className="font-medium">Precio manual</Label>
+            </div>
+
+            {formData.manualPrice && (
+              <div>
+                <Label htmlFor="customPrice" className="text-sm font-medium">Precio Personalizado</Label>
+                <Input
+                  id="customPrice"
+                  type="text"
+                  value={formData.customPrice.toString()}
+                  onChange={e => {
+                    const value = e.target.value.replace(/[^0-9]/g, '')
+                    setFormData(prev => ({ ...prev, customPrice: parseInt(value) || 0 }))
+                  }}
+                  placeholder="25000"
+                  className="mt-1"
+                />
+              </div>
+            )}
           </div>
 
-          {formData.manualPrice && (
-            <div>
-              <Label htmlFor="customPrice">Precio Personalizado</Label>
-              <Input
-                id="customPrice"
-                type="text"
-                value={formData.customPrice.toString()}
-                onChange={e => {
-                  const value = e.target.value.replace(/[^0-9]/g, '')
-                  setFormData(prev => ({ ...prev, customPrice: parseInt(value) || 0 }))
-                }}
-                placeholder="25000"
-              />
-            </div>
-          )}
-
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <p><strong>Período:</strong> {rentalDays} días</p>
-                <p><strong>Precio base:</strong> {formatPrice(formData.manualPrice ? formData.customPrice : calculatedPrice)}</p>
+          <div className="bg-white p-4 rounded-lg border shadow-sm">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div className="space-y-2">
+                <p className="flex justify-between">
+                  <span className="font-medium">Período:</span> 
+                  <span>{rentalDays} días</span>
+                </p>
+                <p className="flex justify-between">
+                  <span className="font-medium">Precio base:</span> 
+                  <span>{formatPrice(formData.manualPrice ? formData.customPrice : calculatedPrice)}</span>
+                </p>
                 {formData.discount > 0 && (
-                  <p><strong>Descuento:</strong> -{formData.discount}%</p>
+                  <p className="flex justify-between text-red-600">
+                    <span className="font-medium">Descuento:</span> 
+                    <span>-{formData.discount}%</span>
+                  </p>
                 )}
               </div>
-              <div>
-                <p><strong>Productos adicionales:</strong> {formatPrice(formData.additionalProducts.reduce((sum, p) => sum + (p.price * p.quantity), 0))}</p>
-                <p><strong>Garantía:</strong> {formatPrice(formData.totalBoxes * 2000)}</p>
+              <div className="space-y-2">
+                <p className="flex justify-between">
+                  <span className="font-medium">Productos adicionales:</span> 
+                  <span>{formatPrice(formData.additionalProducts.reduce((sum, p) => sum + (p.price * p.quantity), 0))}</span>
+                </p>
+                <p className="flex justify-between">
+                  <span className="font-medium">Garantía:</span> 
+                  <span>{formatPrice(formData.totalBoxes * 2000)}</span>
+                </p>
                 {(() => {
                   const basePrice = formData.manualPrice ? formData.customPrice : calculatedPrice
                   const discountAmount = (basePrice * formData.discount) / 100
@@ -779,7 +874,10 @@ export default function CustomersPageNew() {
                   const additionalTotal = formData.additionalProducts.reduce((sum, p) => sum + (p.price * p.quantity), 0)
                   const guaranteeTotal = formData.totalBoxes * 2000
                   return (
-                    <p className="font-bold"><strong>Total:</strong> {formatPrice(finalPrice + additionalTotal + guaranteeTotal)}</p>
+                    <p className="flex justify-between text-lg font-bold text-green-700 border-t pt-2">
+                      <span>Total:</span> 
+                      <span>{formatPrice(finalPrice + additionalTotal + guaranteeTotal)}</span>
+                    </p>
                   )
                 })()}
               </div>
@@ -787,8 +885,8 @@ export default function CustomersPageNew() {
           </div>
         </div>
 
-        <Button type="submit" className="w-full" disabled={createRentalMutation.isPending || updateRentalMutation.isPending}>
-          {rental ? 'Actualizar Arriendo' : 'Crear Arriendo'}
+        <Button type="submit" className="w-full py-3 text-lg font-semibold bg-blue-600 hover:bg-blue-700" disabled={createRentalMutation.isPending || updateRentalMutation.isPending}>
+          {createRentalMutation.isPending || updateRentalMutation.isPending ? '⏳ Procesando...' : (rental ? '📝 Actualizar Arriendo' : '🎯 Crear Arriendo')}
         </Button>
       </form>
     )
