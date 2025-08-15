@@ -677,9 +677,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const parsedData = updateRentalSchema.parse(req.body);
       
-      // Convert string dates to Date objects if needed
+      // Convert and normalize data types
       const rentalData = {
         ...parsedData,
+        dailyRate: parsedData.dailyRate ? String(parsedData.dailyRate) : undefined,
+        totalAmount: parsedData.totalAmount ? String(parsedData.totalAmount) : undefined,
+        guaranteeAmount: parsedData.guaranteeAmount ? String(parsedData.guaranteeAmount) : undefined,
+        additionalProductsTotal: parsedData.additionalProductsTotal ? String(parsedData.additionalProductsTotal) : undefined,
         deliveryDate: parsedData.deliveryDate ? 
           (typeof parsedData.deliveryDate === 'string' ? new Date(parsedData.deliveryDate) : parsedData.deliveryDate) 
           : undefined,

@@ -243,8 +243,10 @@ export const insertRentalSchema = createInsertSchema(rentals).omit({
 });
 
 export const updateRentalSchema = insertRentalSchema.partial().extend({
-  totalAmount: z.string().optional(),
-  guaranteeAmount: z.string().optional(),
+  totalAmount: z.union([z.string(), z.number()]).optional(),
+  guaranteeAmount: z.union([z.string(), z.number()]).optional(),
+  dailyRate: z.union([z.string(), z.number()]).optional(),
+  additionalProductsTotal: z.union([z.string(), z.number()]).optional(),
   deliveryDate: z.union([z.string(), z.date()]).optional(),
   returnDate: z.union([z.string(), z.date()]).optional(),
   additionalProducts: z.string().optional(),
