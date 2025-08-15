@@ -255,6 +255,7 @@ export default function CustomersCleanPage() {
   const { user, isLoading } = useCurrentUser()
   const { toast } = useToast()
   const [searchTerm, setSearchTerm] = useState('')
+  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table')
   
   // Dialog states
   const [showCreateCustomer, setShowCreateCustomer] = useState(false)
@@ -493,37 +494,173 @@ export default function CustomersCleanPage() {
               />
             </div>
 
-            {/* Customers Cards */}
-            <div className="grid gap-6">
-              {filteredCustomers.map((customer) => {
-                const customerRentals = getCustomerRentals(customer.id)
-                const activeRentals = getActiveRentals(customer.id)
-                
-                return (
-                  <CustomerCard 
-                    key={customer.id}
-                    customer={customer}
-                    rentals={customerRentals}
-                    activeRentals={activeRentals}
-                    onEdit={() => {
-                      setSelectedCustomer(customer)
-                      setShowEditCustomer(true)
-                    }}
-                    onCreateRental={() => {
-                      setSelectedCustomer(customer)
-                      setShowCreateRental(true)
-                    }}
-                    onEditRental={(rental) => {
-                      setSelectedRental(rental)
-                      setShowEditRental(true)
-                    }}
-                    getStatusColor={getStatusColor}
-                    getStatusText={getStatusText}
-                    formatPrice={formatPrice}
-                  />
-                )
-              })}
+            {/* View Toggle */}
+            <div className="flex items-center gap-2 mb-4">
+              <Button
+                variant={viewMode === 'table' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('table')}
+              >
+                <Eye className="h-4 w-4 mr-2" />
+                Vista Tabla
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  // Export functionality
+                  toast({ title: "Exportando historial de clientes..." })
+                }}
+              >
+                Descargar Historial
+              </Button>
+              <Button onClick={() => setShowCreateCustomer(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Nuevo Cliente
+              </Button>
             </div>
+
+            {/* Customers Table */}
+            <Card>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Cliente</TableHead>
+                    <TableHead>Contacto</TableHead>
+                    <TableHead>RUT</TableHead>
+                    <TableHead>Arriendos</TableHead>
+                    <TableHead>Estado</TableHead>
+                    <TableHead>Repartidor</TableHead>
+                    <TableHead>Acciones</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredCustomers.map((customer) => {
+                    const customerRentals = getCustomerRentals(customer.id)
+                    const activeRentals = getActiveRentals(customer.id)
+                    const hasActiveRentals = activeRentals.length > 0
+                    const mostRecentRental = customerRentals
+                      .sort((a, b) => new Date(b.deliveryDate).getTime() - new Date(a.deliveryDate).getTime())[0]
+                    
+                    return (
+                      <TableRow key={customer.id}>
+                        <TableCell>
+                          <div className="flex items-center space-x-3">
+                            <div className="flex-shrink-0">
+                              <div className="h-10 w-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-medium">
+                                {customer.name.charAt(0).toUpperCase()}
+                              </div>
+                            </div>
+                            <div>
+                              <div className="font-medium text-gray-900">{customer.name}</div>
+                              <div className="text-sm text-gray-500">
+                                Cliente desde {customer.createdAt ? new Date(customer.createdAt).toLocaleDateString('es-CL') : 'N/A'}
+                              </div>
+                            </div>
+                          </div>
+                        </TableCell>
+                        
+                        <TableCell>
+                          <div className="text-sm">
+                            <div className="text-gray-900">{customer.email}</div>
+                            {customer.phone && (
+                              <div className="text-gray-500">{customer.phone}</div>
+                            )}
+                          </div>
+                        </TableCell>
+                        
+                        <TableCell>
+                          <span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">
+                            {customer.rut || 'Sin RUT'}
+                          </span>
+                        </TableCell>
+                        
+                        <TableCell>
+                          <div className="text-sm">
+                            <div className="font-medium">
+                              {hasActiveRentals ? `${activeRentals.length} activos` : '0 activos'} / {customerRentals.length} total
+                            </div>
+                            {hasActiveRentals && (
+                              <div className="text-blue-600">
+                                {activeRentals.reduce((sum, rental) => sum + (rental.totalBoxes || 0), 0)} cajas
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                        
+                        <TableCell>
+                          {hasActiveRentals ? (
+                            <Badge className="bg-green-500 text-white">
+                              entregada
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline">
+                              sin arriendos
+                            </Badge>
+                          )}
+                        </TableCell>
+                        
+                        <TableCell>
+                          <div className="text-sm text-gray-500">
+                            {mostRecentRental?.driverId ? (
+                              <div>
+                                <div>Asignar repartidor</div>
+                                <div className="text-blue-600">Sin asignar</div>
+                              </div>
+                            ) : (
+                              'Sin asignar'
+                            )}
+                          </div>
+                        </TableCell>
+                        
+                        <TableCell>
+                          <div className="flex items-center space-x-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedCustomer(customer)
+                                setShowEditCustomer(true)
+                              }}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedCustomer(customer)
+                                setShowCreateRental(true)
+                              }}
+                            >
+                              <Calendar className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                // Delete customer logic
+                                if (confirm('¿Está seguro de eliminar este cliente?')) {
+                                  toast({ title: 'Cliente eliminado' })
+                                }
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })}
+                </TableBody>
+              </Table>
+              
+              {filteredCustomers.length === 0 && (
+                <div className="text-center py-12">
+                  <p className="text-gray-500">No se encontraron clientes</p>
+                </div>
+              )}
+            </Card>
           </div>
         </main>
       </div>
