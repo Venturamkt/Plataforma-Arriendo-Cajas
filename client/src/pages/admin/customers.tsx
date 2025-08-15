@@ -317,25 +317,26 @@ export default function Customers() {
       const res = await apiRequest("PUT", `/api/rentals/${id}`, data)
       return res.json()
     },
-    onSuccess: async () => {
-      // Force immediate refresh with cache removal
-      queryClient.removeQueries({ queryKey: ["/api/rentals"] })
-      queryClient.removeQueries({ queryKey: ["/api/customers"] })
-      await queryClient.refetchQueries({ queryKey: ["/api/rentals"] })
-      await queryClient.refetchQueries({ queryKey: ["/api/customers"] })
+    onSuccess: async (updatedRental) => {
+      // Update cached data immediately
+      queryClient.setQueryData(["/api/rentals"], (oldData: any) => {
+        if (!oldData) return oldData
+        return oldData.map((rental: any) => 
+          rental.id === updatedRental.id ? updatedRental : rental
+        )
+      })
       
-      // Add small delay to ensure update is visible
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ["/api/rentals"] })
-        queryClient.invalidateQueries({ queryKey: ["/api/customers"] })
-      }, 500)
+      // Refresh queries
+      queryClient.invalidateQueries({ queryKey: ["/api/rentals"] })
+      queryClient.invalidateQueries({ queryKey: ["/api/customers"] })
       
       toast({
         title: "Arriendo actualizado",
         description: "El arriendo ha sido actualizado exitosamente"
       })
-      setShowRentalDialog(false)
-      setSelectedRental(null)
+      
+      // DO NOT close dialog or reset data - keep form open for more edits
+      // User can close manually when they're done
     },
     onError: (error: any) => {
       toast({
@@ -440,7 +441,7 @@ export default function Customers() {
         deliveryAddress: rental.deliveryAddress || '',
         pickupAddress: rental.pickupAddress || '',
         notes: rental.notes || '',
-        customPrice: parseFloat(rental.totalAmount) || 2775,
+        customPrice: parseFloat(rental.totalAmount) || 0,
         discount: 0,
         additionalProducts: parsedAdditionalProducts,
         manualPrice: true // Existing rentals have agreed pricing
@@ -453,7 +454,7 @@ export default function Customers() {
         rentalDays: rental.rentalDays || 7,
         originalDailyRate: rental.dailyRate,
         originalTotalAmount: rental.totalAmount,
-        customPrice: rental.dailyRate ? parseInt(rental.dailyRate) : null,
+        customPrice: rental.totalAmount ? parseInt(rental.totalAmount) : null,
         manualPrice: true
       })
       
@@ -1654,7 +1655,7 @@ export default function Customers() {
                         <Input
                           type="number"
                           min="0"
-                          value={selectedRental.customPrice || (selectedRental.originalDailyRate ? parseInt(selectedRental.originalDailyRate) : getPriceByPeriod(selectedRental.boxQuantity, selectedRental.rentalDays))}
+                          value={selectedRental.customPrice || (selectedRental.originalTotalAmount ? parseInt(selectedRental.originalTotalAmount) : getPriceByPeriod(selectedRental.boxQuantity, selectedRental.rentalDays))}
                           onChange={(e) => {
                             const newPrice = parseInt(e.target.value) || 0
                             setSelectedRental({ 
@@ -1862,13 +1863,13 @@ export default function Customers() {
                             data: {
                               status: selectedRental.status,
                               totalBoxes: selectedRental.boxQuantity,
-                              // Only update pricing if manually changed, otherwise preserve original
-                              dailyRate: selectedRental.manualPrice && selectedRental.customPrice ? 
+                              // Preserve pricing - use current values in form or fallback to original
+                              dailyRate: selectedRental.customPrice ? 
                                 selectedRental.customPrice.toString() : 
-                                selectedRental.originalDailyRate,
-                              totalAmount: selectedRental.manualPrice && selectedRental.customPrice ? 
+                                (selectedRental.originalDailyRate || selectedRental.totalAmount),
+                              totalAmount: selectedRental.customPrice ? 
                                 selectedRental.customPrice.toString() : 
-                                selectedRental.originalTotalAmount,
+                                (selectedRental.originalTotalAmount || selectedRental.totalAmount),
                               guaranteeAmount: (selectedRental.boxQuantity * 2000).toString(),
                               additionalProducts: JSON.stringify(selectedRental.additionalProducts || []),
                               additionalProductsTotal: (selectedRental.additionalProducts || []).reduce((sum: number, product: any) => sum + ((product.price || 0) * (product.quantity || 1)), 0).toString(),
