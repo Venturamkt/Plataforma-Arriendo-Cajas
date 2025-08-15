@@ -10,7 +10,7 @@ import AdminLogin from "@/pages/auth/admin-login";
 import DriverLogin from "@/pages/auth/driver-login";
 import AdminDashboard from "@/pages/admin/dashboard";
 import AdminInventory from "@/pages/admin/inventory";
-import AdminCustomers from "@/pages/admin/customers";
+import AdminCustomers from "@/pages/admin/customers-new";
 import AdminDeliveries from "@/pages/admin/deliveries";
 import AdminReports from "@/pages/admin/reports";
 import UserManagement from "@/pages/admin/user-management";
