@@ -51,6 +51,7 @@ export interface IStorage {
   createBox(box: InsertBox): Promise<Box>;
   updateBox(id: string, box: Partial<InsertBox>): Promise<Box | undefined>;
   getBoxesByStatus(status: string): Promise<Box[]>;
+  cleanupOrphanBoxes(): Promise<number>;
   
   // Rental operations
   getRentals(): Promise<Rental[]>;
@@ -738,30 +739,60 @@ export class DatabaseStorage implements IStorage {
       
       // Delete dependent records first
       // 1. Delete delivery tasks for these rentals
-      await db
-        .delete(deliveryTasks)
-        .where(sql`${deliveryTasks.rentalId} = ANY(${sql.placeholder('rentalIds', rentalIds)})`);
+      for (const rentalId of rentalIds) {
+        await db
+          .delete(deliveryTasks)
+          .where(eq(deliveryTasks.rentalId, rentalId));
+      }
       
       // 2. Delete rental boxes
-      await db
-        .delete(rentalBoxes)
-        .where(sql`${rentalBoxes.rentalId} = ANY(${sql.placeholder('rentalIds', rentalIds)})`);
+      for (const rentalId of rentalIds) {
+        await db
+          .delete(rentalBoxes)
+          .where(eq(rentalBoxes.rentalId, rentalId));
+      }
       
       // 3. Reset box statuses to available for boxes that were assigned to these rentals
       await db
         .update(boxes)
         .set({ status: 'available' })
-        .where(sql`${boxes.status} = 'no_disponible'`);
+        .where(eq(boxes.status, 'no_disponible'));
       
       // 4. Finally delete the rentals
       const result = await db
         .delete(rentals)
-        .where(sql`${rentals.id} = ANY(${sql.placeholder('rentalIds', rentalIds)})`);
+        .where(sql`${rentals.createdAt} >= ${twoDaysAgo}`);
       
       console.log(`Reset test data: deleted ${rentalIds.length} recent rentals and their dependencies`);
       return rentalIds.length;
     } catch (error) {
       console.error("Error resetting test data:", error);
+      return 0;
+    }
+  }
+
+  // Clean up orphan boxes that are marked as no_disponible but not in active rentals
+  async cleanupOrphanBoxes(): Promise<number> {
+    try {
+      const result = await db
+        .update(boxes)
+        .set({ status: 'available', updatedAt: new Date() })
+        .where(
+          and(
+            eq(boxes.status, 'no_disponible'),
+            sql`${boxes.id} NOT IN (
+              SELECT DISTINCT rb.box_id 
+              FROM ${rentalBoxes} rb
+              INNER JOIN ${rentals} r ON rb.rental_id = r.id
+              WHERE r.status IN ('pendiente', 'pagada', 'entregada')
+            )`
+          )
+        );
+      
+      console.log(`Cleaned up ${result.rowCount || 0} orphan boxes`);
+      return result.rowCount || 0;
+    } catch (error) {
+      console.error("Error cleaning up orphan boxes:", error);
       return 0;
     }
   }

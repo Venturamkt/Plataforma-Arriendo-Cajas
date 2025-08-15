@@ -239,12 +239,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Reset test data endpoint
   app.delete('/api/rentals/reset-test-data', requireAdminSession, async (req, res) => {
     try {
-      // Delete all rentals marked as test data or created in the last day for testing
+      // Clean up orphan boxes first
+      const orphanBoxes = await storage.cleanupOrphanBoxes();
+      
+      // Then delete test data
       const result = await storage.resetTestData();
-      res.json({ message: "Test data reset successfully", deletedCount: result });
+      
+      res.json({ 
+        message: "Test data reset successfully", 
+        deletedCount: result,
+        orphanBoxesCleaned: orphanBoxes
+      });
     } catch (error) {
       console.error("Error resetting test data:", error);
       res.status(500).json({ message: "Failed to reset test data" });
+    }
+  });
+
+  // Cleanup orphan boxes endpoint
+  app.post('/api/boxes/cleanup-orphans', requireAdminSession, async (req, res) => {
+    try {
+      const result = await storage.cleanupOrphanBoxes();
+      res.json({ 
+        message: "Orphan boxes cleaned up successfully", 
+        cleanedCount: result 
+      });
+    } catch (error) {
+      console.error("Error cleaning up orphan boxes:", error);
+      res.status(500).json({ message: "Failed to cleanup orphan boxes" });
     }
   });
 

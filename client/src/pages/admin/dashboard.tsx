@@ -248,9 +248,15 @@ export default function AdminDashboard() {
                     const data = await response.json();
                     
                     if (response.ok) {
+                      const message = data.deletedCount > 0 
+                        ? `Se eliminaron ${data.deletedCount} registros de prueba exitosamente`
+                        : data.orphanBoxesCleaned > 0 
+                        ? `Se liberaron ${data.orphanBoxesCleaned} cajas huérfanas exitosamente`
+                        : "Sistema limpio - no había datos de prueba";
+                      
                       toast({
                         title: "Datos reseteados",
-                        description: `Se eliminaron ${data.deletedCount} registros de prueba exitosamente`,
+                        description: message,
                       });
                       refetch();
                       // Also refresh other data
