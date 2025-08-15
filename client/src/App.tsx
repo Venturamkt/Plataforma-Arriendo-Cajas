@@ -11,7 +11,6 @@ import DriverLogin from "@/pages/auth/driver-login";
 import AdminDashboard from "@/pages/admin/dashboard";
 import AdminInventory from "@/pages/admin/inventory";
 import AdminCustomers from "@/pages/admin/customers-clean";
-import AdminCustomersEnhanced from "@/pages/admin/customers-enhanced";
 
 import AdminDeliveries from "@/pages/admin/deliveries";
 import AdminReports from "@/pages/admin/reports";
@@ -48,7 +47,7 @@ function Router() {
       <Route path="/admin/customers-new" component={AdminCustomers} />
       <Route path="/admin/customers-clean" component={AdminCustomers} />
       <Route path="/admin/customers-final" component={AdminCustomers} />
-      <Route path="/admin/customers-enhanced" component={AdminCustomersEnhanced} />
+
       <Route path="/admin/deliveries" component={AdminDeliveries} />
       <Route path="/admin/reports" component={AdminReports} />
       <Route path="/admin/users" component={UserManagement} />

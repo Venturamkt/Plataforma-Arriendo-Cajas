@@ -13,7 +13,7 @@ import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Checkbox } from '@/components/ui/checkbox'
 
@@ -670,6 +670,9 @@ export default function CustomersCleanPage() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Crear Nuevo Cliente</DialogTitle>
+            <DialogDescription>
+              Complete los datos del nuevo cliente para agregarlo al sistema.
+            </DialogDescription>
           </DialogHeader>
           <CustomerForm 
             onSubmit={(data) => createCustomerMutation.mutate(data)}
@@ -683,6 +686,9 @@ export default function CustomersCleanPage() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Editar Cliente</DialogTitle>
+            <DialogDescription>
+              Modifique los datos del cliente seleccionado.
+            </DialogDescription>
           </DialogHeader>
           <CustomerForm 
             customer={selectedCustomer}
@@ -700,6 +706,9 @@ export default function CustomersCleanPage() {
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Crear Nuevo Arriendo</DialogTitle>
+            <DialogDescription>
+              Complete los datos del nuevo arriendo de cajas para el cliente seleccionado.
+            </DialogDescription>
           </DialogHeader>
           <RentalForm 
             customerId={selectedCustomer?.id}
@@ -717,6 +726,9 @@ export default function CustomersCleanPage() {
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Editar Arriendo</DialogTitle>
+            <DialogDescription>
+              Modifique los datos del arriendo seleccionado.
+            </DialogDescription>
           </DialogHeader>
           <RentalForm 
             rental={selectedRental}
