@@ -169,7 +169,7 @@ export const emailTemplates = {
             </div>
             
             <div class="footer">
-              <p>📞 +56 9 1234 5678 | 📧 jalarcon@arriendocajas.cl</p>
+              <p>📞 +56 9 1234 5678 | 📧 contacto@arriendocajas.cl</p>
               <p>Arriendo Cajas - Tu solución en almacenamiento temporal</p>
             </div>
           </div>
@@ -253,7 +253,7 @@ export const emailTemplates = {
             
             <div class="footer">
               <p>Arriendo Cajas - Tu solución de almacenamiento temporal</p>
-              <p>¿Preguntas? Contáctanos: jalarcon@arriendocajas.cl</p>
+              <p>¿Preguntas? Contáctanos: contacto@arriendocajas.cl</p>
               <p><small>Recibiste este email porque tienes un arriendo activo con nosotros. Para darse de baja, responde con "STOP".</small></p>
             </div>
           </div>
@@ -519,7 +519,7 @@ export const emailTemplates = {
         </body>
       </html>
     `,
-    text: `¡Hola ${data.customerName}! RECORDATORIO: En 2 días debes devolver tus ${data.totalBoxes} cajas. Prepáralas: límpia, revisa estado, apila ordenadamente. Dirección: ${data.deliveryAddress}. Garantía: $${data.guaranteeAmount.toLocaleString()} se devuelve al completar. Seguimiento: ${data.trackingUrl} (${data.trackingCode}). Consultas: jalarcon@arriendocajas.cl`
+    text: `¡Hola ${data.customerName}! RECORDATORIO: En 2 días debes devolver tus ${data.totalBoxes} cajas. Prepáralas: límpia, revisa estado, apila ordenadamente. Dirección: ${data.deliveryAddress}. Garantía: $${data.guaranteeAmount.toLocaleString()} se devuelve al completar. Seguimiento: ${data.trackingUrl} (${data.trackingCode}). Consultas: contacto@arriendocajas.cl`
   }),
 
   "recordatorio-entrega": (data: RentalEmailData): EmailTemplate => ({

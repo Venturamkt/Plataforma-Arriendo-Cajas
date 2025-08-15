@@ -251,7 +251,7 @@ export default function TrackRental() {
               • El código de seguimiento exacto (8 caracteres, ejemplo: HO2RLARR)
               <br />
               <br />
-              Si el problema persiste, contacta a: <strong>jalarcon@arriendocajas.cl</strong>
+              Si el problema persiste, contacta a: <strong>contacto@arriendocajas.cl</strong>
             </AlertDescription>
           </Alert>
         )}

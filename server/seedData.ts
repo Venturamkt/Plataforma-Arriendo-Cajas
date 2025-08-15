@@ -11,13 +11,13 @@ export async function seedInitialData() {
     if (adminExists.length === 0) {
       const hashedPassword = await bcrypt.hash("admin123", 10);
       await db.insert(adminUsers).values({
-        email: "jalarcon@arriendocajas.cl",
+        email: "contacto@arriendocajas.cl",
         password: hashedPassword,
-        firstName: "José",
-        lastName: "Alarcón",
+        firstName: "Administrador",
+        lastName: "Sistema",
         isActive: true,
       });
-      console.log("✓ Admin user created: jalarcon@arriendocajas.cl / admin123");
+      console.log("✓ Admin user created: contacto@arriendocajas.cl / admin123");
     }
     
     // Create default driver user

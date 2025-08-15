@@ -840,15 +840,15 @@ export class DatabaseStorage implements IStorage {
 
   // Initialize default admin user
   async initializeDefaultAdmin(): Promise<void> {
-    const adminEmail = "jalarcon@arriendocajas.cl";
+    const adminEmail = "contacto@arriendocajas.cl";
     const existingAdmin = await db.select().from(users).where(eq(users.email, adminEmail));
     
     if (existingAdmin.length === 0) {
       await db.insert(users).values({
         id: "admin-default",
         email: adminEmail,
-        firstName: "José",
-        lastName: "Alarcón",
+        firstName: "Administrador",
+        lastName: "Sistema",
         role: "admin",
       });
     } else {

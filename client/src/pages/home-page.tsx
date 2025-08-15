@@ -100,7 +100,7 @@ export default function HomePage() {
             />
           </div>
           <p className="mb-2 text-sm lg:text-base">Arriendo Cajas - Tu solución de almacenamiento temporal</p>
-          <p className="text-gray-400 text-sm lg:text-base">¿Preguntas? Contáctanos: jalarcon@arriendocajas.cl</p>
+          <p className="text-gray-400 text-sm lg:text-base">¿Preguntas? Contáctanos: contacto@arriendocajas.cl</p>
         </div>
       </footer>
     </div>

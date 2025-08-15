@@ -238,7 +238,7 @@ export class EmailService {
             </div>
             
             <div class="footer">
-              <p>📞 +56 9 1234 5678 | 📧 jalarcon@arriendocajas.cl</p>
+              <p>📞 +56 9 1234 5678 | 📧 contacto@arriendocajas.cl</p>
               <p>Arriendo Cajas - Entrega confiable, siempre a tiempo</p>
             </div>
           </div>
