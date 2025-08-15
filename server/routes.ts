@@ -679,7 +679,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           : undefined,
       };
       
-      const rental = await storage.updateRental(req.params.id, rentalData);
+      let rental = await storage.updateRental(req.params.id, rentalData);
       if (!rental) {
         return res.status(404).json({ message: "Rental not found" });
       }
