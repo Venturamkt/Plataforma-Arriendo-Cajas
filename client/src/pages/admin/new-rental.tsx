@@ -232,10 +232,10 @@ export default function NewRental() {
               </Button>
               <div>
                 <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">
-                  Nuevo Arriendo
+                  Nuevo Arriendo - VERSIÓN CON PRECIO MANUAL
                 </h1>
                 <p className="text-gray-600">
-                  Crea un nuevo arriendo de cajas
+                  Crea un nuevo arriendo de cajas - Ahora con precio personalizado
                 </p>
               </div>
             </div>
