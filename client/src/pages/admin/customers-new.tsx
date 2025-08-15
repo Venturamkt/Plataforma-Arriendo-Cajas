@@ -496,8 +496,8 @@ export default function CustomersPageNew() {
       const deliveryDate = new Date(formData.deliveryDate)
       const returnDate = new Date(formData.returnDate)
       
-      // Por simplicidad, calculamos cajas disponibles básicamente
-      const totalBoxes = 100 // Total de cajas en inventario
+      // Consultar cajas disponibles reales de la base de datos
+      const totalBoxes = 60 // Total de cajas reales en inventario físico
       const rentalsInPeriod = rentals.filter(r => {
         if (r.status === 'cancelada' || r.status === 'completada') return false
         
@@ -530,6 +530,13 @@ export default function CustomersPageNew() {
 
     const handleSubmit = (e: React.FormEvent) => {
       e.preventDefault()
+      
+      // Validar disponibilidad de cajas antes de enviar
+      const availableBoxes = getAvailableBoxes()
+      if (formData.totalBoxes > Number(availableBoxes)) {
+        alert(`Error: Solo hay ${availableBoxes} cajas disponibles para el período seleccionado. No puedes reservar ${formData.totalBoxes} cajas.`)
+        return
+      }
       
       const basePrice = formData.manualPrice ? formData.customPrice : calculatedPrice
       const discountAmount = (basePrice * formData.discount) / 100
@@ -589,8 +596,11 @@ export default function CustomersPageNew() {
               placeholder="5"
               required
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className={`text-xs mt-1 ${formData.totalBoxes > Number(getAvailableBoxes()) ? 'text-red-600 font-medium' : 'text-gray-500'}`}>
               Cajas disponibles: {getAvailableBoxes()} 
+              {formData.totalBoxes > Number(getAvailableBoxes()) && (
+                <span className="block text-red-600">⚠️ No hay suficientes cajas disponibles</span>
+              )}
               {formData.deliveryDate && formData.returnDate && (
                 ` (del ${formData.deliveryDate} al ${formData.returnDate})`
               )}
