@@ -1456,6 +1456,60 @@ export default function Customers() {
                     </div>
                   </div>
 
+                  {/* Box Pricing - Editable */}
+                  <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                    <Label className="text-sm font-medium text-gray-700 mb-3 block">Precio de Cajas</Label>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <Label className="text-xs text-gray-600">Precio calculado automático</Label>
+                        <div className="text-lg font-semibold text-green-600">
+                          ${getPriceByPeriod(selectedRental.boxQuantity, selectedRental.rentalDays).toLocaleString('es-CL')}
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-gray-600">Precio manual</Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          value={selectedRental.customPrice || getPriceByPeriod(selectedRental.boxQuantity, selectedRental.rentalDays)}
+                          onChange={(e) => {
+                            const newPrice = parseInt(e.target.value) || 0
+                            setSelectedRental({ 
+                              ...selectedRental, 
+                              customPrice: newPrice,
+                              manualPrice: true
+                            })
+                          }}
+                          className="mt-1"
+                          placeholder="Precio personalizado"
+                        />
+                      </div>
+                      <div className="flex items-end">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedRental({ 
+                              ...selectedRental, 
+                              customPrice: getPriceByPeriod(selectedRental.boxQuantity, selectedRental.rentalDays),
+                              manualPrice: false
+                            })
+                          }}
+                          className="mb-1"
+                        >
+                          Usar precio automático
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="mt-2 text-sm text-gray-600">
+                      {selectedRental.manualPrice ? 
+                        "💰 Usando precio manual" : 
+                        "🤖 Usando precio automático basado en cantidad y días"
+                      }
+                    </div>
+                  </div>
+
                   {/* Additional Products - Fully Editable */}
                   <div className="bg-orange-50 p-4 rounded-lg">
                     <div className="flex items-center justify-between mb-3">

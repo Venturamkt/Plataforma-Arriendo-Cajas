@@ -455,7 +455,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           let updatedRental = rental;
           if (!rental.trackingCode) {
             console.log('New rental missing tracking code, generating one...');
-            updatedRental = await storage.generateTrackingCodeForRental(rental.id);
+            const result = await storage.generateTrackingCodeForRental(rental.id);
+            if (result) {
+              updatedRental = result;
+            }
             console.log(`Generated tracking code: ${updatedRental?.trackingCode}`);
           }
           
@@ -482,7 +485,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
             // Calculate rental days from delivery and return dates
             const deliveryDate = new Date(updatedRental.deliveryDate);
-            const returnDate = new Date(updatedRental.returnDate);
+            const returnDate = updatedRental.returnDate ? new Date(updatedRental.returnDate) : new Date(deliveryDate.getTime() + (7 * 24 * 60 * 60 * 1000));
             const rentalDays = Math.ceil((returnDate.getTime() - deliveryDate.getTime()) / (1000 * 60 * 60 * 24));
 
             const emailData = {
@@ -504,7 +507,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             };
 
             console.log(`Sending email for new rental status: ${updatedRental.status}`);
-            const success = await emailService.sendRentalStatusEmail(customer.email, updatedRental.status, emailData);
+            const success = await emailService.sendRentalStatusEmail(customer.email, updatedRental.status || 'pendiente', emailData);
             
             if (success) {
               console.log(`New rental email sent successfully to ${customer.email}`);
@@ -646,7 +649,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               };
 
               // Enviar email al repartidor usando el template específico
-              await emailService.sendDriverNotification(driver.email, driverEmailData);
+              await emailService.sendDriverNotification(driver.email || '', driverEmailData);
               console.log(`Driver notification sent successfully to ${driver.email}`);
             }
           }
@@ -667,7 +670,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           let updatedRental = rental;
           if (!rental.trackingCode) {
             console.log('Rental missing tracking code, generating new one...');
-            updatedRental = await storage.generateTrackingCodeForRental(rental.id);
+            const result = await storage.generateTrackingCodeForRental(rental.id);
+            if (result) {
+              updatedRental = result;
+            }
             console.log(`Generated tracking code: ${updatedRental?.trackingCode}`);
           }
           

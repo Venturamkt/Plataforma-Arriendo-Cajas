@@ -656,7 +656,7 @@ export class DatabaseStorage implements IStorage {
     const activeBoxesResult = await db
       .select({ count: count() })
       .from(boxes)
-      .where(eq(boxes.status, "rented"));
+      .where(eq(boxes.status, "no_disponible"));
 
     // Count pending deliveries - no date filter for current status
     const pendingDeliveriesResult = await db
