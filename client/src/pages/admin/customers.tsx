@@ -419,7 +419,12 @@ export default function Customers() {
         ...rental,
         additionalProducts: parsedAdditionalProducts,
         boxQuantity: rental.totalBoxes || 2,
-        rentalDays: rental.rentalDays || 7
+        rentalDays: rental.rentalDays || 7,
+        // Preserve original pricing
+        originalDailyRate: rental.dailyRate,
+        originalTotalAmount: rental.totalAmount,
+        customPrice: rental.dailyRate ? parseInt(rental.dailyRate) : null,
+        manualPrice: true // Assume existing rentals have agreed pricing
       })
       setShowRentalDialog(true)
     }
@@ -1618,7 +1623,7 @@ export default function Customers() {
                         <Input
                           type="number"
                           min="0"
-                          value={selectedRental.customPrice || getPriceByPeriod(selectedRental.boxQuantity, selectedRental.rentalDays)}
+                          value={selectedRental.customPrice || (selectedRental.originalDailyRate ? parseInt(selectedRental.originalDailyRate) : getPriceByPeriod(selectedRental.boxQuantity, selectedRental.rentalDays))}
                           onChange={(e) => {
                             const newPrice = parseInt(e.target.value) || 0
                             setSelectedRental({ 
@@ -1774,7 +1779,10 @@ export default function Customers() {
                       <div className="flex justify-between items-center">
                         <span>Arriendo ({selectedRental.boxQuantity} cajas × {selectedRental.rentalDays} días):</span>
                         <span className="font-medium">
-                          ${getPriceByPeriod(selectedRental.boxQuantity, selectedRental.rentalDays).toLocaleString()}
+                          ${(selectedRental.manualPrice && selectedRental.customPrice ? 
+                            selectedRental.customPrice : 
+                            (selectedRental.originalDailyRate ? parseInt(selectedRental.originalDailyRate) : getPriceByPeriod(selectedRental.boxQuantity, selectedRental.rentalDays))
+                          ).toLocaleString()}
                         </span>
                       </div>
                       
@@ -1794,7 +1802,10 @@ export default function Customers() {
                         <span className="text-lg font-bold">Total a pagar:</span>
                         <span className="text-xl font-bold text-green-600">
                           ${(
-                            getPriceByPeriod(selectedRental.boxQuantity, selectedRental.rentalDays) + 
+                            (selectedRental.manualPrice && selectedRental.customPrice ? 
+                              selectedRental.customPrice : 
+                              (selectedRental.originalDailyRate ? parseInt(selectedRental.originalDailyRate) : getPriceByPeriod(selectedRental.boxQuantity, selectedRental.rentalDays))
+                            ) + 
                             (selectedRental.boxQuantity * 2000) +
                             (selectedRental.additionalProducts || []).reduce((sum: number, product: any) => sum + ((product.price || 0) * (product.quantity || 1)), 0)
                           ).toLocaleString()}
@@ -1820,11 +1831,16 @@ export default function Customers() {
                             data: {
                               status: selectedRental.status,
                               totalBoxes: selectedRental.boxQuantity,
-                              dailyRate: getPriceByPeriod(selectedRental.boxQuantity, selectedRental.rentalDays).toString(),
-                              totalAmount: getPriceByPeriod(selectedRental.boxQuantity, selectedRental.rentalDays).toString(),
+                              // Only update pricing if manually changed, otherwise preserve original
+                              dailyRate: selectedRental.manualPrice && selectedRental.customPrice ? 
+                                selectedRental.customPrice.toString() : 
+                                selectedRental.originalDailyRate,
+                              totalAmount: selectedRental.manualPrice && selectedRental.customPrice ? 
+                                selectedRental.customPrice.toString() : 
+                                selectedRental.originalTotalAmount,
                               guaranteeAmount: (selectedRental.boxQuantity * 2000).toString(),
                               additionalProducts: JSON.stringify(selectedRental.additionalProducts || []),
-                              additionalProductsTotal: (selectedRental.additionalProducts || []).reduce((sum: number, product: any) => sum + (product.price || 0), 0).toString(),
+                              additionalProductsTotal: (selectedRental.additionalProducts || []).reduce((sum: number, product: any) => sum + ((product.price || 0) * (product.quantity || 1)), 0).toString(),
                               deliveryDate: new Date(selectedRental.deliveryDate),
                               returnDate: selectedRental.returnDate ? new Date(selectedRental.returnDate) : null,
                               deliveryAddress: selectedRental.deliveryAddress,
