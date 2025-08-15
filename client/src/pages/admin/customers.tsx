@@ -426,17 +426,37 @@ export default function Customers() {
     if (rental) {
       const parsedAdditionalProducts = parseAdditionalProducts(rental.additionalProducts)
       
+      // Calculate return date from delivery date and rental days
+      const deliveryDate = new Date(rental.deliveryDate)
+      const returnDate = rental.returnDate ? new Date(rental.returnDate) : 
+        new Date(deliveryDate.getTime() + (rental.rentalDays - 1) * 24 * 60 * 60 * 1000)
+      
+      // Populate the form with existing rental data
+      setNewRental({
+        boxQuantity: rental.totalBoxes || 2,
+        rentalDays: rental.rentalDays || 7,
+        deliveryDate: rental.deliveryDate ? new Date(rental.deliveryDate).toISOString().split('T')[0] : '',
+        pickupDate: returnDate.toISOString().split('T')[0],
+        deliveryAddress: rental.deliveryAddress || '',
+        pickupAddress: rental.pickupAddress || '',
+        notes: rental.notes || '',
+        customPrice: parseFloat(rental.totalAmount) || 2775,
+        discount: 0,
+        additionalProducts: parsedAdditionalProducts,
+        manualPrice: true // Existing rentals have agreed pricing
+      })
+      
       setSelectedRental({
         ...rental,
         additionalProducts: parsedAdditionalProducts,
         boxQuantity: rental.totalBoxes || 2,
         rentalDays: rental.rentalDays || 7,
-        // Preserve original pricing
         originalDailyRate: rental.dailyRate,
         originalTotalAmount: rental.totalAmount,
         customPrice: rental.dailyRate ? parseInt(rental.dailyRate) : null,
-        manualPrice: true // Assume existing rentals have agreed pricing
+        manualPrice: true
       })
+      
       setShowRentalDialog(true)
     }
   }
