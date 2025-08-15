@@ -32,6 +32,8 @@ export default function NewRental() {
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [notes, setNotes] = useState("");
   const [rentalDays, setRentalDays] = useState("7");
+  const [useManualPrice, setUseManualPrice] = useState(false);
+  const [manualBoxPrice, setManualBoxPrice] = useState("");
   
   // New customer form state
   const [showNewCustomerDialog, setShowNewCustomerDialog] = useState(false);
@@ -131,6 +133,11 @@ export default function NewRental() {
   };
 
   const calculateTotal = () => {
+    if (useManualPrice && manualBoxPrice) {
+      const pricePerBox = parseInt(manualBoxPrice.replace(/[^\d]/g, '')) || 0;
+      const days = parseInt(rentalDays) || 1;
+      return selectedBoxes.length * pricePerBox * days;
+    }
     const boxTotal = selectedBoxes.reduce((sum, box) => sum + (box.dailyRate || 1000), 0);
     const days = parseInt(rentalDays) || 1;
     return boxTotal * days;
@@ -164,11 +171,16 @@ export default function NewRental() {
       return;
     }
 
+    const totalAmount = calculateTotal();
+    const dailyRate = useManualPrice && manualBoxPrice 
+      ? parseInt(manualBoxPrice.replace(/[^\d]/g, '')) || 0
+      : totalAmount / parseInt(rentalDays) / selectedBoxes.length;
+
     const rentalData = {
       customerId: selectedCustomer.id,
       totalBoxes: selectedBoxes.length,
-      dailyRate: calculateTotal() / parseInt(rentalDays),
-      totalAmount: calculateTotal(),
+      dailyRate: dailyRate,
+      totalAmount: totalAmount,
       deliveryDate: deliveryDate,
       deliveryAddress,
       notes,
@@ -589,6 +601,52 @@ export default function NewRental() {
                   </Select>
                 </div>
 
+                {/* Manual Pricing Option */}
+                <div className="border-t pt-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="manualPricing" className="text-sm font-medium">
+                      Precio manual por caja/día
+                    </Label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="manualPricing"
+                        checked={useManualPrice}
+                        onChange={(e) => {
+                          setUseManualPrice(e.target.checked);
+                          if (!e.target.checked) {
+                            setManualBoxPrice("");
+                          }
+                        }}
+                        className="rounded border-gray-300"
+                      />
+                      <label htmlFor="manualPricing" className="text-sm">
+                        Activar
+                      </label>
+                    </div>
+                  </div>
+                  
+                  {useManualPrice && (
+                    <div>
+                      <Label htmlFor="manualBoxPrice">Precio por caja por día (CLP)</Label>
+                      <Input
+                        id="manualBoxPrice"
+                        type="text"
+                        placeholder="1,000"
+                        value={manualBoxPrice}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/[^\d]/g, '');
+                          const formattedValue = value ? parseInt(value).toLocaleString('es-CL') : '';
+                          setManualBoxPrice(formattedValue);
+                        }}
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Este precio se aplicará por cada caja por día
+                      </p>
+                    </div>
+                  )}
+                </div>
+
                 <div>
                   <Label htmlFor="deliveryDate">Fecha de entrega</Label>
                   <Input
@@ -642,6 +700,12 @@ export default function NewRental() {
                     <span>Días de arriendo:</span>
                     <span className="font-medium">{rentalDays} días</span>
                   </div>
+                  {useManualPrice && manualBoxPrice && (
+                    <div className="flex justify-between text-blue-600">
+                      <span>Precio manual por caja/día:</span>
+                      <span className="font-medium">${parseInt(manualBoxPrice.replace(/[^\d]/g, '')).toLocaleString('es-CL')}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span>Total arriendo:</span>
                     <span className="font-medium">${calculateTotal().toLocaleString('es-CL')}</span>
