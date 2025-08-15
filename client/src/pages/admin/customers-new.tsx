@@ -534,13 +534,16 @@ export default function CustomersPageNew() {
       const basePrice = formData.manualPrice ? formData.customPrice : calculatedPrice
       const discountAmount = (basePrice * formData.discount) / 100
       const finalPrice = basePrice - discountAmount
+      const additionalTotal = formData.additionalProducts.reduce((sum, product) => sum + (product.price * product.quantity), 0)
+      const guaranteeAmount = formData.totalBoxes * 2000 // $2,000 per box
       
       const rentalData = {
         ...formData,
-        totalAmount: finalPrice,
-        guaranteeAmount: formData.totalBoxes * 2000, // $2,000 per box
+        dailyRate: (finalPrice / rentalDays / formData.totalBoxes).toString(),
+        totalAmount: finalPrice.toString(),
+        guaranteeAmount: guaranteeAmount.toString(),
         additionalProducts: JSON.stringify(formData.additionalProducts),
-        additionalProductsTotal: formData.additionalProducts.reduce((sum, product) => sum + (product.price * product.quantity), 0),
+        additionalProductsTotal: additionalTotal.toString(),
         deliveryDate: new Date(formData.deliveryDate).toISOString(),
         returnDate: formData.returnDate ? new Date(formData.returnDate).toISOString() : null,
         rentalDays: rentalDays,
