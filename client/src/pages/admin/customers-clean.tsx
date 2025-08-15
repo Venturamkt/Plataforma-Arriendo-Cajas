@@ -632,6 +632,8 @@ function RentalForm({
 
   const [calculatedPrice, setCalculatedPrice] = useState(0)
   const [rentalDays, setRentalDays] = useState(7)
+  const [showAddProductDialog, setShowAddProductDialog] = useState(false)
+  const [newProduct, setNewProduct] = useState({ name: '', price: 0, quantity: 1 })
   
   // Calculate rental days and price
   useEffect(() => {
@@ -841,6 +843,113 @@ function RentalForm({
         />
       </div>
 
+      {/* Productos Adicionales */}
+      <div className="bg-gray-50 p-4 rounded-lg border">
+        <div className="flex justify-between items-center mb-4">
+          <Label className="text-base font-semibold">Productos Adicionales</Label>
+          <Button 
+            type="button" 
+            variant="outline" 
+            size="sm"
+            onClick={() => setShowAddProductDialog(true)}
+          >
+            <Plus className="h-4 w-4 mr-1" />
+            Agregar Producto
+          </Button>
+        </div>
+
+        {/* Productos Predefinidos */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
+          {[
+            { name: 'Carrito plegable', price: 15000 },
+            { name: 'Base móvil', price: 8000 },
+            { name: 'Kit 2 bases móviles', price: 15000 },
+            { name: 'Correa Ratchet', price: 3000 },
+          ].map((product, index) => (
+            <Button
+              key={index}
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                const exists = formData.additionalProducts.find(p => p.name === product.name)
+                if (!exists) {
+                  setFormData(prev => ({
+                    ...prev,
+                    additionalProducts: [...prev.additionalProducts, { ...product, quantity: 1 }]
+                  }))
+                }
+              }}
+              className="text-xs bg-white hover:bg-blue-50 border text-left p-2 h-auto flex flex-col items-start"
+            >
+              <span className="font-medium">{product.name}</span>
+              <span className="text-gray-500">{formatPrice(product.price)}</span>
+            </Button>
+          ))}
+        </div>
+        
+        {/* Lista de Productos Agregados */}
+        {formData.additionalProducts.length > 0 && (
+          <div className="space-y-2 mb-4">
+            {formData.additionalProducts.map((product, index) => (
+              <div key={index} className="flex items-center justify-between p-3 bg-white rounded border">
+                <div className="flex-1">
+                  <span className="font-medium">{product.name}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="text"
+                    value={product.price.toString()}
+                    onChange={e => {
+                      const value = e.target.value.replace(/[^0-9]/g, '')
+                      const newProducts = [...formData.additionalProducts]
+                      newProducts[index] = { ...product, price: parseInt(value) || 0 }
+                      setFormData(prev => ({ ...prev, additionalProducts: newProducts }))
+                    }}
+                    className="w-20 text-center"
+                    placeholder="0"
+                  />
+                  <span>×</span>
+                  <Input
+                    type="text"
+                    value={product.quantity.toString()}
+                    onChange={e => {
+                      const value = e.target.value.replace(/[^0-9]/g, '')
+                      const newProducts = [...formData.additionalProducts]
+                      newProducts[index] = { ...product, quantity: parseInt(value) || 1 }
+                      setFormData(prev => ({ ...prev, additionalProducts: newProducts }))
+                    }}
+                    className="w-16 text-center"
+                    placeholder="1"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      const newProducts = formData.additionalProducts.filter((_, i) => i !== index)
+                      setFormData(prev => ({ ...prev, additionalProducts: newProducts }))
+                    }}
+                    className="text-red-500 hover:text-red-700"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Total de productos adicionales */}
+        {additionalProductsTotal > 0 && (
+          <div className="bg-blue-50 p-3 rounded border text-right">
+            <span className="font-medium text-blue-800">
+              Total productos adicionales: {formatPrice(additionalProductsTotal)}
+            </span>
+          </div>
+        )}
+      </div>
+
       {/* Pricing Section */}
       <div className="bg-green-50 p-6 rounded-lg border border-green-200">
         <Label className="text-lg font-semibold text-green-800 mb-4 block">Configuración de Precios</Label>
@@ -934,6 +1043,66 @@ function RentalForm({
       >
         {isLoading ? '⏳ Procesando...' : (rental ? '📝 Actualizar Arriendo' : '🎯 Crear Arriendo')}
       </Button>
+
+      {/* Dialog para agregar productos personalizados */}
+      <Dialog open={showAddProductDialog} onOpenChange={setShowAddProductDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Agregar Producto Personalizado</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="productName">Nombre del Producto</Label>
+              <Input
+                id="productName"
+                placeholder="Ej: Candado extra, Cinta adhesiva..."
+                value={newProduct.name}
+                onChange={e => setNewProduct(prev => ({ ...prev, name: e.target.value }))}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="productPrice">Precio</Label>
+                <Input
+                  id="productPrice"
+                  type="text"
+                  value={newProduct.price.toString()}
+                  onChange={e => {
+                    const value = e.target.value.replace(/[^0-9]/g, '')
+                    setNewProduct(prev => ({ ...prev, price: parseInt(value) || 0 }))
+                  }}
+                  placeholder="20000"
+                />
+              </div>
+              <div>
+                <Label htmlFor="productQuantity">Cantidad</Label>
+                <Input
+                  id="productQuantity"
+                  type="number"
+                  min="1"
+                  value={newProduct.quantity}
+                  onChange={e => setNewProduct(prev => ({ ...prev, quantity: parseInt(e.target.value) || 1 }))}
+                />
+              </div>
+            </div>
+            <Button 
+              onClick={() => {
+                if (newProduct.name && newProduct.price > 0) {
+                  setFormData(prev => ({
+                    ...prev,
+                    additionalProducts: [...prev.additionalProducts, newProduct]
+                  }))
+                  setNewProduct({ name: '', price: 0, quantity: 1 })
+                  setShowAddProductDialog(false)
+                }
+              }}
+              className="w-full"
+            >
+              Agregar Producto
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </form>
   )
 }
