@@ -1210,6 +1210,58 @@ export default function Customers() {
                       </div>
                     </div>
 
+                    {/* Manual Pricing Option */}
+                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <input
+                          type="checkbox"
+                          id="manual-pricing"
+                          className="w-4 h-4"
+                          checked={newRental.manualPrice || false}
+                          onChange={(e) => {
+                            setNewRental({
+                              ...newRental,
+                              manualPrice: e.target.checked,
+                              customPrice: e.target.checked ? 
+                                (newRental.customPrice || getPriceByPeriod(newRental.boxQuantity, newRental.rentalDays)) : 
+                                undefined
+                            })
+                          }}
+                        />
+                        <Label htmlFor="manual-pricing" className="font-medium text-blue-700">
+                          💰 Precio manual por caja/día
+                        </Label>
+                      </div>
+                      
+                      {newRental.manualPrice && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <Label className="text-sm">Precio personalizado total</Label>
+                            <Input
+                              type="number"
+                              min="0"
+                              value={newRental.customPrice || ''}
+                              onChange={(e) => {
+                                const price = parseInt(e.target.value) || 0
+                                setNewRental({
+                                  ...newRental,
+                                  customPrice: price
+                                })
+                              }}
+                              className="mt-1"
+                              placeholder="Ej: 50000"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-sm">Precio automático (referencia)</Label>
+                            <div className="mt-1 p-2 bg-gray-100 rounded border text-sm">
+                              ${getPriceByPeriod(newRental.boxQuantity, newRental.rentalDays).toLocaleString()}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
                     {/* Price Summary */}
                     <div className="bg-green-50 p-4 rounded-lg border border-green-200">
                       <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
@@ -1220,7 +1272,13 @@ export default function Customers() {
                       <div className="space-y-3">
                         <div className="flex justify-between items-center">
                           <span>Arriendo ({newRental.boxQuantity} cajas × {newRental.rentalDays} días):</span>
-                          <span className="font-medium">${getPriceByPeriod(newRental.boxQuantity, newRental.rentalDays).toLocaleString()}</span>
+                          <span className="font-medium">
+                            ${(newRental.manualPrice && newRental.customPrice ? 
+                              newRental.customPrice : 
+                              getPriceByPeriod(newRental.boxQuantity, newRental.rentalDays)
+                            ).toLocaleString()}
+                            {newRental.manualPrice && <span className="text-blue-600 text-xs ml-1">(manual)</span>}
+                          </span>
                         </div>
                         
                         {newRental.additionalProducts.map((product, index) => (
@@ -1239,7 +1297,9 @@ export default function Customers() {
                           <span className="text-lg font-bold">Total a pagar:</span>
                           <span className="text-xl font-bold text-green-600">
                             ${(
-                              getPriceByPeriod(newRental.boxQuantity, newRental.rentalDays) + 
+                              (newRental.manualPrice && newRental.customPrice ? 
+                                newRental.customPrice : 
+                                getPriceByPeriod(newRental.boxQuantity, newRental.rentalDays)) + 
                               (newRental.boxQuantity * 2000) +
                               newRental.additionalProducts.reduce((sum, product) => sum + product.price, 0)
                             ).toLocaleString()}
