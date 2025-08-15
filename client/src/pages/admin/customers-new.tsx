@@ -506,9 +506,9 @@ export default function CustomersPageNew() {
       const deliveryDate = new Date(formData.deliveryDate)
       const returnDate = new Date(formData.returnDate)
       
-      // Contar cajas físicamente disponibles en inventario
+      // Contar cajas físicamente disponibles en inventario - API usa 'available'
       const availableBoxesInInventory = inventory.filter(box => 
-        box.status === 'available' || box.status === 'maintenance'
+        box.status === 'available'
       ).length
       
       // Verificar reservas en el período seleccionado
