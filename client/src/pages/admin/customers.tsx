@@ -955,6 +955,16 @@ export default function Customers() {
                             value={[2, 5, 10, 15].includes(newRental.boxQuantity) ? newRental.boxQuantity.toString() : 'custom'}
                             onValueChange={(value) => {
                               const boxes = value === 'custom' ? 1 : parseInt(value)
+                              // Validate inventory availability
+                              const availableBoxes = inventory?.filter(box => box.status === 'available').length || 0;
+                              if (boxes > availableBoxes) {
+                                toast({
+                                  title: "Inventario insuficiente",
+                                  description: `Solo hay ${availableBoxes} cajas disponibles, pero necesitas ${boxes}`,
+                                  variant: "destructive"
+                                });
+                                return;
+                              }
                               setNewRental({ ...newRental, boxQuantity: boxes })
                             }}
                           >
@@ -1021,6 +1031,18 @@ export default function Customers() {
                                 const newPickupDate = newRental.deliveryDate ? 
                                   new Date(new Date(newRental.deliveryDate).getTime() + (days - 1) * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : 
                                   newRental.pickupDate
+                                
+                                // Validate inventory availability
+                                const availableBoxes = inventory?.filter(box => box.status === 'available').length || 0;
+                                if (newRental.boxQuantity > availableBoxes) {
+                                  toast({
+                                    title: "Inventario insuficiente",
+                                    description: `Solo hay ${availableBoxes} cajas disponibles, pero necesitas ${newRental.boxQuantity}`,
+                                    variant: "destructive"
+                                  });
+                                  return;
+                                }
+                                
                                 setNewRental({ 
                                   ...newRental, 
                                   rentalDays: days,
@@ -1326,6 +1348,38 @@ export default function Customers() {
                       ) : <div>Cliente no encontrado</div>
                     })()}
                   </div>
+
+                  {/* Driver and Box Information */}
+                  {(selectedRental.driverId || selectedRental.assignedBoxCodes) && (
+                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                      <h3 className="text-sm font-medium text-gray-700 mb-2">Información de Entrega</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        {selectedRental.driverId && (
+                          <div>
+                            <strong>Repartidor Asignado:</strong> {selectedRental.assignedDriver || 'Sin asignar'}
+                          </div>
+                        )}
+                        {selectedRental.masterCode && (
+                          <div>
+                            <strong>Código Maestro:</strong> 
+                            <Badge variant="outline" className="ml-2 font-mono">{selectedRental.masterCode}</Badge>
+                          </div>
+                        )}
+                        {selectedRental.assignedBoxCodes && selectedRental.assignedBoxCodes.length > 0 && (
+                          <div className="md:col-span-2">
+                            <strong>Cajas Asignadas ({selectedRental.assignedBoxCodes.length}):</strong>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
+                              {selectedRental.assignedBoxCodes.map((code: string, index: number) => (
+                                <Badge key={index} variant="secondary" className="font-mono text-xs">
+                                  {code}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Status Selection */}
                   <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">

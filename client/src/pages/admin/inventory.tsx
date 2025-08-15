@@ -25,7 +25,7 @@ export default function AdminInventory() {
   const { user, isLoading } = useCurrentUser();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("list");
   const [sortBy, setSortBy] = useState<"barcode" | "status" | "condition" | "createdAt">("createdAt");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [showScanner, setShowScanner] = useState(false);

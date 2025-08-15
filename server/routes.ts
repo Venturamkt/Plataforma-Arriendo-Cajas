@@ -520,6 +520,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Don't fail the rental creation if email fails
         }
       }
+
+      // Si el estado es "pagada", asignar repartidor y códigos de cajas
+      if (rental.status === 'pagada') {
+        console.log(`New rental created with status 'pagada', assigning driver and box codes...`);
+        
+        try {
+          // 1. Asignar repartidor automáticamente
+          const rentalWithDriver = await storage.assignDriverToRental(rental.id);
+          console.log(`Driver assigned to rental: ${rentalWithDriver?.driverId}`);
+
+          // 2. Asignar códigos de cajas y generar código maestro
+          const rentalWithBoxes = await storage.assignBoxCodesToRental(rental.id);
+          console.log(`Box codes assigned. Master code: ${rentalWithBoxes?.masterCode}`);
+          
+          // 3. Enviar email al repartidor asignado
+          if (rentalWithDriver?.driverId && rentalWithBoxes?.assignedBoxCodes) {
+            const driver = await storage.getUser(rentalWithDriver.driverId);
+            const customer = await storage.getCustomer(rental.customerId);
+            
+            if (driver && customer) {
+              console.log(`Sending driver notification to: ${driver.email}`);
+              
+              const driverEmailData = {
+                driverName: `${driver.firstName} ${driver.lastName}`,
+                rentalId: rental.id,
+                customerName: customer.name,
+                totalBoxes: rental.totalBoxes,
+                deliveryDate: rental.deliveryDate.toLocaleDateString('es-CL'),
+                deliveryAddress: rental.deliveryAddress || '',
+                pickupAddress: rental.pickupAddress || undefined,
+                masterCode: rentalWithBoxes.masterCode || '',
+                assignedBoxCodes: rentalWithBoxes.assignedBoxCodes || []
+              };
+
+              // Enviar email al repartidor usando el template específico
+              await emailService.sendDriverNotification(driver.email || '', driverEmailData);
+              console.log(`Driver notification sent successfully to ${driver.email}`);
+            }
+          }
+
+          // Actualizar el rental con la información asignada
+          rental = rentalWithBoxes || rental;
+        } catch (driverError) {
+          console.error('Error assigning driver and boxes to new rental:', driverError);
+          // No fallar la creación del arriendo si falla la asignación
+        }
+      }
       
       res.status(201).json(rental);
     } catch (error) {
