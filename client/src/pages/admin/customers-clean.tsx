@@ -18,7 +18,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Checkbox } from '@/components/ui/checkbox'
 
 // Icons
-import { Plus, Search, RefreshCw, Edit, Trash2, Eye, Calendar, Package } from 'lucide-react'
+import { Plus, Search, RefreshCw, Edit, Trash2, Eye, Calendar, Package, ChevronDown, ChevronRight } from 'lucide-react'
 
 // Layout Components
 import Header from '@/components/layout/header'
@@ -107,6 +107,148 @@ const getPriceByPeriod = (boxes: number, days: number): number => {
   else baseBoxPrice = basePrice7Days[15] / 15
   
   return Math.round(baseBoxPrice * boxes * (days / 7))
+}
+
+// Customer Card Component
+function CustomerCard({ 
+  customer, 
+  rentals, 
+  activeRentals, 
+  onEdit, 
+  onCreateRental, 
+  onEditRental,
+  getStatusColor,
+  getStatusText,
+  formatPrice
+}: {
+  customer: Customer
+  rentals: Rental[]
+  activeRentals: Rental[]
+  onEdit: () => void
+  onCreateRental: () => void
+  onEditRental: (rental: Rental) => void
+  getStatusColor: (status: string) => string
+  getStatusText: (status: string) => string
+  formatPrice: (amount: number) => string
+}) {
+  const [expanded, setExpanded] = useState(false)
+  
+  return (
+    <Card className="overflow-hidden">
+      {/* Customer Header */}
+      <div 
+        className="p-4 bg-gray-50 border-b cursor-pointer hover:bg-gray-100 transition-colors"
+        onClick={() => setExpanded(!expanded)}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            {expanded ? <ChevronDown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">{customer.name}</h3>
+              <div className="text-sm text-gray-600">
+                <span className="font-mono bg-gray-200 px-2 py-1 rounded">{customer.rut}</span>
+                <span className="ml-3">{customer.email}</span>
+                <span className="ml-3">{customer.phone}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <div className="text-right text-sm">
+              <div className="text-gray-600">
+                Total: {rentals.length} arriendos
+              </div>
+              {activeRentals.length > 0 && (
+                <div className="text-blue-600 font-medium">
+                  {activeRentals.length} activos
+                </div>
+              )}
+            </div>
+            
+            <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); onEdit() }}>
+              <Edit className="h-4 w-4" />
+            </Button>
+            
+            <Button 
+              variant="default" 
+              size="sm"
+              onClick={(e) => { e.stopPropagation(); onCreateRental() }}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Arriendo
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Expanded Content - Rentals */}
+      {expanded && (
+        <div className="p-4">
+          {rentals.length === 0 ? (
+            <p className="text-gray-500 text-center py-4">No hay arriendos registrados</p>
+          ) : (
+            <div className="space-y-3">
+              <h4 className="font-medium text-gray-900 mb-3">Historial de Arriendos</h4>
+              {rentals
+                .sort((a, b) => new Date(b.deliveryDate).getTime() - new Date(a.deliveryDate).getTime())
+                .slice(0, 10) // Show last 10 rentals
+                .map((rental) => (
+                  <div key={rental.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center space-x-4">
+                      <Badge className={`${getStatusColor(rental.status)} text-white`}>
+                        {getStatusText(rental.status)}
+                      </Badge>
+                      
+                      <div className="text-sm">
+                        <div className="font-medium">
+                          {rental.totalBoxes} cajas × {rental.rentalDays || 0} días
+                        </div>
+                        <div className="text-gray-600">
+                          {new Date(rental.deliveryDate).toLocaleDateString('es-CL')}
+                          {rental.returnDate && ` - ${new Date(rental.returnDate).toLocaleDateString('es-CL')}`}
+                        </div>
+                      </div>
+                      
+                      <div className="text-sm">
+                        <div className="font-medium">{formatPrice(parseInt(rental.totalAmount))}</div>
+                        {rental.guaranteeAmount && (
+                          <div className="text-gray-600">
+                            + {formatPrice(parseInt(rental.guaranteeAmount))} garantía
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      {rental.trackingCode && (
+                        <Badge variant="outline" className="text-xs">
+                          {rental.trackingCode}
+                        </Badge>
+                      )}
+                      
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onEditRental(rental)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              
+              {rentals.length > 10 && (
+                <p className="text-gray-500 text-center text-sm">
+                  Y {rentals.length - 10} arriendos más...
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </Card>
+  )
 }
 
 export default function CustomersCleanPage() {
@@ -351,91 +493,37 @@ export default function CustomersCleanPage() {
               />
             </div>
 
-            {/* Customers Table */}
-            <Card>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Cliente</TableHead>
-                    <TableHead>Contacto</TableHead>
-                    <TableHead>RUT</TableHead>
-                    <TableHead>Arriendos</TableHead>
-                    <TableHead>Estado</TableHead>
-                    <TableHead>Acciones</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredCustomers.map((customer) => {
-                    const customerRentals = getCustomerRentals(customer.id)
-                    const activeRentals = getActiveRentals(customer.id)
-                    
-                    return (
-                      <TableRow key={customer.id}>
-                        <TableCell>
-                          <div>
-                            <p className="font-medium">{customer.name}</p>
-                            {customer.address && (
-                              <p className="text-sm text-gray-500">{customer.address}</p>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm">
-                            <p>{customer.email}</p>
-                            <p className="text-gray-500">{customer.phone}</p>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <code className="text-sm bg-gray-100 px-2 py-1 rounded">
-                            {customer.rut}
-                          </code>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm">
-                            <p>Total: {customerRentals.length}</p>
-                            {activeRentals.length > 0 && (
-                              <p className="text-blue-600">Activos: {activeRentals.length}</p>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {activeRentals.length > 0 ? (
-                            <Badge className="bg-green-100 text-green-800">Activo</Badge>
-                          ) : (
-                            <Badge variant="secondary">Inactivo</Badge>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedCustomer(customer)
-                                setShowEditCustomer(true)
-                              }}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedCustomer(customer)
-                                setShowCreateRental(true)
-                              }}
-                            >
-                              <Plus className="h-4 w-4" />
-                              Arriendo
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    )
-                  })}
-                </TableBody>
-              </Table>
-            </Card>
+            {/* Customers Cards */}
+            <div className="grid gap-6">
+              {filteredCustomers.map((customer) => {
+                const customerRentals = getCustomerRentals(customer.id)
+                const activeRentals = getActiveRentals(customer.id)
+                
+                return (
+                  <CustomerCard 
+                    key={customer.id}
+                    customer={customer}
+                    rentals={customerRentals}
+                    activeRentals={activeRentals}
+                    onEdit={() => {
+                      setSelectedCustomer(customer)
+                      setShowEditCustomer(true)
+                    }}
+                    onCreateRental={() => {
+                      setSelectedCustomer(customer)
+                      setShowCreateRental(true)
+                    }}
+                    onEditRental={(rental) => {
+                      setSelectedRental(rental)
+                      setShowEditRental(true)
+                    }}
+                    getStatusColor={getStatusColor}
+                    getStatusText={getStatusText}
+                    formatPrice={formatPrice}
+                  />
+                )
+              })}
+            </div>
           </div>
         </main>
       </div>
@@ -509,6 +597,8 @@ export default function CustomersCleanPage() {
     </div>
   )
 }
+
+
 
 // Customer Form Component
 function CustomerForm({ 
@@ -625,9 +715,13 @@ function RentalForm({
     notes: rental?.notes || '',
     status: rental?.status || 'pendiente',
     manualPrice: false,
-    customPrice: rental?.totalAmount || 0,
+    customPrice: rental?.totalAmount ? parseInt(rental.totalAmount.toString()) : 0,
     discount: 0,
-    additionalProducts: [] as any[]
+    additionalProducts: rental?.additionalProducts 
+      ? (typeof rental.additionalProducts === 'string' 
+          ? JSON.parse(rental.additionalProducts) 
+          : rental.additionalProducts) 
+      : [] as any[]
   })
 
   const [calculatedPrice, setCalculatedPrice] = useState(0)
@@ -697,6 +791,9 @@ function RentalForm({
     }
     
     onSubmit(submitData)
+    
+    // Don't reset form data - keep everything for continued editing
+    // Form will stay open with current data intact
   }
 
   return (
