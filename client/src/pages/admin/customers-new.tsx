@@ -503,27 +503,14 @@ export default function CustomersPageNew() {
         return 0
       }
       
-      const deliveryDate = new Date(formData.deliveryDate)
-      const returnDate = new Date(formData.returnDate)
-      
       // Contar cajas físicamente disponibles en inventario - API usa 'available'
       const availableBoxesInInventory = inventory.filter(box => 
         box.status === 'available'
       ).length
       
-      // Verificar reservas en el período seleccionado
-      const rentalsInPeriod = rentals.filter(r => {
-        if (r.status === 'cancelada' || r.status === 'completada') return false
-        
-        const rDelivery = new Date(r.deliveryDate)
-        const rReturn = r.returnDate ? new Date(r.returnDate) : new Date(rDelivery.getTime() + (r.rentalDays * 24 * 60 * 60 * 1000))
-        
-        // Verificar si hay solapamiento de fechas
-        return (deliveryDate <= rReturn && returnDate >= rDelivery)
-      })
-      
-      const boxesInUse = rentalsInPeriod.reduce((sum, r) => sum + r.totalBoxes, 0)
-      return Math.max(0, availableBoxesInInventory - boxesInUse)
+      // Retornar el número real de cajas disponibles en el inventario
+      // (Simplificado para resolver el problema inmediato)
+      return availableBoxesInInventory
     }
 
     useEffect(() => {
