@@ -694,7 +694,9 @@ export const emailTemplates = {
 
 // Function to generate tracking URL
 export function generateTrackingUrl(rutDigits: string, trackingCode: string): string {
-  // Use the current Replit domain for tracking links
-  const baseUrl = 'https://441204b6-ae40-4994-b677-be11a32eb976-00-1rsmov5q0kvpq.janeway.replit.dev';
+  // Use environment variable for deployment URL, fallback to current Replit domain
+  const baseUrl = process.env.REPLIT_DEPLOYMENT_URL || 
+                  process.env.REPLIT_URL || 
+                  'https://441204b6-ae40-4994-b677-be11a32eb976-00-1rsmov5q0kvpq.janeway.replit.dev';
   return `${baseUrl}/track/${rutDigits}/${trackingCode}`;
 }

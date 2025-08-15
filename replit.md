@@ -34,12 +34,15 @@ Preferred communication style: Simple, everyday language.
 - ✅ **Email notifications**: Fixed email sending for new rental creation - now working for both new rentals and status changes
 - ✅ **Rental status changes**: Fully functional with automatic email notifications to customers
 - ✅ **Complete rental editing form**: Enhanced edit form with status selection, matching creation form functionality
-- ✅ **Email system verification**: Confirmed working with jalarcon@arriendocajas.cl for all rental lifecycle events
+- ✅ **Email system verification**: Confirmed working with contacto@arriendocajas.cl for all rental lifecycle events
 - ✅ **Manual pricing functionality**: Implemented checkbox-based manual pricing option in rental creation form within customers page
 - ✅ **Price validation fix**: Removed restrictive step validation allowing flexible pricing in Chilean pesos for all products
 - ✅ **Production database protection**: Disabled automatic seeding to preserve real customer data (Isabel Poblete, etc.)
 - ✅ **Tracking code protection**: System prevents deletion of customers/rentals with active tracking codes
 - ✅ **Price preservation**: Rental prices remain fixed when changing status unless explicitly modified
+- ✅ **Personal email removal**: Replaced all instances of jalarcon@arriendocajas.cl with contacto@arriendocajas.cl for privacy
+- ✅ **Driver assignment verified**: Automatic driver assignment when status changes to "pagada" is working correctly
+- ✅ **Tracking URL fix**: Updated tracking URL generation to use environment variables for proper deployment URL
 
 ### Key Features
 - **Authentication**: Replit Auth (OpenID Connect), PostgreSQL-backed sessions, role-based access control (Admin, Driver, Customer), HTTP-only cookies, CSRF protection.
