@@ -211,10 +211,10 @@ function CustomerCard({
                       </div>
                       
                       <div className="text-sm">
-                        <div className="font-medium">{formatPrice(parseInt(rental.totalAmount))}</div>
+                        <div className="font-medium">{formatPrice(parseInt(rental.totalAmount.toString()))}</div>
                         {rental.guaranteeAmount && (
                           <div className="text-gray-600">
-                            + {formatPrice(parseInt(rental.guaranteeAmount))} garantía
+                            + {formatPrice(parseInt(rental.guaranteeAmount.toString()))} garantía
                           </div>
                         )}
                       </div>
@@ -915,7 +915,7 @@ function RentalForm({
     : 0
 
   const additionalProductsTotal = formData.additionalProducts.reduce(
-    (sum, product) => sum + (product.price * product.quantity), 0
+    (sum: number, product: any) => sum + (product.price * product.quantity), 0
   )
 
   const finalPrice = formData.manualPrice ? formData.customPrice : calculatedPrice
@@ -967,6 +967,32 @@ function RentalForm({
           </SelectContent>
         </Select>
       </div>
+
+      {/* Status Selection - Only show when editing */}
+      {rental && (
+        <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+          <Label className="text-lg font-semibold text-orange-800 mb-4 block">Estado del Arriendo</Label>
+          <Select
+            value={formData.status || rental.status}
+            onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Seleccionar estado" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="pendiente">🟡 Pendiente</SelectItem>
+              <SelectItem value="pagada">🟢 Pagada</SelectItem>
+              <SelectItem value="entregada">🔵 Entregada</SelectItem>
+              <SelectItem value="retirada">🟣 Retirada</SelectItem>
+              <SelectItem value="completada">✅ Completada</SelectItem>
+              <SelectItem value="cancelada">🔴 Cancelada</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-sm text-orange-600 mt-2">
+            Cambiar el estado enviará automáticamente un email de notificación al cliente.
+          </p>
+        </div>
+      )}
 
       {/* Date and Quantity Section */}
       <div className="bg-red-50 p-4 rounded-lg border border-red-200">
@@ -1121,7 +1147,7 @@ function RentalForm({
               variant="ghost"
               size="sm"
               onClick={() => {
-                const exists = formData.additionalProducts.find(p => p.name === product.name)
+                const exists = formData.additionalProducts.find((p: any) => p.name === product.name)
                 if (!exists) {
                   setFormData(prev => ({
                     ...prev,
@@ -1140,7 +1166,7 @@ function RentalForm({
         {/* Lista de Productos Agregados */}
         {formData.additionalProducts.length > 0 && (
           <div className="space-y-2 mb-4">
-            {formData.additionalProducts.map((product, index) => (
+            {formData.additionalProducts.map((product: any, index: number) => (
               <div key={index} className="flex items-center justify-between p-3 bg-white rounded border">
                 <div className="flex-1">
                   <span className="font-medium">{product.name}</span>
@@ -1176,7 +1202,7 @@ function RentalForm({
                     variant="ghost"
                     size="sm"
                     onClick={() => {
-                      const newProducts = formData.additionalProducts.filter((_, i) => i !== index)
+                      const newProducts = formData.additionalProducts.filter((_: any, i: number) => i !== index)
                       setFormData(prev => ({ ...prev, additionalProducts: newProducts }))
                     }}
                     className="text-red-500 hover:text-red-700"
