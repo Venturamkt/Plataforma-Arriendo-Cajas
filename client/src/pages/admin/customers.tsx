@@ -674,35 +674,48 @@ export default function Customers() {
                               )}
                             </TableCell>
                             <TableCell>
-                              {rentalInfo.driverName ? (
-                                <div className="text-sm">
-                                  <div className="font-medium">{rentalInfo.driverName}</div>
-                                  {rentalInfo.driverEmail && (
-                                    <div className="text-xs text-gray-500">{rentalInfo.driverEmail}</div>
-                                  )}
-                                  <button
-                                    className="text-xs text-blue-600 hover:text-blue-800"
-                                    onClick={() => {
-                                      const rental = getCustomerRental(customer.id)
-                                      setEditingDriverRental(rental)
-                                      setShowDriverEditDialog(true)
-                                    }}
-                                  >
-                                    Cambiar repartidor
-                                  </button>
-                                </div>
-                              ) : (
-                                <button
-                                  className="text-sm text-blue-600 hover:text-blue-800"
-                                  onClick={() => {
-                                    const rental = getCustomerRental(customer.id)
-                                    setEditingDriverRental(rental)
-                                    setShowDriverEditDialog(true)
-                                  }}
-                                >
-                                  Asignar repartidor
-                                </button>
-                              )}
+                              {(() => {
+                                // Get the latest rental with driver assignment
+                                const latestRental = rentals
+                                  .filter((r: Rental) => r.customerId === customer.id && r.assignedDriver)
+                                  .sort((a: Rental, b: Rental) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+                                
+                                if (latestRental?.assignedDriver) {
+                                  return (
+                                    <div className="text-sm">
+                                      <div className="font-medium text-gray-900">{latestRental.assignedDriver}</div>
+                                      <div className="text-xs text-gray-500">
+                                        Código: {latestRental.masterCode || 'Sin asignar'}
+                                      </div>
+                                      <button
+                                        className="text-xs text-blue-600 hover:text-blue-800"
+                                        onClick={() => {
+                                          const rental = getCustomerRental(customer.id)
+                                          setEditingDriverRental(rental)
+                                          setShowDriverEditDialog(true)
+                                        }}
+                                      >
+                                        Cambiar repartidor
+                                      </button>
+                                    </div>
+                                  );
+                                } else if (rentalInfo.active > 0) {
+                                  return (
+                                    <button
+                                      className="text-sm text-blue-600 hover:text-blue-800"
+                                      onClick={() => {
+                                        const rental = getCustomerRental(customer.id)
+                                        setEditingDriverRental(rental)
+                                        setShowDriverEditDialog(true)
+                                      }}
+                                    >
+                                      Asignar repartidor
+                                    </button>
+                                  );
+                                } else {
+                                  return <span className="text-gray-400 text-sm">Sin arriendos activos</span>;
+                                }
+                              })()}
                             </TableCell>
                             <TableCell className="text-center">
                               <div className="flex items-center justify-center gap-1">
@@ -1805,7 +1818,30 @@ export default function Customers() {
                           </div>
                           <div>
                             <Label>Repartidor</Label>
-                            <p className="font-medium">{rental.driverName || 'Sin asignar'}</p>
+                            <p className="font-medium">{rental.assignedDriver || 'Sin asignar'}</p>
+                          </div>
+                          <div>
+                            <Label>Código Maestro</Label>
+                            <p className="font-medium font-mono">{rental.masterCode || 'Sin generar'}</p>
+                          </div>
+                          <div className="col-span-full">
+                            <Label>Códigos de Cajas Asignadas</Label>
+                            {rental.assignedBoxCodes ? (
+                              <div className="mt-2 p-3 bg-gray-50 rounded-lg">
+                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                                  {rental.assignedBoxCodes.map((code: string, index: number) => (
+                                    <div key={index} className="text-xs font-mono bg-white px-2 py-1 rounded border">
+                                      {code}
+                                    </div>
+                                  ))}
+                                </div>
+                                <p className="text-xs text-gray-600 mt-2">
+                                  Total: {rental.assignedBoxCodes.length} cajas asignadas
+                                </p>
+                              </div>
+                            ) : (
+                              <p className="text-gray-500 text-sm">No hay códigos de cajas asignados</p>
+                            )}
                           </div>
                           <div>
                             <Label>Dirección de Entrega</Label>
@@ -1816,30 +1852,6 @@ export default function Customers() {
                             <p className="font-medium">${rental.totalAmount}</p>
                           </div>
                         </div>
-                        
-                        {/* Box Codes */}
-                        {rental.boxCodes && rental.boxCodes.length > 0 && (
-                          <div className="mt-4">
-                            <Label>Códigos de Cajas</Label>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2">
-                              {rental.boxCodes.map((code: string, index: number) => (
-                                <div key={index} className="bg-gray-100 p-2 rounded text-center font-mono text-sm">
-                                  {code}
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Master Code */}
-                        {rental.masterCode && (
-                          <div className="mt-4">
-                            <Label>Código Maestro</Label>
-                            <div className="bg-blue-100 p-3 rounded text-center font-mono text-lg font-bold">
-                              {rental.masterCode}
-                            </div>
-                          </div>
-                        )}
                       </div>
                     )
                   })()}

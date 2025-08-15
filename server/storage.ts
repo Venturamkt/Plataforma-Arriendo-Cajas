@@ -404,6 +404,7 @@ export class DatabaseStorage implements IStorage {
       .update(rentals)
       .set({ 
         driverId: drivers[0].id,
+        assignedDriver: `${drivers[0].firstName} ${drivers[0].lastName}`,
         updatedAt: new Date() 
       })
       .where(eq(rentals.id, rentalId))
