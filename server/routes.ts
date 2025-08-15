@@ -616,12 +616,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/track/:rutDigits/:trackingCode", async (req, res) => {
     try {
       const { rutDigits, trackingCode } = req.params;
+      console.log(`🔍 Tracking API request: RUT digits=${rutDigits}, tracking code=${trackingCode}`);
+      
       const rental = await storage.getRentalByTracking(rutDigits, trackingCode);
       
       if (!rental) {
+        console.log(`❌ No rental found for RUT digits=${rutDigits}, tracking code=${trackingCode}`);
         return res.status(404).json({ message: "Rental not found" });
       }
 
+      console.log(`✅ Rental found: ID=${rental.id}, status=${rental.status}`);
       res.json(rental);
     } catch (error) {
       console.error("Error tracking rental:", error);
