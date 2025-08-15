@@ -290,13 +290,14 @@ export default function Customers() {
 
   const updateDriverMutation = useMutation({
     mutationFn: async ({ rentalId, driverId }: { rentalId: string, driverId: string }) => {
-      const res = await apiRequest("PATCH", `/api/rentals/${rentalId}`, { driverId })
+      const res = await apiRequest("PUT", `/api/rentals/${rentalId}/assign-driver`, { driverId })
       return res.json()
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/rentals"] })
+      queryClient.invalidateQueries({ queryKey: ["/api/customers"] })
       toast({
-        title: "Repartidor actualizado",
+        title: "Repartidor asignado",
         description: "El repartidor ha sido asignado exitosamente"
       })
       setShowDriverEditDialog(false)
@@ -305,7 +306,7 @@ export default function Customers() {
     onError: (error: any) => {
       toast({
         title: "Error",
-        description: error.message || "No se pudo actualizar el repartidor",
+        description: error.message || "No se pudo asignar el repartidor",
         variant: "destructive"
       })
     }
@@ -682,35 +683,54 @@ export default function Customers() {
                                 
                                 if (latestRental?.assignedDriver) {
                                   return (
-                                    <div className="text-sm">
-                                      <div className="font-medium text-gray-900">{latestRental.assignedDriver}</div>
-                                      <div className="text-xs text-gray-500">
-                                        Código: {latestRental.masterCode || 'Sin asignar'}
+                                    <div className="flex items-center space-x-3">
+                                      <div className="flex-1">
+                                        <div className="flex items-center space-x-2">
+                                          <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                            <span className="text-xs font-semibold text-green-700">
+                                              {latestRental.assignedDriver.split(' ').map(n => n[0]).join('')}
+                                            </span>
+                                          </div>
+                                          <div>
+                                            <div className="font-medium text-gray-900 text-sm">{latestRental.assignedDriver}</div>
+                                            <div className="text-xs text-gray-500 font-mono">
+                                              {latestRental.masterCode || 'Sin código'}
+                                            </div>
+                                          </div>
+                                        </div>
+                                        <button
+                                          className="text-xs text-blue-600 hover:text-blue-800 mt-1"
+                                          onClick={() => {
+                                            const rental = getCustomerRental(customer.id)
+                                            setEditingDriverRental(rental)
+                                            setShowDriverEditDialog(true)
+                                          }}
+                                        >
+                                          Cambiar repartidor
+                                        </button>
                                       </div>
-                                      <button
-                                        className="text-xs text-blue-600 hover:text-blue-800"
-                                        onClick={() => {
-                                          const rental = getCustomerRental(customer.id)
-                                          setEditingDriverRental(rental)
-                                          setShowDriverEditDialog(true)
-                                        }}
-                                      >
-                                        Cambiar repartidor
-                                      </button>
                                     </div>
                                   );
                                 } else if (rentalInfo.active > 0) {
                                   return (
-                                    <button
-                                      className="text-sm text-blue-600 hover:text-blue-800"
-                                      onClick={() => {
-                                        const rental = getCustomerRental(customer.id)
-                                        setEditingDriverRental(rental)
-                                        setShowDriverEditDialog(true)
-                                      }}
-                                    >
-                                      Asignar repartidor
-                                    </button>
+                                    <div className="flex items-center space-x-3">
+                                      <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                                        <span className="text-xs text-gray-500">?</span>
+                                      </div>
+                                      <div>
+                                        <button
+                                          className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                                          onClick={() => {
+                                            const rental = getCustomerRental(customer.id)
+                                            setEditingDriverRental(rental)
+                                            setShowDriverEditDialog(true)
+                                          }}
+                                        >
+                                          Asignar repartidor
+                                        </button>
+                                        <div className="text-xs text-gray-400">Sin asignar</div>
+                                      </div>
+                                    </div>
                                   );
                                 } else {
                                   return <span className="text-gray-400 text-sm">Sin arriendos activos</span>;
@@ -1871,7 +1891,7 @@ export default function Customers() {
                   <div>
                     <Label>Repartidor Actual</Label>
                     <p className="text-sm text-gray-600">
-                      {editingDriverRental.driverName || 'Sin asignar'}
+                      {editingDriverRental.assignedDriver || 'Sin asignar'}
                     </p>
                   </div>
                   
@@ -1889,7 +1909,7 @@ export default function Customers() {
                       <SelectContent>
                         {drivers.map((driver: any) => (
                           <SelectItem key={driver.id} value={driver.id}>
-                            {driver.name} - {driver.email}
+                            {`${driver.firstName} ${driver.lastName}`} - {driver.email}
                           </SelectItem>
                         ))}
                       </SelectContent>
