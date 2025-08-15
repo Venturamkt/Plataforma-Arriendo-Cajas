@@ -203,6 +203,11 @@ export default function CustomersPageNew() {
     refetchInterval: 5000,
   })
 
+  const { data: inventory = [] } = useQuery({
+    queryKey: ["/api/boxes/"],
+    refetchInterval: 5000,
+  })
+
   // Manual refresh
   const handleManualRefresh = () => {
     refetchCustomers()
@@ -493,11 +498,20 @@ export default function CustomersPageNew() {
     const getAvailableBoxes = () => {
       if (!formData.deliveryDate || !formData.returnDate) return 'Selecciona fechas'
       
+      // Usar datos reales del inventario API
+      if (!inventory || inventory.length === 0) {
+        return 0
+      }
+      
       const deliveryDate = new Date(formData.deliveryDate)
       const returnDate = new Date(formData.returnDate)
       
-      // Consultar cajas disponibles reales de la base de datos
-      const totalBoxes = 60 // Total de cajas reales en inventario físico
+      // Contar cajas físicamente disponibles en inventario
+      const availableBoxesInInventory = inventory.filter(box => 
+        box.status === 'available' || box.status === 'maintenance'
+      ).length
+      
+      // Verificar reservas en el período seleccionado
       const rentalsInPeriod = rentals.filter(r => {
         if (r.status === 'cancelada' || r.status === 'completada') return false
         
@@ -509,7 +523,7 @@ export default function CustomersPageNew() {
       })
       
       const boxesInUse = rentalsInPeriod.reduce((sum, r) => sum + r.totalBoxes, 0)
-      return totalBoxes - boxesInUse
+      return Math.max(0, availableBoxesInInventory - boxesInUse)
     }
 
     useEffect(() => {
