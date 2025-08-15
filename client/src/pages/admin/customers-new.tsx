@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { useQuery, useMutation } from "@tanstack/react-query"
 import { queryClient, apiRequest } from "@/lib/queryClient"
+import { useCurrentUser } from "@/hooks/useCurrentUser"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -10,6 +11,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "@/hooks/use-toast"
 import { Trash2, Edit, Plus, Search, RefreshCw } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import Header from "@/components/layout/header"
+import Sidebar from "@/components/layout/sidebar"
+import MobileNav from "@/components/layout/mobile-nav"
+import { useLocation } from "wouter"
 
 interface Customer {
   id: string
@@ -34,41 +39,41 @@ interface Rental {
 }
 
 export default function CustomersPageNew() {
+  const { user, isLoading } = useCurrentUser()
+  const [, setLocation] = useLocation()
   const [search, setSearch] = useState("")
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [showEditDialog, setShowEditDialog] = useState(false)
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
   const [selectedRental, setSelectedRental] = useState<Rental | null>(null)
   const [showRentalDialog, setShowRentalDialog] = useState(false)
-  const [forceRefresh, setForceRefresh] = useState(0)
 
-  // Force refresh every 3 seconds
+  // Auth check
   useEffect(() => {
-    const interval = setInterval(() => {
-      setForceRefresh(prev => prev + 1)
-      queryClient.invalidateQueries({ queryKey: ["/api/customers"] })
-      queryClient.invalidateQueries({ queryKey: ["/api/rentals"] })
-    }, 3000)
-    return () => clearInterval(interval)
-  }, [])
+    if (isLoading) return
+    if (!user) {
+      window.location.href = "/"
+      return
+    }
+    if (user.type !== 'admin') {
+      window.location.href = "/"
+      return
+    }
+  }, [user, isLoading])
 
-  // Fetch data with force refresh key
+  // Fetch data
   const { data: customers = [], isLoading: customersLoading, refetch: refetchCustomers } = useQuery<Customer[]>({
-    queryKey: ["/api/customers", forceRefresh],
-    staleTime: 0,
-    gcTime: 0,
+    queryKey: ["/api/customers"],
+    refetchInterval: 5000, // Refresh every 5 seconds
   })
 
   const { data: rentals = [], refetch: refetchRentals } = useQuery<Rental[]>({
-    queryKey: ["/api/rentals", forceRefresh],
-    staleTime: 0,
-    gcTime: 0,
+    queryKey: ["/api/rentals"],
+    refetchInterval: 5000,
   })
 
   // Manual refresh
   const handleManualRefresh = async () => {
-    queryClient.removeQueries({ queryKey: ["/api/customers"] })
-    queryClient.removeQueries({ queryKey: ["/api/rentals"] })
     await refetchCustomers()
     await refetchRentals()
     toast({
@@ -250,8 +255,22 @@ export default function CustomersPageNew() {
     )
   }
 
+  if (isLoading || !user) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <RefreshCw className="animate-spin h-8 w-8" />
+      </div>
+    )
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+      <div className="flex">
+        <Sidebar />
+        <MobileNav />
+        <main className="flex-1 p-6">
+          <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">Gestión de Clientes</h1>
@@ -433,6 +452,9 @@ export default function CustomersPageNew() {
           )}
         </DialogContent>
       </Dialog>
+          </div>
+        </main>
+      </div>
     </div>
   )
 }
