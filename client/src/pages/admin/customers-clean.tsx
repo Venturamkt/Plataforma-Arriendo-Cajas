@@ -227,10 +227,45 @@ function CustomerCard({
                         </Badge>
                       )}
                       
+                      {/* Quick Status Selector */}
+                      <Select
+                        value={rental.status}
+                        onValueChange={async (value) => {
+                          // Update rental status directly via API
+                          try {
+                            const response = await fetch(`/api/rentals/${rental.id}`, {
+                              method: 'PUT',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ status: value })
+                            })
+                            
+                            if (response.ok) {
+                              // Reload rentals to show updated status
+                              window.location.reload()
+                            }
+                          } catch (error) {
+                            console.error('Error updating status:', error)
+                          }
+                        }}
+                      >
+                        <SelectTrigger className="w-32 h-8 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pendiente">🟡 Pendiente</SelectItem>
+                          <SelectItem value="pagada">🟢 Pagada</SelectItem>
+                          <SelectItem value="entregada">🔵 Entregada</SelectItem>
+                          <SelectItem value="retirada">🟣 Retirada</SelectItem>
+                          <SelectItem value="completada">✅ Completada</SelectItem>
+                          <SelectItem value="cancelada">🔴 Cancelada</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => onEditRental(rental)}
+                        title="Editar arriendo completo"
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
