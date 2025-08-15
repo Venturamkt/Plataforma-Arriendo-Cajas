@@ -62,6 +62,8 @@ Preferred communication style: Simple, everyday language.
 - ✅ **Form reset issue resolved**: Fixed rental forms auto-closing after save - now preserve all data for continued editing
 - ✅ **Inventory sync corrected**: Fixed API status mismatch ('available' vs 'disponible') - now shows correct box count (35 available)
 - ✅ **User experience improved**: Forms stay open after successful operations with clear success messages
+- ✅ **Clean customers page created**: Built new customers-clean.tsx with simplified, error-free logic while preserving design and colors
+- ✅ **Logic separation**: Maintained all visual elements (colors, layout, shortcuts) but rebuilt core functionality from scratch
 
 ### Key Features
 - **Authentication**: Replit Auth (OpenID Connect), PostgreSQL-backed sessions, role-based access control (Admin, Driver, Customer), HTTP-only cookies, CSRF protection.
