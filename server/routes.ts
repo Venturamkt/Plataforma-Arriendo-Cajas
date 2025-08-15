@@ -464,7 +464,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Guarantee calculation: ", req.body.totalBoxes, "boxes x $2,000 = $", processedBody.guaranteeAmount);
       
       const rentalData = insertRentalSchema.parse(processedBody);
-      const rental = await storage.createRental(rentalData);
+      let rental = await storage.createRental(rentalData);
       
       // Send email notification for new rental creation
       if (rental && emailService.isEmailConfigured()) {
