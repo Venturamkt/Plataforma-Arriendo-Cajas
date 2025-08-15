@@ -7,7 +7,18 @@ import { setupTaskRoutes } from "./taskRoutes";
 import { emailService } from "./emailService";
 import { generateTrackingUrl } from "./emailTemplates";
 import { reminderService } from "./reminderService";
-import { insertCustomerSchema, insertBoxSchema, insertRentalSchema, updateRentalSchema, insertDeliveryTaskSchema, insertBoxMovementSchema } from "@shared/schema";
+import { 
+  insertCustomerSchema, 
+  insertBoxSchema, 
+  insertRentalSchema, 
+  updateRentalSchema, 
+  insertDeliveryTaskSchema, 
+  insertBoxMovementSchema,
+  insertCustomerAddressSchema,
+  insertCustomerActivitySchema,
+  insertCustomerPaymentSchema,
+  insertBoxReservationSchema
+} from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -346,6 +357,270 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       res.status(500).json({ message: "Failed to delete customer" });
+    }
+  });
+
+  // Enhanced customer routes for the new functionality
+  
+  // Customer search with filters
+  app.get('/api/customers/search', requireAdminSession, async (req, res) => {
+    try {
+      const { hasDebt, hasActiveRentals, search } = req.query;
+      const filters = {
+        hasDebt: hasDebt === 'true',
+        hasActiveRentals: hasActiveRentals === 'true',
+        search: search as string
+      };
+      const customers = await storage.getCustomersWithFilters(filters);
+      res.json(customers);
+    } catch (error) {
+      console.error("Error searching customers:", error);
+      res.status(500).json({ message: "Failed to search customers" });
+    }
+  });
+
+  // Customer lookup by RUT or phone
+  app.get('/api/customers/lookup/:identifier', requireAdminSession, async (req, res) => {
+    try {
+      const { identifier } = req.params;
+      let customer;
+      
+      // Try to find by RUT first, then by phone
+      if (identifier.includes('-') || identifier.length >= 7) {
+        customer = await storage.getCustomerByRut(identifier);
+      }
+      
+      if (!customer && identifier.length >= 8) {
+        customer = await storage.getCustomerByPhone(identifier);
+      }
+      
+      if (!customer) {
+        return res.status(404).json({ message: "Customer not found" });
+      }
+      
+      res.json(customer);
+    } catch (error) {
+      console.error("Error looking up customer:", error);
+      res.status(500).json({ message: "Failed to lookup customer" });
+    }
+  });
+
+  // Customer addresses
+  app.get('/api/customers/:id/addresses', requireAdminSession, async (req, res) => {
+    try {
+      const addresses = await storage.getCustomerAddresses(req.params.id);
+      res.json(addresses);
+    } catch (error) {
+      console.error("Error fetching customer addresses:", error);
+      res.status(500).json({ message: "Failed to fetch addresses" });
+    }
+  });
+
+  app.post('/api/customers/:id/addresses', requireAdminSession, async (req, res) => {
+    try {
+      const addressData = insertCustomerAddressSchema.parse({
+        ...req.body,
+        customerId: req.params.id
+      });
+      const address = await storage.createCustomerAddress(addressData);
+      
+      // Log activity
+      await storage.createCustomerActivity({
+        customerId: req.params.id,
+        type: 'address_added',
+        description: `Dirección agregada: ${address.address}`,
+        metadata: JSON.stringify({ addressId: address.id })
+      });
+      
+      res.status(201).json(address);
+    } catch (error) {
+      console.error("Error creating customer address:", error);
+      res.status(400).json({ message: "Failed to create address" });
+    }
+  });
+
+  app.put('/api/customers/:customerId/addresses/:addressId', requireAdminSession, async (req, res) => {
+    try {
+      const addressData = insertCustomerAddressSchema.partial().parse(req.body);
+      const address = await storage.updateCustomerAddress(req.params.addressId, addressData);
+      if (!address) {
+        return res.status(404).json({ message: "Address not found" });
+      }
+      
+      // Log activity
+      await storage.createCustomerActivity({
+        customerId: req.params.customerId,
+        type: 'address_updated',
+        description: `Dirección actualizada: ${address.address}`,
+        metadata: JSON.stringify({ addressId: address.id })
+      });
+      
+      res.json(address);
+    } catch (error) {
+      console.error("Error updating customer address:", error);
+      res.status(400).json({ message: "Failed to update address" });
+    }
+  });
+
+  app.delete('/api/customers/:customerId/addresses/:addressId', requireAdminSession, async (req, res) => {
+    try {
+      const success = await storage.deleteCustomerAddress(req.params.addressId);
+      if (!success) {
+        return res.status(404).json({ message: "Address not found" });
+      }
+      
+      // Log activity
+      await storage.createCustomerActivity({
+        customerId: req.params.customerId,
+        type: 'address_deleted',
+        description: 'Dirección eliminada',
+        metadata: JSON.stringify({ addressId: req.params.addressId })
+      });
+      
+      res.json({ message: "Address deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting customer address:", error);
+      res.status(500).json({ message: "Failed to delete address" });
+    }
+  });
+
+  // Customer activities (timeline)
+  app.get('/api/customers/:id/activities', requireAdminSession, async (req, res) => {
+    try {
+      const activities = await storage.getCustomerActivities(req.params.id);
+      res.json(activities);
+    } catch (error) {
+      console.error("Error fetching customer activities:", error);
+      res.status(500).json({ message: "Failed to fetch activities" });
+    }
+  });
+
+  app.post('/api/customers/:id/activities', requireAdminSession, async (req, res) => {
+    try {
+      const activityData = insertCustomerActivitySchema.parse({
+        ...req.body,
+        customerId: req.params.id
+      });
+      const activity = await storage.createCustomerActivity(activityData);
+      res.status(201).json(activity);
+    } catch (error) {
+      console.error("Error creating customer activity:", error);
+      res.status(400).json({ message: "Failed to create activity" });
+    }
+  });
+
+  // Customer payments and balance
+  app.get('/api/customers/:id/payments', requireAdminSession, async (req, res) => {
+    try {
+      const payments = await storage.getCustomerPayments(req.params.id);
+      res.json(payments);
+    } catch (error) {
+      console.error("Error fetching customer payments:", error);
+      res.status(500).json({ message: "Failed to fetch payments" });
+    }
+  });
+
+  app.post('/api/customers/:id/payments', requireAdminSession, async (req, res) => {
+    try {
+      const paymentData = insertCustomerPaymentSchema.parse({
+        ...req.body,
+        customerId: req.params.id
+      });
+      const payment = await storage.createCustomerPayment(paymentData);
+      
+      // Log activity
+      await storage.createCustomerActivity({
+        customerId: req.params.id,
+        type: payment.type === 'payment' ? 'payment_received' : 'charge_added',
+        description: `${payment.type === 'payment' ? 'Pago recibido' : 'Cargo agregado'}: $${payment.amount}`,
+        metadata: JSON.stringify({ paymentId: payment.id, amount: payment.amount })
+      });
+      
+      res.status(201).json(payment);
+    } catch (error) {
+      console.error("Error creating customer payment:", error);
+      res.status(400).json({ message: "Failed to create payment" });
+    }
+  });
+
+  app.get('/api/customers/:id/balance', requireAdminSession, async (req, res) => {
+    try {
+      const balance = await storage.getCustomerBalance(req.params.id);
+      res.json({ balance });
+    } catch (error) {
+      console.error("Error fetching customer balance:", error);
+      res.status(500).json({ message: "Failed to fetch balance" });
+    }
+  });
+
+  // Customer rentals
+  app.get('/api/customers/:id/rentals', requireAdminSession, async (req, res) => {
+    try {
+      const { status } = req.query;
+      const rentals = await storage.getCustomerRentals(req.params.id, status as string);
+      res.json(rentals);
+    } catch (error) {
+      console.error("Error fetching customer rentals:", error);
+      res.status(500).json({ message: "Failed to fetch rentals" });
+    }
+  });
+
+  // Inventory validation for rental creation
+  app.post('/api/inventory/validate', requireAdminSession, async (req, res) => {
+    try {
+      const { totalBoxes, deliveryDate, returnDate } = req.body;
+      
+      if (!totalBoxes || !deliveryDate) {
+        return res.status(400).json({ message: "totalBoxes and deliveryDate are required" });
+      }
+      
+      const validation = await storage.validateInventoryForRental(
+        parseInt(totalBoxes),
+        new Date(deliveryDate),
+        returnDate ? new Date(returnDate) : undefined
+      );
+      
+      res.json(validation);
+    } catch (error) {
+      console.error("Error validating inventory:", error);
+      res.status(500).json({ message: "Failed to validate inventory" });
+    }
+  });
+
+  // Box reservations
+  app.get('/api/reservations', requireAdminSession, async (req, res) => {
+    try {
+      const { rentalId } = req.query;
+      const reservations = await storage.getBoxReservations(rentalId as string);
+      res.json(reservations);
+    } catch (error) {
+      console.error("Error fetching reservations:", error);
+      res.status(500).json({ message: "Failed to fetch reservations" });
+    }
+  });
+
+  app.post('/api/reservations', requireAdminSession, async (req, res) => {
+    try {
+      const reservationData = insertBoxReservationSchema.parse(req.body);
+      const reservation = await storage.createBoxReservation(reservationData);
+      res.status(201).json(reservation);
+    } catch (error) {
+      console.error("Error creating reservation:", error);
+      res.status(400).json({ message: "Failed to create reservation" });
+    }
+  });
+
+  app.put('/api/reservations/:id/status', requireAdminSession, async (req, res) => {
+    try {
+      const { status } = req.body;
+      const reservation = await storage.updateBoxReservationStatus(req.params.id, status);
+      if (!reservation) {
+        return res.status(404).json({ message: "Reservation not found" });
+      }
+      res.json(reservation);
+    } catch (error) {
+      console.error("Error updating reservation status:", error);
+      res.status(400).json({ message: "Failed to update reservation" });
     }
   });
 

@@ -81,10 +81,24 @@ export const customers = pgTable("customers", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id),
   name: varchar("name").notNull(),
-  email: varchar("email").notNull(),
-  phone: varchar("phone"),
+  email: varchar("email").notNull(), // Keep without unique for now to avoid breaking existing data
+  phone: varchar("phone"), // Keep without unique for now 
+  rut: varchar("rut"), // Keep without unique for now
+  businessType: varchar("business_type"), // Giro empresarial
+  billingNotes: text("billing_notes"), // Notas de cobro
+  contactPreference: varchar("contact_preference", { enum: ["email", "phone", "whatsapp"] }).default("email"),
+  // Main addresses
+  deliveryAddress: text("delivery_address"),
+  pickupAddress: text("pickup_address"),
+  // Commercial status
+  currentBalance: decimal("current_balance", { precision: 10, scale: 2 }).default("0"),
+  lastTransactionDate: timestamp("last_transaction_date"),
+  // Operational summary  
+  activeRentals: integer("active_rentals").default(0),
+  totalRentals: integer("total_rentals").default(0),
+  lastRentalStatus: varchar("last_rental_status"),
+  // Legacy field for backward compatibility
   address: text("address"),
-  rut: varchar("rut"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -158,6 +172,64 @@ export const boxMovements = pgTable("box_movements", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Customer addresses (multiple addresses per customer)
+export const customerAddresses = pgTable("customer_addresses", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  customerId: varchar("customer_id").references(() => customers.id).notNull(),
+  type: varchar("type", { enum: ["delivery", "pickup", "billing"] }).notNull(),
+  address: text("address").notNull(),
+  isPrimary: boolean("is_primary").default(false),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Customer activity log for timeline
+export const customerActivities = pgTable("customer_activities", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  customerId: varchar("customer_id").references(() => customers.id).notNull(),
+  type: varchar("type", { 
+    enum: ["rental_created", "rental_updated", "payment_received", "payment_overdue", 
+           "delivery_scheduled", "delivery_completed", "pickup_scheduled", "pickup_completed",
+           "customer_updated", "note_added", "address_added", "address_updated", "address_deleted",
+           "charge_added"] 
+  }).notNull(),
+  description: text("description").notNull(),
+  metadata: text("metadata"), // JSON for additional data
+  performedBy: varchar("performed_by").references(() => users.id),
+  relatedRentalId: varchar("related_rental_id").references(() => rentals.id),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Box reservations for inventory management
+export const boxReservations = pgTable("box_reservations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  rentalId: varchar("rental_id").references(() => rentals.id).notNull(),
+  boxId: varchar("box_id").references(() => boxes.id).notNull(),
+  reservedFrom: timestamp("reserved_from").notNull(),
+  reservedUntil: timestamp("reserved_until").notNull(),
+  status: varchar("status", { 
+    enum: ["reserved", "confirmed", "delivered", "returned", "cancelled"] 
+  }).default("reserved"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Customer payments and debt tracking
+export const customerPayments = pgTable("customer_payments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  customerId: varchar("customer_id").references(() => customers.id).notNull(),
+  rentalId: varchar("rental_id").references(() => rentals.id),
+  type: varchar("type", { enum: ["payment", "charge", "adjustment"] }).notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  description: text("description").notNull(),
+  dueDate: timestamp("due_date"),
+  paidDate: timestamp("paid_date"),
+  status: varchar("status", { enum: ["pending", "paid", "overdue", "cancelled"] }).default("pending"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Delivery tasks
 export const deliveryTasks = pgTable("delivery_tasks", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -183,6 +255,29 @@ export const usersRelations = relations(users, ({ many }) => ({
 export const customersRelations = relations(customers, ({ one, many }) => ({
   user: one(users, { fields: [customers.userId], references: [users.id] }),
   rentals: many(rentals),
+  addresses: many(customerAddresses),
+  activities: many(customerActivities),
+  payments: many(customerPayments),
+}));
+
+export const customerAddressesRelations = relations(customerAddresses, ({ one }) => ({
+  customer: one(customers, { fields: [customerAddresses.customerId], references: [customers.id] }),
+}));
+
+export const customerActivitiesRelations = relations(customerActivities, ({ one }) => ({
+  customer: one(customers, { fields: [customerActivities.customerId], references: [customers.id] }),
+  performedBy: one(users, { fields: [customerActivities.performedBy], references: [users.id] }),
+  relatedRental: one(rentals, { fields: [customerActivities.relatedRentalId], references: [rentals.id] }),
+}));
+
+export const customerPaymentsRelations = relations(customerPayments, ({ one }) => ({
+  customer: one(customers, { fields: [customerPayments.customerId], references: [customers.id] }),
+  rental: one(rentals, { fields: [customerPayments.rentalId], references: [rentals.id] }),
+}));
+
+export const boxReservationsRelations = relations(boxReservations, ({ one }) => ({
+  rental: one(rentals, { fields: [boxReservations.rentalId], references: [rentals.id] }),
+  box: one(boxes, { fields: [boxReservations.boxId], references: [boxes.id] }),
 }));
 
 export const boxesRelations = relations(boxes, ({ many }) => ({
@@ -271,6 +366,30 @@ export const insertDeliveryTaskSchema = createInsertSchema(deliveryTasks).omit({
   createdAt: true,
 });
 
+// New table schemas
+export const insertCustomerAddressSchema = createInsertSchema(customerAddresses).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCustomerActivitySchema = createInsertSchema(customerActivities).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertBoxReservationSchema = createInsertSchema(boxReservations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCustomerPaymentSchema = createInsertSchema(customerPayments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -287,3 +406,13 @@ export type InsertBoxMovement = z.infer<typeof insertBoxMovementSchema>;
 export type BoxMovement = typeof boxMovements.$inferSelect;
 export type InsertDeliveryTask = z.infer<typeof insertDeliveryTaskSchema>;
 export type DeliveryTask = typeof deliveryTasks.$inferSelect;
+
+// New types
+export type InsertCustomerAddress = z.infer<typeof insertCustomerAddressSchema>;
+export type CustomerAddress = typeof customerAddresses.$inferSelect;
+export type InsertCustomerActivity = z.infer<typeof insertCustomerActivitySchema>;
+export type CustomerActivity = typeof customerActivities.$inferSelect;
+export type InsertBoxReservation = z.infer<typeof insertBoxReservationSchema>;
+export type BoxReservation = typeof boxReservations.$inferSelect;
+export type InsertCustomerPayment = z.infer<typeof insertCustomerPaymentSchema>;
+export type CustomerPayment = typeof customerPayments.$inferSelect;

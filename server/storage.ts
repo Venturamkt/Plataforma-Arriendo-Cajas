@@ -6,6 +6,10 @@ import {
   rentalBoxes,
   boxMovements,
   deliveryTasks,
+  customerAddresses,
+  customerActivities,
+  customerPayments,
+  boxReservations,
   driverUsers,
   type User,
   type UpsertUser,
@@ -21,9 +25,17 @@ import {
   type InsertBoxMovement,
   type DeliveryTask,
   type InsertDeliveryTask,
+  type CustomerAddress,
+  type InsertCustomerAddress,
+  type CustomerActivity,
+  type InsertCustomerActivity,
+  type CustomerPayment,
+  type InsertCustomerPayment,
+  type BoxReservation,
+  type InsertBoxReservation
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, count, sql, or, like } from "drizzle-orm";
+import { eq, desc, and, count, sql, or, like, gte, lte } from "drizzle-orm";
 
 // Interface for storage operations
 export interface IStorage {
@@ -40,9 +52,37 @@ export interface IStorage {
   getCustomers(): Promise<Customer[]>;
   getCustomer(id: string): Promise<Customer | undefined>;
   getCustomerByEmail(email: string): Promise<Customer | undefined>;
+  getCustomerByRut(rut: string): Promise<Customer | undefined>;
+  getCustomerByPhone(phone: string): Promise<Customer | undefined>;
   createCustomer(customer: InsertCustomer): Promise<Customer>;
   updateCustomer(id: string, customer: Partial<InsertCustomer>): Promise<Customer | undefined>;
   deleteCustomer(id: string): Promise<boolean>;
+  getCustomersWithFilters(filters: { hasDebt?: boolean; hasActiveRentals?: boolean; search?: string }): Promise<Customer[]>;
+  
+  // Customer addresses
+  getCustomerAddresses(customerId: string): Promise<CustomerAddress[]>;
+  createCustomerAddress(address: InsertCustomerAddress): Promise<CustomerAddress>;
+  updateCustomerAddress(id: string, address: Partial<InsertCustomerAddress>): Promise<CustomerAddress | undefined>;
+  deleteCustomerAddress(id: string): Promise<boolean>;
+  
+  // Customer activities (timeline)
+  getCustomerActivities(customerId: string): Promise<CustomerActivity[]>;
+  createCustomerActivity(activity: InsertCustomerActivity): Promise<CustomerActivity>;
+  
+  // Customer payments and debt
+  getCustomerPayments(customerId: string): Promise<CustomerPayment[]>;
+  createCustomerPayment(payment: InsertCustomerPayment): Promise<CustomerPayment>;
+  updateCustomerPayment(id: string, payment: Partial<InsertCustomerPayment>): Promise<CustomerPayment | undefined>;
+  getCustomerBalance(customerId: string): Promise<number>;
+  
+  // Enhanced rental with inventory validation
+  validateInventoryForRental(totalBoxes: number, deliveryDate: Date, returnDate?: Date): Promise<{ available: number; alternatives?: { quantity: number; date: Date }[] }>;
+  getCustomerRentals(customerId: string, status?: string): Promise<Rental[]>;
+  
+  // Box reservations
+  createBoxReservation(reservation: InsertBoxReservation): Promise<BoxReservation>;
+  getBoxReservations(rentalId?: string): Promise<BoxReservation[]>;
+  updateBoxReservationStatus(reservationId: string, status: string): Promise<BoxReservation | undefined>;
   
   // Box operations
   getBoxes(): Promise<Box[]>;
@@ -214,6 +254,16 @@ export class DatabaseStorage implements IStorage {
     return customer;
   }
 
+  async getCustomerByRut(rut: string): Promise<Customer | undefined> {
+    const [customer] = await db.select().from(customers).where(eq(customers.rut, rut));
+    return customer;
+  }
+
+  async getCustomerByPhone(phone: string): Promise<Customer | undefined> {
+    const [customer] = await db.select().from(customers).where(eq(customers.phone, phone));
+    return customer;
+  }
+
   async createCustomer(customer: InsertCustomer): Promise<Customer> {
     const [newCustomer] = await db.insert(customers).values(customer).returning();
     return newCustomer;
@@ -283,6 +333,230 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async getCustomersWithFilters(filters: { hasDebt?: boolean; hasActiveRentals?: boolean; search?: string }): Promise<Customer[]> {
+    const conditions = [];
+    
+    if (filters.hasDebt) {
+      conditions.push(sql`${customers.currentBalance} > 0`);
+    }
+    
+    if (filters.hasActiveRentals) {
+      conditions.push(sql`${customers.activeRentals} > 0`);
+    }
+    
+    if (filters.search) {
+      const searchTerm = `%${filters.search}%`;
+      conditions.push(
+        or(
+          like(customers.name, searchTerm),
+          like(customers.email, searchTerm),
+          like(customers.rut, searchTerm),
+          like(customers.phone, searchTerm)
+        )
+      );
+    }
+    
+    if (conditions.length > 0) {
+      return await db.select().from(customers).where(and(...conditions)).orderBy(desc(customers.createdAt));
+    }
+    
+    return await db.select().from(customers).orderBy(desc(customers.createdAt));
+  }
+
+  // Customer addresses
+  async getCustomerAddresses(customerId: string): Promise<CustomerAddress[]> {
+    return await db.select().from(customerAddresses)
+      .where(eq(customerAddresses.customerId, customerId))
+      .orderBy(desc(customerAddresses.isPrimary), desc(customerAddresses.createdAt));
+  }
+
+  async createCustomerAddress(address: InsertCustomerAddress): Promise<CustomerAddress> {
+    const [newAddress] = await db.insert(customerAddresses).values(address).returning();
+    return newAddress;
+  }
+
+  async updateCustomerAddress(id: string, address: Partial<InsertCustomerAddress>): Promise<CustomerAddress | undefined> {
+    const [updatedAddress] = await db
+      .update(customerAddresses)
+      .set({ ...address, updatedAt: new Date() })
+      .where(eq(customerAddresses.id, id))
+      .returning();
+    return updatedAddress;
+  }
+
+  async deleteCustomerAddress(id: string): Promise<boolean> {
+    const result = await db.delete(customerAddresses).where(eq(customerAddresses.id, id));
+    return result.rowCount ? result.rowCount > 0 : false;
+  }
+
+  // Customer activities (timeline)
+  async getCustomerActivities(customerId: string): Promise<CustomerActivity[]> {
+    return await db.select().from(customerActivities)
+      .where(eq(customerActivities.customerId, customerId))
+      .orderBy(desc(customerActivities.createdAt));
+  }
+
+  async createCustomerActivity(activity: InsertCustomerActivity): Promise<CustomerActivity> {
+    const [newActivity] = await db.insert(customerActivities).values(activity).returning();
+    return newActivity;
+  }
+
+  // Customer payments and debt
+  async getCustomerPayments(customerId: string): Promise<CustomerPayment[]> {
+    return await db.select().from(customerPayments)
+      .where(eq(customerPayments.customerId, customerId))
+      .orderBy(desc(customerPayments.createdAt));
+  }
+
+  async createCustomerPayment(payment: InsertCustomerPayment): Promise<CustomerPayment> {
+    const [newPayment] = await db.insert(customerPayments).values(payment).returning();
+    
+    // Update customer balance
+    await this.updateCustomerBalance(payment.customerId);
+    
+    return newPayment;
+  }
+
+  async updateCustomerPayment(id: string, payment: Partial<InsertCustomerPayment>): Promise<CustomerPayment | undefined> {
+    const [updatedPayment] = await db
+      .update(customerPayments)
+      .set({ ...payment, updatedAt: new Date() })
+      .where(eq(customerPayments.id, id))
+      .returning();
+    
+    if (updatedPayment) {
+      await this.updateCustomerBalance(updatedPayment.customerId);
+    }
+    
+    return updatedPayment;
+  }
+
+  async getCustomerBalance(customerId: string): Promise<number> {
+    const [result] = await db
+      .select({ 
+        balance: sql<number>`COALESCE(SUM(
+          CASE 
+            WHEN ${customerPayments.type} = 'payment' THEN -${customerPayments.amount}
+            WHEN ${customerPayments.type} = 'charge' THEN ${customerPayments.amount}
+            ELSE ${customerPayments.amount}
+          END
+        ), 0)` 
+      })
+      .from(customerPayments)
+      .where(eq(customerPayments.customerId, customerId));
+      
+    return result?.balance || 0;
+  }
+
+  private async updateCustomerBalance(customerId: string): Promise<void> {
+    const balance = await this.getCustomerBalance(customerId);
+    await db
+      .update(customers)
+      .set({ 
+        currentBalance: balance.toString(),
+        lastTransactionDate: new Date(),
+        updatedAt: new Date() 
+      })
+      .where(eq(customers.id, customerId));
+  }
+
+  // Enhanced rental with inventory validation
+  async validateInventoryForRental(totalBoxes: number, deliveryDate: Date, returnDate?: Date): Promise<{ available: number; alternatives?: { quantity: number; date: Date }[] }> {
+    const effectiveReturnDate = returnDate || new Date(deliveryDate.getTime() + (7 * 24 * 60 * 60 * 1000)); // Default 7 days
+    
+    // Get total available boxes
+    const [totalBoxesResult] = await db
+      .select({ count: count() })
+      .from(boxes)
+      .where(eq(boxes.status, 'available'));
+    
+    const totalAvailable = totalBoxesResult?.count || 0;
+    
+    // Get overlapping rentals for the requested period
+    const overlappingRentals = await db
+      .select({ totalBoxes: rentals.totalBoxes })
+      .from(rentals)
+      .where(
+        and(
+          sql`${rentals.deliveryDate} <= ${effectiveReturnDate}`,
+          sql`${rentals.returnDate} >= ${deliveryDate} OR ${rentals.returnDate} IS NULL`,
+          sql`${rentals.status} NOT IN ('cancelada', 'finalizado')`
+        )
+      );
+    
+    const boxesInUse = overlappingRentals.reduce((sum, rental) => sum + rental.totalBoxes, 0);
+    const availableForPeriod = Math.max(0, totalAvailable - boxesInUse);
+    
+    const result: { available: number; alternatives?: { quantity: number; date: Date }[] } = {
+      available: availableForPeriod
+    };
+    
+    // If not enough boxes available, suggest alternatives
+    if (availableForPeriod < totalBoxes) {
+      const alternatives = [];
+      
+      // Check day before
+      const dayBefore = new Date(deliveryDate.getTime() - (24 * 60 * 60 * 1000));
+      const availableDayBefore = await this.validateInventoryForRental(totalBoxes, dayBefore, returnDate);
+      if (availableDayBefore.available >= totalBoxes) {
+        alternatives.push({ quantity: totalBoxes, date: dayBefore });
+      }
+      
+      // Check day after
+      const dayAfter = new Date(deliveryDate.getTime() + (24 * 60 * 60 * 1000));
+      const availableDayAfter = await this.validateInventoryForRental(totalBoxes, dayAfter, returnDate);
+      if (availableDayAfter.available >= totalBoxes) {
+        alternatives.push({ quantity: totalBoxes, date: dayAfter });
+      }
+      
+      // Suggest maximum available quantity for the requested date
+      if (availableForPeriod > 0) {
+        alternatives.push({ quantity: availableForPeriod, date: deliveryDate });
+      }
+      
+      result.alternatives = alternatives;
+    }
+    
+    return result;
+  }
+
+  async getCustomerRentals(customerId: string, status?: string): Promise<Rental[]> {
+    if (status) {
+      return await db.select().from(rentals)
+        .where(and(eq(rentals.customerId, customerId), eq(rentals.status, status)))
+        .orderBy(desc(rentals.createdAt));
+    }
+    
+    return await db.select().from(rentals)
+      .where(eq(rentals.customerId, customerId))
+      .orderBy(desc(rentals.createdAt));
+  }
+
+  // Box reservations
+  async createBoxReservation(reservation: InsertBoxReservation): Promise<BoxReservation> {
+    const [newReservation] = await db.insert(boxReservations).values(reservation).returning();
+    return newReservation;
+  }
+
+  async getBoxReservations(rentalId?: string): Promise<BoxReservation[]> {
+    if (rentalId) {
+      return await db.select().from(boxReservations)
+        .where(eq(boxReservations.rentalId, rentalId))
+        .orderBy(desc(boxReservations.createdAt));
+    }
+    
+    return await db.select().from(boxReservations).orderBy(desc(boxReservations.createdAt));
+  }
+
+  async updateBoxReservationStatus(reservationId: string, status: 'reserved' | 'confirmed' | 'delivered' | 'returned' | 'cancelled'): Promise<BoxReservation | undefined> {
+    const [updatedReservation] = await db
+      .update(boxReservations)
+      .set({ status, updatedAt: new Date() })
+      .where(eq(boxReservations.id, reservationId))
+      .returning();
+    return updatedReservation;
+  }
+
   // Box operations
   async getBoxes(): Promise<Box[]> {
     return await db.select().from(boxes).orderBy(desc(boxes.createdAt));
@@ -350,10 +624,18 @@ export class DatabaseStorage implements IStorage {
     // Generate unique tracking code
     const trackingCode = this.generateTrackingCode();
     
-    const [newRental] = await db.insert(rentals).values({
+    // Convert number values to strings for database
+    const rentalData = {
       ...rental,
+      dailyRate: typeof rental.dailyRate === 'number' ? rental.dailyRate.toString() : rental.dailyRate,
+      guaranteeAmount: typeof rental.guaranteeAmount === 'number' ? rental.guaranteeAmount.toString() : rental.guaranteeAmount,
+      totalAmount: typeof rental.totalAmount === 'number' ? rental.totalAmount.toString() : rental.totalAmount,
+      subTotal: typeof rental.subTotal === 'number' ? rental.subTotal.toString() : rental.subTotal,
+      deliveryFee: typeof rental.deliveryFee === 'number' ? rental.deliveryFee.toString() : rental.deliveryFee,
       trackingCode
-    }).returning();
+    };
+    
+    const [newRental] = await db.insert(rentals).values(rentalData).returning();
 
     // Assign available boxes to this rental 
     await this.assignBoxesToRental(newRental.id, rental.totalBoxes);
@@ -391,9 +673,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateRental(id: string, rental: Partial<InsertRental>): Promise<Rental | undefined> {
+    // Convert number values to strings for database
+    const updateData = {
+      ...rental,
+      dailyRate: typeof rental.dailyRate === 'number' ? rental.dailyRate.toString() : rental.dailyRate,
+      guaranteeAmount: typeof rental.guaranteeAmount === 'number' ? rental.guaranteeAmount.toString() : rental.guaranteeAmount,
+      totalAmount: typeof rental.totalAmount === 'number' ? rental.totalAmount.toString() : rental.totalAmount,
+      subTotal: typeof rental.subTotal === 'number' ? rental.subTotal.toString() : rental.subTotal,
+      deliveryFee: typeof rental.deliveryFee === 'number' ? rental.deliveryFee.toString() : rental.deliveryFee,
+      updatedAt: new Date()
+    };
+    
     const [updatedRental] = await db
       .update(rentals)
-      .set({ ...rental, updatedAt: new Date() })
+      .set(updateData)
       .where(eq(rentals.id, id))
       .returning();
 

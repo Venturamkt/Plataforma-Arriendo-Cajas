@@ -1,0 +1,155 @@
+Prompt: Lógica funcional — Módulo de Clientes (con inventario)
+
+Quiero que el módulo Clientes sea el punto de partida para crear y gestionar arriendos de cajas. Debe estar conectado al inventario y mostrar alertas de stock, deudas y actividades. Evita términos técnicos; describe funcionalidades y reglas de negocio.
+
+Objetivo del módulo
+
+Registrar y mantener fichas de clientes.
+
+Crear arriendos desde la ficha del cliente, validando inventario disponible.
+
+Mostrar estado resumido: arriendos activos, deuda, y próximos hitos.
+
+Entregar historial claro de acciones.
+
+Datos de Cliente (mínimos)
+
+Identificación: nombre o razón social, RUT (único), email (único), teléfono (único).
+
+Direcciones: entrega y retiro (múltiples posibles, una principal).
+
+Facturación: giro/opcional, notas de cobro, preferencia de contacto.
+
+Estado comercial: saldo pendiente (sí/no y monto), fecha de última transacción.
+
+Resumen operativo: arriendos_activos, arriendos_totales, último estado relevante.
+
+Reglas de unicidad: no permitir crear cliente con RUT, email o teléfono ya registrados.
+
+Acciones en la lista de Clientes
+
+Buscar/filtrar por nombre, RUT, email, teléfono, saldo pendiente, “con arriendos activos”.
+
+Ver columnas: contacto, RUT, “X activos / Y total”, badge de estado (del arriendo activo más reciente), deuda, y acciones.
+
+Acciones rápidas por fila:
+
+Ver ficha del cliente.
+
+Nuevo arriendo (abre flujo descrito abajo).
+
+Descargar histórico (CSV/XLSX según filtros visibles).
+
+Editar datos.
+
+Eliminar (solo si no tiene arriendos activos ni deuda).
+
+Ficha de Cliente
+
+Cabecera con datos principales y alertas:
+
+Deuda (monto y días en mora).
+
+Stock pendiente de devolución (si existen arriendos con cajas aún en cliente).
+
+Próximos hitos (entrega/retiro próximos 7 días).
+
+Pestañas:
+
+Arriendos (lista con filtros: activos, finalizados, cancelados).
+
+Pagos/Deuda (resumen de cargos y abonos).
+
+Direcciones (gestión y selección de principal).
+
+Notas/Actividades (timeline).
+
+Flujo “Nuevo Arriendo” desde Cliente (con inventario)
+
+Seleccionar plan/cantidad de cajas y fechas tentativas (entrega y, si aplica, retiro).
+
+Validación de inventario:
+
+Verificar disponibilidad real para la fecha de entrega (reservar desde ese día).
+
+Si no hay stock suficiente, sugerir alternativas:
+
+Menor cantidad disponible.
+
+Cambiar fecha (día anterior/siguiente con stock).
+
+Si el cliente ya tiene arriendos activos, considerar las cajas en terreno para proponer reutilización (si corresponde).
+
+Reserva de inventario:
+
+Al confirmar el arriendo, marcar cajas reservadas desde la fecha de entrega.
+
+La reserva se transforma en cajas en terreno al marcar Entregada.
+
+Reglas de bloqueo:
+
+Si el cliente tiene deuda vencida, permitir crear el arriendo solo si se registra una condición de pago (por ejemplo, abono) o se autoriza manualmente (dejar registro).
+
+Confirmación:
+
+Guardar arriendo y reflejarlo en el resumen del cliente (sube 1 en “activos”).
+
+Generar alertas y próximos hitos en la ficha.
+
+Relación con Inventario (reglas generales)
+
+Estados de inventario vinculados a arriendos:
+
+Disponible → antes de reservar.
+
+Reservado → desde confirmación del arriendo hasta la entrega.
+
+En terreno → desde Entregada hasta Retirada.
+
+Devuelto → al marcar Retirada; vuelve a Disponible tras control.
+
+La ficha del cliente debe mostrar:
+
+Cantidad reservada a futuro para este cliente.
+
+Cantidad en terreno (cajas actualmente con este cliente).
+
+Al cancelar un arriendo:
+
+Liberar reservas y actualizar disponibilidades.
+
+Si hay costos (visita fallida), mantenerlos en Deuda del cliente.
+
+Deuda y pagos (resumen en clientes)
+
+Mostrar saldo del cliente (suma de sus arriendos).
+
+No permitir Finalizar un arriendo del cliente si su saldo total ≠ 0.
+
+Filtros útiles: “Con saldo”, “En mora”, “Sin saldo”.
+
+Eliminación y seguridad de datos
+
+No eliminar cliente si tiene arriendos activos o deuda. Debe aparecer el motivo.
+
+Al eliminar sin bloqueos, mantener trazabilidad mínima en histórico general (sin datos sensibles).
+
+Reportes rápidos desde Clientes
+
+Totales por período: clientes nuevos, clientes con primer arriendo, clientes con repetición.
+
+Indicadores: % con deuda, promedio de arriendos por cliente, cajas en terreno por cliente (top 10).
+
+Mensajería básica desde Clientes
+
+Desde la ficha, poder enviar confirmación de nuevo arriendo y recordatorios de entrega/retiro (si están configurados).
+
+Si se modifica cantidad o fechas y afecta inventario, enviar aviso automático al cliente.
+
+Estados especiales y validaciones
+
+Si el cliente cambia dirección principal, proponer actualizar próximos hitos del arriendo.
+
+Si no hay stock para la fecha solicitada, no permitir crear el arriendo sin elegir alternativa.
+
+Si el cliente tiene >1 arriendo activo, al crear otro, mostrar advertencia y pedir confirmación.
