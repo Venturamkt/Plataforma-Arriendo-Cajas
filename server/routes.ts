@@ -443,6 +443,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const rentalData = insertRentalSchema.parse(processedBody);
       const rental = await storage.createRental(rentalData);
+      
+      // Send email notification for new rental creation
+      if (rental && emailService.isEmailConfigured()) {
+        console.log(`Attempting to send email for new rental creation with status: ${rental.status}`);
+        try {
+          const customer = await storage.getCustomer(rental.customerId);
+          console.log(`Customer found: ${customer?.name}, email: ${customer?.email}`);
+          
+          // Generate trackingCode if it doesn't exist
+          let updatedRental = rental;
+          if (!rental.trackingCode) {
+            console.log('New rental missing tracking code, generating one...');
+            updatedRental = await storage.generateTrackingCodeForRental(rental.id);
+            console.log(`Generated tracking code: ${updatedRental?.trackingCode}`);
+          }
+          
+          if (customer?.email && updatedRental?.trackingCode) {
+            // Extract last 4 digits before the verification digit
+            const rutDigits = customer.rut ? 
+              customer.rut.replace(/[.-]/g, '').slice(0, -1).slice(-4).padStart(4, '0') : "0000";
+            const trackingUrl = generateTrackingUrl(rutDigits, updatedRental.trackingCode);
+            
+            // Parse additional products if they exist
+            let additionalProducts = [];
+            try {
+              if (updatedRental.additionalProducts) {
+                additionalProducts = typeof updatedRental.additionalProducts === 'string' 
+                  ? JSON.parse(updatedRental.additionalProducts)
+                  : Array.isArray(updatedRental.additionalProducts) 
+                    ? updatedRental.additionalProducts 
+                    : [];
+              }
+            } catch (e) {
+              console.log('Error parsing additional products:', e);
+              additionalProducts = [];
+            }
+
+            // Calculate rental days from delivery and return dates
+            const deliveryDate = new Date(updatedRental.deliveryDate);
+            const returnDate = new Date(updatedRental.returnDate);
+            const rentalDays = Math.ceil((returnDate.getTime() - deliveryDate.getTime()) / (1000 * 60 * 60 * 24));
+
+            const emailData = {
+              customerName: customer.name,
+              rentalId: updatedRental.id,
+              trackingCode: updatedRental.trackingCode,
+              trackingUrl: trackingUrl,
+              totalBoxes: updatedRental.totalBoxes,
+              rentalDays: rentalDays > 0 ? rentalDays : 7, // Default to 7 if calculation fails
+              deliveryDate: updatedRental.deliveryDate.toLocaleDateString('es-CL', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              }),
+              deliveryAddress: updatedRental.deliveryAddress || '',
+              totalAmount: parseInt(updatedRental.totalAmount || '0'),
+              guaranteeAmount: parseInt(updatedRental.guaranteeAmount || '0'),
+              additionalProducts: additionalProducts
+            };
+
+            console.log(`Sending email for new rental status: ${updatedRental.status}`);
+            const success = await emailService.sendRentalStatusEmail(customer.email, updatedRental.status, emailData);
+            
+            if (success) {
+              console.log(`New rental email sent successfully to ${customer.email}`);
+            } else {
+              console.log(`Failed to send new rental email to ${customer.email}`);
+            }
+          }
+        } catch (emailError) {
+          console.error('Error sending new rental email:', emailError);
+          // Don't fail the rental creation if email fails
+        }
+      }
+      
       res.status(201).json(rental);
     } catch (error) {
       console.error("Error creating rental:", error);

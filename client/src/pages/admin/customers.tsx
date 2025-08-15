@@ -286,7 +286,7 @@ export default function Customers() {
 
   const updateRentalMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string, data: any }) => {
-      const res = await apiRequest("PATCH", `/api/rentals/${id}`, data)
+      const res = await apiRequest("PUT", `/api/rentals/${id}`, data)
       return res.json()
     },
     onSuccess: () => {
@@ -1228,9 +1228,9 @@ export default function Customers() {
             </DialogContent>
           </Dialog>
 
-          {/* Edit Rental Dialog */}
+          {/* Edit Rental Dialog - Complete Form like Creation Form */}
           <Dialog open={showRentalDialog} onOpenChange={setShowRentalDialog}>
-            <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Editar Arriendo</DialogTitle>
               </DialogHeader>
@@ -1253,6 +1253,27 @@ export default function Customers() {
                     })()}
                   </div>
 
+                  {/* Status Selection */}
+                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                    <Label className="text-sm font-medium text-gray-700">Estado del Arriendo</Label>
+                    <Select 
+                      value={selectedRental.status} 
+                      onValueChange={(value) => setSelectedRental({ ...selectedRental, status: value })}
+                    >
+                      <SelectTrigger className="mt-2">
+                        <SelectValue placeholder="Seleccionar estado" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pendiente">🟡 Pendiente (Esperando pago)</SelectItem>
+                        <SelectItem value="pagada">🔵 Pagada (Lista para entrega)</SelectItem>
+                        <SelectItem value="entregada">🟢 Entregada (En uso por cliente)</SelectItem>
+                        <SelectItem value="retirada">🟣 Retirada (Cajas recogidas)</SelectItem>
+                        <SelectItem value="finalizado">⚫ Finalizada (Proceso completo)</SelectItem>
+                        <SelectItem value="cancelada">🔴 Cancelada</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
                   {/* Rental Details */}
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1262,26 +1283,34 @@ export default function Customers() {
                           type="number"
                           min="1"
                           value={selectedRental.boxQuantity}
-                          onChange={(e) => setSelectedRental({ 
-                            ...selectedRental, 
-                            boxQuantity: parseInt(e.target.value) || 1 
-                          })}
+                          onChange={(e) => {
+                            const newQuantity = parseInt(e.target.value) || 1
+                            setSelectedRental({ 
+                              ...selectedRental, 
+                              boxQuantity: newQuantity
+                            })
+                          }}
                           className="mt-1"
                         />
                       </div>
                       <div>
                         <Label>Días de arriendo</Label>
-                        <Input
-                          type="number"
-                          min="1"
-                          max="90"
-                          value={selectedRental.rentalDays}
-                          onChange={(e) => setSelectedRental({ 
+                        <Select 
+                          value={selectedRental.rentalDays.toString()}
+                          onValueChange={(value) => setSelectedRental({ 
                             ...selectedRental, 
-                            rentalDays: parseInt(e.target.value) || 1 
+                            rentalDays: parseInt(value) 
                           })}
-                          className="mt-1"
-                        />
+                        >
+                          <SelectTrigger className="mt-1">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="7">7 días</SelectItem>
+                            <SelectItem value="14">14 días</SelectItem>
+                            <SelectItem value="30">30 días</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
 
@@ -1322,6 +1351,7 @@ export default function Customers() {
                             deliveryAddress: e.target.value 
                           })}
                           className="mt-1"
+                          placeholder="Dirección completa de entrega"
                         />
                       </div>
                       <div>
@@ -1333,12 +1363,13 @@ export default function Customers() {
                             pickupAddress: e.target.value 
                           })}
                           className="mt-1"
+                          placeholder="Dirección completa de retiro"
                         />
                       </div>
                     </div>
 
                     <div>
-                      <Label>Notas</Label>
+                      <Label>Notas adicionales</Label>
                       <textarea
                         className="w-full p-2 border border-gray-300 rounded-md min-h-[80px] mt-1"
                         value={selectedRental.notes || ''}
@@ -1346,7 +1377,7 @@ export default function Customers() {
                           ...selectedRental, 
                           notes: e.target.value 
                         })}
-                        placeholder="Notas adicionales..."
+                        placeholder="Instrucciones especiales, referencias, etc."
                       />
                     </div>
                   </div>
@@ -1431,8 +1462,8 @@ export default function Customers() {
                           await updateRentalMutation.mutateAsync({
                             id: selectedRental.id,
                             data: {
+                              status: selectedRental.status,
                               totalBoxes: selectedRental.boxQuantity,
-                              rentalDays: selectedRental.rentalDays,
                               dailyRate: getPriceByPeriod(selectedRental.boxQuantity, selectedRental.rentalDays).toString(),
                               totalAmount: getPriceByPeriod(selectedRental.boxQuantity, selectedRental.rentalDays).toString(),
                               guaranteeAmount: (selectedRental.boxQuantity * 2000).toString(),

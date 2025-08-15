@@ -113,6 +113,7 @@ export class EmailService {
 
   // Check if email service is configured
   isEmailConfigured(): boolean {
+    console.log('Email configured check:', this.isConfigured);
     return this.isConfigured;
   }
 

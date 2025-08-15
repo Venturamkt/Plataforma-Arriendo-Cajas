@@ -30,6 +30,12 @@ Preferred communication style: Simple, everyday language.
 - **Schema**: Shared between frontend and backend
 - **Migrations**: Drizzle Kit
 
+### Recent Updates (Aug 15, 2025)
+- ✅ **Email notifications**: Fixed email sending for new rental creation - now working for both new rentals and status changes
+- ✅ **Rental status changes**: Fully functional with automatic email notifications to customers
+- ✅ **Complete rental editing form**: Enhanced edit form with status selection, matching creation form functionality
+- ✅ **Email system verification**: Confirmed working with jalarcon@arriendocajas.cl for all rental lifecycle events
+
 ### Key Features
 - **Authentication**: Replit Auth (OpenID Connect), PostgreSQL-backed sessions, role-based access control (Admin, Driver, Customer), HTTP-only cookies, CSRF protection.
 - **Admin Panel**: Dashboard, inventory management (box status, barcode generation), customer database, delivery task management, financial reporting, box movement audit.
