@@ -246,7 +246,7 @@ export default function TrackRental() {
               <br />
               Verifica que hayas ingresado:
               <br />
-              • Tu RUT completo (ejemplo: 16.220.939-6)
+              • Tu RUT completo (ejemplo: 12.345.678-9)
               <br />
               • El código de seguimiento exacto (8 caracteres, ejemplo: HO2RLARR)
               <br />

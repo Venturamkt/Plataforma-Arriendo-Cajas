@@ -52,6 +52,13 @@ Preferred communication style: Simple, everyday language.
 - ✅ **Quick shortcuts**: Pre-configured buttons for common combinations (5/10/15 boxes × 7/14 days)
 - ✅ **Predefined products**: One-click addition of standard products (Carrito plegable, Base móvil, Kit 2 bases, Correa Ratchet)
 - ✅ **Guarantee calculation**: Automatic $2,000 per box guarantee calculation as required
+- ✅ **Form validation fixed**: Corrected data type conversion for rental creation (strings vs numbers)
+- ✅ **Address fields optimized**: Changed from large textarea to compact input fields in grid layout
+- ✅ **Editable product pricing**: Added inline editing for prices and quantities of additional products
+- ✅ **Customer form working**: Fixed "Create New Customer" dialog with all required fields
+- ✅ **Driver assignment dropdown**: Replaced broken "Asignar repartidor" button with functional Select dropdown
+- ✅ **Privacy protection**: Changed RUT examples from personal data to generic "12.345.678-9"
+- ✅ **Tracking system verified**: Confirmed URL tracking works correctly with proper RUT digits and tracking codes
 
 ### Key Features
 - **Authentication**: Replit Auth (OpenID Connect), PostgreSQL-backed sessions, role-based access control (Admin, Driver, Customer), HTTP-only cookies, CSRF protection.
