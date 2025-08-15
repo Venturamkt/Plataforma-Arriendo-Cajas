@@ -240,6 +240,10 @@ export const insertRentalSchema = createInsertSchema(rentals).omit({
 }).extend({
   deliveryDate: z.coerce.date(),
   returnDate: z.coerce.date().optional(),
+  totalAmount: z.union([z.string(), z.number()]).optional(),
+  guaranteeAmount: z.union([z.string(), z.number()]),
+  dailyRate: z.union([z.string(), z.number()]),
+  additionalProductsTotal: z.union([z.string(), z.number()]).optional(),
 });
 
 export const updateRentalSchema = insertRentalSchema.partial().extend({

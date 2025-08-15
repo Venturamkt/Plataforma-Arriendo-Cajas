@@ -685,12 +685,15 @@ function RentalForm({
     
     const submitData = {
       ...formData,
-      rentalDays,
-      dailyRate: finalPrice / rentalDays,
-      totalAmount,
-      guaranteeAmount,
-      additionalProductsTotal,
-      additionalProducts: JSON.stringify(formData.additionalProducts)
+      totalBoxes: formData.totalBoxes,
+      rentalDays: rentalDays,
+      dailyRate: (finalPrice / rentalDays).toString(),
+      totalAmount: totalAmount.toString(),
+      guaranteeAmount: guaranteeAmount.toString(),
+      additionalProductsTotal: additionalProductsTotal.toString(),
+      additionalProducts: JSON.stringify(formData.additionalProducts),
+      customPrice: formData.customPrice.toString(),
+      discount: formData.discount
     }
     
     onSubmit(submitData)
