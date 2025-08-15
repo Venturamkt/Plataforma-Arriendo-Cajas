@@ -123,6 +123,9 @@ export const rentals = pgTable("rentals", {
   notes: text("notes"),
   trackingCode: varchar("tracking_code").unique(),
   assignedDriver: varchar("assigned_driver"),
+  driverId: varchar("driver_id").references(() => users.id),
+  assignedBoxCodes: text("assigned_box_codes").array(), // Array de códigos de cajas asignadas
+  masterCode: varchar("master_code").unique(), // Código maestro para escaneo masivo
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

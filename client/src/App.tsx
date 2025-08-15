@@ -19,6 +19,7 @@ import NewRental from "@/pages/admin/new-rental";
 import RentalStatus from "@/pages/admin/rental-status";
 import EmailPreview from "@/pages/admin/email-preview";
 import Reminders from "@/pages/admin/reminders";
+import BoxCodesPage from "@/pages/admin/box-codes";
 import DriverDashboard from "@/pages/driver/dashboard";
 import CustomerDashboard from "@/pages/customer/dashboard";
 import TrackRental from "@/pages/track-rental";
@@ -49,6 +50,7 @@ function Router() {
       <Route path="/admin/new-rental" component={NewRental} />
       <Route path="/admin/emails" component={EmailPreview} />
       <Route path="/admin/reminders" component={Reminders} />
+      <Route path="/admin/box-codes" component={BoxCodesPage} />
       
       {/* Public tracking routes */}
       <Route path="/track" component={TrackRental} />

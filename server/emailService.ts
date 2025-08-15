@@ -1,5 +1,5 @@
 import nodemailer from 'nodemailer';
-import { emailTemplates, generateTrackingUrl, type RentalEmailData } from './emailTemplates';
+import { emailTemplates, generateTrackingUrl, driverNotificationTemplate, type RentalEmailData } from './emailTemplates';
 
 // Email service configuration
 export class EmailService {
@@ -273,6 +273,53 @@ export class EmailService {
       return true;
     } catch (error) {
       console.error('Error sending reminder email:', error);
+      return false;
+    }
+  }
+
+  // Nuevo método para enviar notificaciones a repartidores
+  async sendDriverNotification(
+    driverEmail: string,
+    driverData: {
+      driverName: string;
+      rentalId: string;
+      customerName: string;
+      totalBoxes: number;
+      deliveryDate: string;
+      deliveryAddress: string;
+      pickupAddress?: string;
+      masterCode: string;
+      assignedBoxCodes: string[];
+    }
+  ): Promise<boolean> {
+    if (!this.isConfigured || !this.transporter) {
+      console.log(`Driver notification not sent - service not configured. Driver: ${driverEmail}`);
+      return false;
+    }
+
+    try {
+      await this.transporter.verify();
+      
+      const htmlContent = driverNotificationTemplate(driverData);
+      
+      const mailOptions = {
+        from: `"Arriendo Cajas" <${process.env.EMAIL_USER}>`,
+        to: driverEmail,
+        cc: 'operaciones@arriendocajas.cl', // Copy to operations for tracking
+        subject: `🚛 Nueva Entrega Asignada - ${driverData.customerName} (${driverData.totalBoxes} cajas)`,
+        html: htmlContent,
+        replyTo: process.env.EMAIL_USER,
+        headers: {
+          'X-Mailer': 'Arriendo Cajas System',
+          'X-Priority': '2' // High priority for driver notifications
+        }
+      };
+
+      const info = await this.transporter.sendMail(mailOptions);
+      console.log(`Driver notification sent successfully to ${driverEmail}:`, info.messageId);
+      return true;
+    } catch (error) {
+      console.error(`Failed to send driver notification to ${driverEmail}:`, error);
       return false;
     }
   }

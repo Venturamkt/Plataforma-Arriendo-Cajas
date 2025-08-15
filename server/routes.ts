@@ -548,6 +548,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Master code scanning endpoint
+  app.post("/api/scan/master/:masterCode", requireAdminSession, async (req, res) => {
+    try {
+      const { masterCode } = req.params;
+      console.log(`Scanning master code: ${masterCode}`);
+      
+      const rentals = await storage.getRentals();
+      const rental = rentals.find(r => r.masterCode === masterCode);
+      
+      if (!rental) {
+        return res.status(404).json({ message: "Código maestro no encontrado" });
+      }
+
+      const customer = await storage.getCustomer(rental.customerId);
+      
+      res.json({
+        success: true,
+        rentalId: rental.id,
+        customerName: customer?.name || 'Cliente desconocido',
+        boxCount: rental.assignedBoxCodes?.length || rental.totalBoxes,
+        assignedBoxCodes: rental.assignedBoxCodes || [],
+        status: rental.status,
+        deliveryDate: rental.deliveryDate,
+        deliveryAddress: rental.deliveryAddress
+      });
+    } catch (error) {
+      console.error("Error scanning master code:", error);
+      res.status(500).json({ message: "Error al escanear código maestro" });
+    }
+  });
+
+  // Endpoint to get rentals with box codes
+  app.get("/api/rentals/with-codes", requireAdminSession, async (req, res) => {
+    try {
+      const rentals = await storage.getRentals();
+      const rentalsWithCodes = rentals.filter(r => r.assignedBoxCodes && r.masterCode);
+      
+      res.json(rentalsWithCodes);
+    } catch (error) {
+      console.error("Error fetching rentals with codes:", error);
+      res.status(500).json({ message: "Error al obtener arriendos con códigos" });
+    }
+  });
+
   app.put('/api/rentals/:id', requireAdminSession, async (req, res) => {
     try {
       const parsedData = updateRentalSchema.parse(req.body);
@@ -566,6 +610,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const rental = await storage.updateRental(req.params.id, rentalData);
       if (!rental) {
         return res.status(404).json({ message: "Rental not found" });
+      }
+
+      // Si el estado cambió a "pagada", asignar repartidor y códigos de cajas
+      if (rentalData.status === 'pagada') {
+        console.log(`Rental status changed to 'pagada', assigning driver and box codes...`);
+        
+        try {
+          // 1. Asignar repartidor automáticamente
+          const rentalWithDriver = await storage.assignDriverToRental(rental.id);
+          console.log(`Driver assigned to rental: ${rentalWithDriver?.driverId}`);
+
+          // 2. Asignar códigos de cajas y generar código maestro
+          const rentalWithBoxes = await storage.assignBoxCodesToRental(rental.id);
+          console.log(`Box codes assigned. Master code: ${rentalWithBoxes?.masterCode}`);
+          
+          // 3. Enviar email al repartidor asignado
+          if (rentalWithDriver?.driverId && rentalWithBoxes?.assignedBoxCodes) {
+            const driver = await storage.getUser(rentalWithDriver.driverId);
+            const customer = await storage.getCustomer(rental.customerId);
+            
+            if (driver && customer) {
+              console.log(`Sending driver notification to: ${driver.email}`);
+              
+              const driverEmailData = {
+                driverName: `${driver.firstName} ${driver.lastName}`,
+                rentalId: rental.id,
+                customerName: customer.name,
+                totalBoxes: rental.totalBoxes,
+                deliveryDate: rental.deliveryDate.toLocaleDateString('es-CL'),
+                deliveryAddress: rental.deliveryAddress || '',
+                pickupAddress: rental.pickupAddress || undefined,
+                masterCode: rentalWithBoxes.masterCode || '',
+                assignedBoxCodes: rentalWithBoxes.assignedBoxCodes || []
+              };
+
+              // Enviar email al repartidor usando el template específico
+              await emailService.sendDriverNotification(driver.email, driverEmailData);
+              console.log(`Driver notification sent successfully to ${driver.email}`);
+            }
+          }
+        } catch (driverError) {
+          console.error('Error assigning driver and boxes:', driverError);
+          // No fallar la actualización del arriendo si falla la asignación
+        }
       }
 
       // Send email if status changed and email service is configured

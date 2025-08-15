@@ -20,6 +20,93 @@ export interface RentalEmailData {
   rentalDays?: number;
 }
 
+// Template para notificación a repartidores
+export const driverNotificationTemplate = (data: {
+  driverName: string;
+  rentalId: string;
+  customerName: string;
+  totalBoxes: number;
+  deliveryDate: string;
+  deliveryAddress: string;
+  pickupAddress?: string;
+  masterCode: string;
+  assignedBoxCodes: string[];
+}) => `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Nueva Entrega Asignada - Arriendo Cajas</title>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: #C8201D; color: white; padding: 20px; text-align: center; }
+    .content { padding: 20px; background: #f9f9f9; }
+    .box-codes { background: #e8f4f8; padding: 15px; border-radius: 5px; margin: 10px 0; }
+    .master-code { background: #fff3cd; padding: 15px; border-radius: 5px; margin: 10px 0; font-weight: bold; }
+    .footer { text-align: center; padding: 20px; color: #666; }
+    .delivery-info { background: white; padding: 15px; border-radius: 5px; margin: 10px 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🚛 Nueva Entrega Asignada</h1>
+    </div>
+    
+    <div class="content">
+      <h2>Hola ${data.driverName},</h2>
+      
+      <p>Se te ha asignado una nueva entrega confirmada. A continuación encontrarás todos los detalles necesarios:</p>
+      
+      <div class="delivery-info">
+        <h3>📦 Información del Arriendo</h3>
+        <p><strong>ID del Arriendo:</strong> ${data.rentalId}</p>
+        <p><strong>Cliente:</strong> ${data.customerName}</p>
+        <p><strong>Cantidad de Cajas:</strong> ${data.totalBoxes}</p>
+        <p><strong>Fecha de Entrega:</strong> ${data.deliveryDate}</p>
+      </div>
+
+      <div class="delivery-info">
+        <h3>📍 Direcciones</h3>
+        <p><strong>Entrega:</strong> ${data.deliveryAddress}</p>
+        ${data.pickupAddress ? `<p><strong>Retiro:</strong> ${data.pickupAddress}</p>` : ''}
+      </div>
+
+      <div class="master-code">
+        <h3>🔑 Código Maestro para Escaneo</h3>
+        <p style="font-size: 24px; text-align: center; color: #C8201D;">${data.masterCode}</p>
+        <p style="text-align: center; font-size: 14px;">Usa este código para escanear todas las cajas de una vez</p>
+      </div>
+
+      <div class="box-codes">
+        <h3>📋 Códigos de Cajas Asignadas</h3>
+        <p>Total: ${data.assignedBoxCodes.length} cajas</p>
+        <ul>
+          ${data.assignedBoxCodes.map(code => `<li>${code}</li>`).join('')}
+        </ul>
+      </div>
+
+      <div style="background: #d4edda; padding: 15px; border-radius: 5px; margin: 20px 0;">
+        <h3>✅ Próximos Pasos:</h3>
+        <ol>
+          <li>Prepara las cajas con los códigos asignados</li>
+          <li>Confirma la entrega en la fecha programada</li>
+          <li>Usa el código maestro <strong>${data.masterCode}</strong> para escaneo rápido</li>
+          <li>Actualiza el estado en el sistema una vez completada</li>
+        </ol>
+      </div>
+    </div>
+    
+    <div class="footer">
+      <p>Este es un mensaje automático del sistema Arriendo Cajas</p>
+      <p>Para consultas contacta: <a href="mailto:contacto@arriendocajas.cl">contacto@arriendocajas.cl</a></p>
+    </div>
+  </div>
+</body>
+</html>
+`;
+
 export const emailTemplates = {
   pendiente: (data: RentalEmailData): EmailTemplate => ({
     subject: `Solicitud Recibida - Código ${data.trackingCode} - Arriendo Cajas`,

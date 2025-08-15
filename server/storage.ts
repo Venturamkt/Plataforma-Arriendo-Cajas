@@ -386,6 +386,79 @@ export class DatabaseStorage implements IStorage {
     return updatedRental;
   }
 
+  // Asignar repartidor automáticamente
+  async assignDriverToRental(rentalId: string): Promise<Rental | undefined> {
+    // Buscar un repartidor disponible (simplemente el primero disponible por ahora)
+    const drivers = await db
+      .select()
+      .from(users)
+      .where(eq(users.role, 'driver'))
+      .limit(1);
+
+    if (drivers.length === 0) {
+      console.log('No hay repartidores disponibles');
+      return undefined;
+    }
+
+    const [updatedRental] = await db
+      .update(rentals)
+      .set({ 
+        driverId: drivers[0].id,
+        updatedAt: new Date() 
+      })
+      .where(eq(rentals.id, rentalId))
+      .returning();
+
+    return updatedRental;
+  }
+
+  // Asignar códigos de cajas y generar código maestro
+  async assignBoxCodesToRental(rentalId: string): Promise<Rental | undefined> {
+    const rental = await this.getRental(rentalId);
+    if (!rental) return undefined;
+
+    // Obtener cajas disponibles
+    const availableBoxes = await db
+      .select()
+      .from(boxes)
+      .where(eq(boxes.status, 'available'))
+      .limit(rental.totalBoxes);
+
+    if (availableBoxes.length < rental.totalBoxes) {
+      console.log(`No hay suficientes cajas disponibles. Necesarias: ${rental.totalBoxes}, Disponibles: ${availableBoxes.length}`);
+      return undefined;
+    }
+
+    const boxCodes = availableBoxes.map(box => box.barcode);
+
+    // Generar código maestro basado en RUT y tracking code
+    const customer = await this.getCustomer(rental.customerId);
+    const rutDigits = customer?.rut ? 
+      customer.rut.replace(/[.-]/g, '').slice(0, -1).slice(-4).padStart(4, '0') : "0000";
+    const masterCode = `${rutDigits}-${rental.trackingCode}`;
+
+    // Actualizar el arriendo con los códigos
+    const [updatedRental] = await db
+      .update(rentals)
+      .set({ 
+        assignedBoxCodes: boxCodes,
+        masterCode: masterCode,
+        updatedAt: new Date() 
+      })
+      .where(eq(rentals.id, rentalId))
+      .returning();
+
+    // Marcar las cajas como rentadas
+    for (const box of availableBoxes) {
+      await db
+        .update(boxes)
+        .set({ status: 'rented' })
+        .where(eq(boxes.id, box.id));
+    }
+
+    return updatedRental;
+  }
+
   private async assignBoxesToRental(rentalId: string, totalBoxes: number): Promise<void> {
     // Get available boxes
     const availableBoxes = await db

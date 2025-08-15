@@ -25,6 +25,7 @@ export default function Sidebar({ role }: SidebarProps) {
     { href: "/admin/inventory", icon: Package, label: "Inventario" },
     { href: "/admin/customers", icon: Users, label: "Clientes" },
     { href: "/admin/deliveries", icon: Truck, label: "Entregas" },
+    { href: "/admin/box-codes", icon: QrCode, label: "Códigos de Cajas" },
     { href: "/admin/emails", icon: Mail, label: "Emails" },
     { href: "/admin/reminders", icon: Clock, label: "Recordatorios" },
     { href: "/admin/reports", icon: BarChart3, label: "Reportes" },
