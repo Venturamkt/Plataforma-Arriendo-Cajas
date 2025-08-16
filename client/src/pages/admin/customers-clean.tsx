@@ -230,9 +230,11 @@ function CustomerCard({
                       {/* Quick Status Selector */}
                       <Select
                         value={rental.status}
-                        onValueChange={async (value) => {
-                          // Update rental status directly via API
+onValueChange={async (value) => {
                           try {
+                            // Show loading state
+                            const originalText = document.querySelector(`[data-rental-id="${rental.id}"]`)?.textContent
+                            
                             const response = await fetch(`/api/rentals/${rental.id}`, {
                               method: 'PUT',
                               headers: { 'Content-Type': 'application/json' },
@@ -240,11 +242,17 @@ function CustomerCard({
                             })
                             
                             if (response.ok) {
-                              // Reload rentals to show updated status
+                              // Success - refresh data
                               window.location.reload()
+                              console.log(`Estado actualizado a ${value}. Email enviado al cliente.`)
+                            } else {
+                              const error = await response.json()
+                              console.error('Error:', error.message || "No se pudo actualizar el estado")
+                              alert('Error al cambiar estado: ' + (error.message || "No se pudo actualizar el estado"))
                             }
                           } catch (error) {
                             console.error('Error updating status:', error)
+                            alert('Error de conexión. Verifica tu conexión e intenta nuevamente.')
                           }
                         }}
                       >
