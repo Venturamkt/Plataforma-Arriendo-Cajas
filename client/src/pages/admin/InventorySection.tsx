@@ -5,16 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Package2, 
   Search, 
-  Plus, 
-  Edit, 
-  Trash2, 
-  AlertCircle,
-  CheckCircle,
   Settings,
-  QrCode
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Inventory } from "@shared/schema";
@@ -49,8 +46,10 @@ const TYPE_ICONS = {
 
 export function InventorySection() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterType, setFilterType] = useState<string>("todos");
   const [filterStatus, setFilterStatus] = useState<string>("todos");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [activeTab, setActiveTab] = useState("todos");
+  const itemsPerPage = 20;
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -68,11 +67,21 @@ export function InventorySection() {
   const filteredInventory = inventory.filter((item: Inventory) => {
     const matchesSearch = item.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          TYPE_LABELS[item.type as keyof typeof TYPE_LABELS].toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = filterType === "todos" || item.type === filterType;
+    const matchesType = activeTab === "todos" || item.type === activeTab;
     const matchesStatus = filterStatus === "todos" || item.status === filterStatus;
     
     return matchesSearch && matchesType && matchesStatus;
   });
+
+  // Paginación
+  const totalPages = Math.ceil(filteredInventory.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedInventory = filteredInventory.slice(startIndex, startIndex + itemsPerPage);
+
+  // Reset página cuando cambian filtros
+  const resetPagination = () => {
+    setCurrentPage(1);
+  };
 
   // Estadísticas del inventario
   const stats = {
@@ -157,141 +166,196 @@ export function InventorySection() {
         </Card>
       </div>
 
-      {/* Filtros */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Search className="h-5 w-5 mr-2" />
-            Filtros y Búsqueda
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="text-sm font-medium mb-2 block">Buscar por código</label>
-              <Input
-                placeholder="CAJ001, BA001, CP001..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-2 block">Tipo</label>
-              <select
-                value={filterType}
-                onChange={(e) => setFilterType(e.target.value)}
-                className="w-full p-2 border rounded-md"
-              >
-                <option value="todos">Todos los tipos</option>
-                <option value="caja">Cajas</option>
-                <option value="base_movil">Bases Móviles</option>
-                <option value="carro_plegable">Carros de Transporte</option>
-                <option value="correa_amarre">Cintas de Amarre</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-2 block">Estado</label>
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="w-full p-2 border rounded-md"
-              >
-                <option value="todos">Todos los estados</option>
-                <option value="disponible">Disponible</option>
-                <option value="alquilada">Arrendada</option>
-                <option value="mantenimiento">Mantenimiento</option>
-                <option value="dañada">Dañada</option>
-              </select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Tabs por Categoría */}
+      <Tabs value={activeTab} onValueChange={(value) => { setActiveTab(value); resetPagination(); }} className="w-full">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="todos">Todos ({inventory.length})</TabsTrigger>
+          <TabsTrigger value="caja">📦 Cajas ({inventory.filter(i => i.type === 'caja').length})</TabsTrigger>
+          <TabsTrigger value="base_movil">🔧 Bases ({inventory.filter(i => i.type === 'base_movil').length})</TabsTrigger>
+          <TabsTrigger value="carro_plegable">🛒 Carros ({inventory.filter(i => i.type === 'carro_plegable').length})</TabsTrigger>
+          <TabsTrigger value="correa_amarre">🔗 Cintas ({inventory.filter(i => i.type === 'correa_amarre').length})</TabsTrigger>
+        </TabsList>
 
-      {/* Inventario por Categorías */}
-      {["caja", "base_movil", "carro_plegable", "correa_amarre"].map((categoryType) => {
-        const categoryItems = filteredInventory.filter((item: Inventory) => item.type === categoryType);
-        const categoryStats = {
-          total: categoryItems.length,
-          disponible: categoryItems.filter(item => item.status === "disponible").length,
-          arrendada: categoryItems.filter(item => item.status === "alquilada").length,
-          mantenimiento: categoryItems.filter(item => item.status === "mantenimiento").length,
-          dañada: categoryItems.filter(item => item.status === "dañada").length
-        };
-
-        if (categoryItems.length === 0 && filterType !== "todos" && filterType !== categoryType) {
-          return null;
-        }
-
-        return (
-          <Card key={categoryType}>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <span className="text-2xl">{TYPE_ICONS[categoryType as keyof typeof TYPE_ICONS]}</span>
-                {TYPE_LABELS[categoryType as keyof typeof TYPE_LABELS]} ({categoryItems.length} items)
-              </CardTitle>
-              <div className="flex gap-4 text-sm">
-                <span className="text-green-600">Disponibles: {categoryStats.disponible}</span>
-                <span className="text-yellow-600">Arrendadas: {categoryStats.arrendada}</span>
-                <span className="text-blue-600">Mantenimiento: {categoryStats.mantenimiento}</span>
-                <span className="text-red-600">Dañadas: {categoryStats.dañada}</span>
+        {/* Filtros */}
+        <Card className="mt-4">
+          <CardContent className="pt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium mb-2 block">Buscar por código</label>
+                <Input
+                  placeholder="CAJ001, BA001, CP001..."
+                  value={searchTerm}
+                  onChange={(e) => { setSearchTerm(e.target.value); resetPagination(); }}
+                />
               </div>
+              <div>
+                <label className="text-sm font-medium mb-2 block">Estado</label>
+                <select
+                  value={filterStatus}
+                  onChange={(e) => { setFilterStatus(e.target.value); resetPagination(); }}
+                  className="w-full p-2 border rounded-md"
+                >
+                  <option value="todos">Todos los estados</option>
+                  <option value="disponible">Disponible</option>
+                  <option value="alquilada">Arrendada</option>
+                  <option value="mantenimiento">Mantenimiento</option>
+                  <option value="dañada">Dañada</option>
+                </select>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Contenido por Tab */}
+        <TabsContent value={activeTab} className="mt-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>
+                {activeTab === "todos" ? "Todo el Inventario" : TYPE_LABELS[activeTab as keyof typeof TYPE_LABELS]} 
+                ({filteredInventory.length} items)
+              </CardTitle>
+              
+              {/* Paginación en header */}
+              {totalPages > 1 && (
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="text-sm">
+                    Página {currentPage} de {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
             </CardHeader>
             <CardContent>
-              {categoryItems.length === 0 ? (
-                <div className="text-center py-4">
-                  <p className="text-gray-500">No hay items de esta categoría con los filtros actuales</p>
+              {filteredInventory.length === 0 ? (
+                <div className="text-center py-8">
+                  <Package2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-600">No se encontraron items con los filtros actuales</p>
                 </div>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Código</TableHead>
-                      <TableHead>Estado</TableHead>
-                      <TableHead>Notas</TableHead>
-                      <TableHead className="text-right">Acciones</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {categoryItems.map((item: Inventory) => (
-                      <TableRow key={item.id} className="hover:bg-gray-50">
-                        <TableCell>
-                          <div className="font-bold text-base">{item.code}</div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={STATUS_COLORS[item.status as keyof typeof STATUS_COLORS]}>
-                            {STATUS_LABELS[item.status as keyof typeof STATUS_LABELS]}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {item.notes ? (
-                            <span className="text-sm text-gray-600">{item.notes}</span>
-                          ) : (
-                            <span className="text-xs text-gray-400">Sin notas</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              const newStatus = item.status === "disponible" ? "mantenimiento" : "disponible";
-                              updateStatusMutation.mutate({ id: item.id, status: newStatus });
-                            }}
-                            disabled={updateStatusMutation.isPending}
-                          >
-                            <Settings className="h-3 w-3 mr-1" />
-                            {item.status === "disponible" ? "Mantenimiento" : "Disponible"}
-                          </Button>
-                        </TableCell>
+                <>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Código</TableHead>
+                        <TableHead>Tipo</TableHead>
+                        <TableHead>Estado</TableHead>
+                        <TableHead>Notas</TableHead>
+                        <TableHead className="text-right">Acciones</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedInventory.map((item: Inventory) => (
+                        <TableRow key={item.id} className="hover:bg-gray-50">
+                          <TableCell>
+                            <div className="font-bold text-base">{item.code}</div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <span className="text-lg">{TYPE_ICONS[item.type as keyof typeof TYPE_ICONS]}</span>
+                              <span className="text-sm font-medium">
+                                {TYPE_LABELS[item.type as keyof typeof TYPE_LABELS]}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={STATUS_COLORS[item.status as keyof typeof STATUS_COLORS]}>
+                              {STATUS_LABELS[item.status as keyof typeof STATUS_LABELS]}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {item.notes ? (
+                              <span className="text-sm text-gray-600">{item.notes}</span>
+                            ) : (
+                              <span className="text-xs text-gray-400">Sin notas</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                const newStatus = item.status === "disponible" ? "mantenimiento" : "disponible";
+                                updateStatusMutation.mutate({ id: item.id, status: newStatus });
+                              }}
+                              disabled={updateStatusMutation.isPending}
+                            >
+                              <Settings className="h-3 w-3 mr-1" />
+                              {item.status === "disponible" ? "Mantenimiento" : "Disponible"}
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                  
+                  {/* Paginación al final */}
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-between mt-4">
+                      <p className="text-sm text-gray-600">
+                        Mostrando {startIndex + 1} a {Math.min(startIndex + itemsPerPage, filteredInventory.length)} de {filteredInventory.length} items
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                          disabled={currentPage === 1}
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                          Anterior
+                        </Button>
+                        
+                        {/* Números de página */}
+                        <div className="flex gap-1">
+                          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                            const pageNum = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
+                            return (
+                              <Button
+                                key={pageNum}
+                                variant={currentPage === pageNum ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setCurrentPage(pageNum)}
+                                className="w-8 h-8 p-0"
+                              >
+                                {pageNum}
+                              </Button>
+                            );
+                          })}
+                        </div>
+                        
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                          disabled={currentPage === totalPages}
+                        >
+                          Siguiente
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>
-        );
-      })}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
