@@ -6,7 +6,9 @@ import {
   payments, 
   boxes, 
   activities,
-  notificationTemplates 
+  notificationTemplates,
+  inventory,
+  rentalItems
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, lte, like, sql } from "drizzle-orm";
@@ -216,6 +218,59 @@ class PostgresStorage implements IStorage {
   async logActivity(activityData: any) {
     const result = await db.insert(activities).values(activityData).returning();
     return result[0];
+  }
+
+  // Inventory methods
+  async getInventory(): Promise<any[]> {
+    const result = await db.select().from(inventory).orderBy(inventory.type, inventory.code);
+    return result;
+  }
+
+  async getAvailableInventory(type?: string, quantity?: number): Promise<any[]> {
+    let query = db.select().from(inventory).where(eq(inventory.status, "disponible"));
+    
+    if (type && type !== 'todos') {
+      query = query.where(eq(inventory.type, type as any));
+    }
+    
+    const result = await query.orderBy(inventory.code).limit(quantity || 1000);
+    return result;
+  }
+
+  async updateInventoryStatus(id: string, status: string): Promise<any> {
+    const result = await db.update(inventory)
+      .set({ status: status as any, updatedAt: new Date() })
+      .where(eq(inventory.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async assignItemsToRental(rentalId: string, itemIds: string[]): Promise<any> {
+    // Crear las asignaciones en rental_items
+    const insertPromises = itemIds.map(itemId => 
+      db.insert(rentalItems).values({
+        rentalId,
+        inventoryId: itemId
+      }).returning()
+    );
+
+    // Actualizar estado de los items a 'alquilada'
+    const updatePromises = itemIds.map(itemId => 
+      db.update(inventory)
+        .set({ status: 'alquilada', updatedAt: new Date() })
+        .where(eq(inventory.id, itemId))
+    );
+
+    // Actualizar el arriendo con los items asignados
+    const updateRental = db.update(rentals)
+      .set({ assignedItems: itemIds, updatedAt: new Date() })
+      .where(eq(rentals.id, rentalId))
+      .returning();
+
+    await Promise.all([...insertPromises, ...updatePromises]);
+    const rentalResult = await updateRental;
+    
+    return rentalResult[0];
   }
 }
 

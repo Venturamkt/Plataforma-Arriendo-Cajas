@@ -66,7 +66,35 @@ export const drivers = pgTable("drivers", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Inventario de cajas
+// Sistema de Inventario Completo
+export const inventory = pgTable("inventory", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  code: varchar("code").unique().notNull(), // CAJ001, BA001, CP001, CO001
+  type: varchar("type", { 
+    enum: ["caja", "base_movil", "carro_plegable", "correa_amarre"] 
+  }).notNull(),
+  status: varchar("status", { 
+    enum: ["disponible", "alquilada", "mantenimiento", "dañada"] 
+  }).default("disponible"),
+  notes: text("notes"), // Notas sobre daños o estado
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Relación entre arriendos e items del inventario
+export const rentalItems = pgTable("rental_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  rentalId: varchar("rental_id").references(() => rentals.id).notNull(),
+  inventoryId: varchar("inventory_id").references(() => inventory.id).notNull(),
+  assignedAt: timestamp("assigned_at").defaultNow(),
+  returnedAt: timestamp("returned_at"),
+  condition: varchar("condition", { 
+    enum: ["bueno", "dañado", "perdido"] 
+  }), // Estado al devolver
+  damageNotes: text("damage_notes"), // Descripción de daños si los hay
+});
+
+// Mantener compatibilidad con boxes (deprecado gradualmente)
 export const boxes = pgTable("boxes", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   code: varchar("code").unique().notNull(),
@@ -100,6 +128,7 @@ export const rentals = pgTable("rentals", {
   pickupAddress: text("pickup_address"),
   notes: text("notes"),
   additionalProducts: jsonb("additional_products").default([]),
+  assignedItems: jsonb("assigned_items").default([]).$type<string[]>(), // IDs de items del inventario asignados
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -148,6 +177,21 @@ export const driversRelations = relations(drivers, ({ many }) => ({
   rentals: many(rentals),
 }));
 
+export const inventoryRelations = relations(inventory, ({ many }) => ({
+  rentalItems: many(rentalItems),
+}));
+
+export const rentalItemsRelations = relations(rentalItems, ({ one }) => ({
+  rental: one(rentals, {
+    fields: [rentalItems.rentalId],
+    references: [rentals.id],
+  }),
+  inventory: one(inventory, {
+    fields: [rentalItems.inventoryId],
+    references: [inventory.id],
+  }),
+}));
+
 export const rentalsRelations = relations(rentals, ({ one, many }) => ({
   customer: one(customers, {
     fields: [rentals.customerId],
@@ -158,6 +202,7 @@ export const rentalsRelations = relations(rentals, ({ one, many }) => ({
     references: [drivers.id],
   }),
   payments: many(payments),
+  rentalItems: many(rentalItems),
 }));
 
 export const paymentsRelations = relations(payments, ({ one }) => ({
@@ -177,6 +222,8 @@ export const insertDriverSchema = createInsertSchema(drivers);
 export const insertRentalSchema = createInsertSchema(rentals);
 export const insertPaymentSchema = createInsertSchema(payments);
 export const insertBoxSchema = createInsertSchema(boxes);
+export const insertInventorySchema = createInsertSchema(inventory);
+export const insertRentalItemSchema = createInsertSchema(rentalItems);
 
 // Tipos
 export type Customer = typeof customers.$inferSelect;
@@ -184,5 +231,7 @@ export type Driver = typeof drivers.$inferSelect;
 export type Rental = typeof rentals.$inferSelect;
 export type Payment = typeof payments.$inferSelect;
 export type Box = typeof boxes.$inferSelect;
+export type Inventory = typeof inventory.$inferSelect;
+export type RentalItem = typeof rentalItems.$inferSelect;
 export type Activity = typeof activities.$inferSelect;
 export type NotificationTemplate = typeof notificationTemplates.$inferSelect;

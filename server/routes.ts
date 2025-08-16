@@ -312,6 +312,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Inventory routes
+  app.get("/api/inventory", async (req, res) => {
+    try {
+      const inventory = await storage.getInventory();
+      res.json(inventory);
+    } catch (error) {
+      console.error("Error getting inventory:", error);
+      res.status(500).json({ error: "Error al obtener inventario" });
+    }
+  });
+
+  app.get("/api/inventory/available", async (req, res) => {
+    try {
+      const { type, quantity } = req.query;
+      const availableItems = await storage.getAvailableInventory(type as string, parseInt(quantity as string));
+      res.json(availableItems);
+    } catch (error) {
+      console.error("Error getting available inventory:", error);
+      res.status(500).json({ error: "Error al obtener inventario disponible" });
+    }
+  });
+
+  app.put("/api/inventory/:id/status", async (req, res) => {
+    try {
+      const { status } = req.body;
+      const item = await storage.updateInventoryStatus(req.params.id, status);
+      res.json(item);
+    } catch (error) {
+      console.error("Error updating inventory status:", error);
+      res.status(500).json({ error: "Error al actualizar estado del inventario" });
+    }
+  });
+
+  app.post("/api/rentals/:id/assign-items", async (req, res) => {
+    try {
+      const { itemIds } = req.body;
+      const assignment = await storage.assignItemsToRental(req.params.id, itemIds);
+      res.json(assignment);
+    } catch (error) {
+      console.error("Error assigning items to rental:", error);
+      res.status(500).json({ error: "Error al asignar items al arriendo" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

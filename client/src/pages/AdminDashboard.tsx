@@ -23,6 +23,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import CustomersSection from "./admin/CustomersSection";
 import RentalsSection from "./admin/RentalsSection";
 import NewRentalForm from "./admin/NewRentalForm";
+import { InventorySection } from "./admin/InventorySection";
 
 const sidebarItems = [
   { id: "dashboard", label: "Dashboard", icon: Home },
@@ -224,7 +225,7 @@ export default function AdminDashboard() {
       case "new-rental":
         return <NewRentalForm />;
       case "inventory":
-        return <div className="p-8 text-center"><h2 className="text-2xl">Gestión de Inventario - En desarrollo</h2></div>;
+        return <InventorySection />;
       case "drivers":
         return <div className="p-8 text-center"><h2 className="text-2xl">Gestión de Repartidores - En desarrollo</h2></div>;
       case "payments":
