@@ -519,6 +519,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Calendar endpoints
+  app.get("/api/calendar/events", async (req, res) => {
+    try {
+      const { year, month } = req.query;
+      const events = await storage.getCalendarEvents(year as string, month as string);
+      res.json(events);
+    } catch (error) {
+      console.error("Error loading calendar events:", error);
+      res.status(500).json({ error: "Error al cargar eventos del calendario" });
+    }
+  });
+
+  app.post("/api/calendar/events", async (req, res) => {
+    try {
+      const event = await storage.createCalendarEvent(req.body);
+      res.json(event);
+    } catch (error) {
+      console.error("Error creating calendar event:", error);
+      res.status(500).json({ error: "Error al crear evento" });
+    }
+  });
+
+  app.put("/api/calendar/events/:id", async (req, res) => {
+    try {
+      const event = await storage.updateCalendarEvent(req.params.id, req.body);
+      res.json(event);
+    } catch (error) {
+      console.error("Error updating calendar event:", error);
+      res.status(500).json({ error: "Error al actualizar evento" });
+    }
+  });
+
+  app.delete("/api/calendar/events/:id", async (req, res) => {
+    try {
+      await storage.deleteCalendarEvent(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting calendar event:", error);
+      res.status(500).json({ error: "Error al eliminar evento" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

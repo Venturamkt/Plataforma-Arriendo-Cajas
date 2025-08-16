@@ -1,0 +1,550 @@
+import { useState, useMemo } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
+import { 
+  Calendar, 
+  ChevronLeft, 
+  ChevronRight, 
+  Plus, 
+  Truck, 
+  Package, 
+  Clock, 
+  MapPin,
+  Users,
+  CalendarDays
+} from "lucide-react";
+
+const MONTHS = [
+  "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+  "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+];
+
+const DAYS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+
+interface CalendarEvent {
+  id: string;
+  title: string;
+  date: string;
+  time: string;
+  type: 'delivery' | 'pickup' | 'meeting' | 'other';
+  status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
+  description?: string;
+  customerName?: string;
+  driverId?: string;
+  address?: string;
+}
+
+export default function CalendarSection() {
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [viewMode, setViewMode] = useState<'month' | 'week' | 'day'>('month');
+  const [showEventDialog, setShowEventDialog] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
+  const [formData, setFormData] = useState<{
+    title: string;
+    date: string;
+    time: string;
+    type: 'delivery' | 'pickup' | 'meeting' | 'other';
+    status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
+    description: string;
+    customerName: string;
+    driverId: string;
+    address: string;
+  }>({
+    title: "",
+    date: "",
+    time: "",
+    type: "delivery",
+    status: "scheduled",
+    description: "",
+    customerName: "",
+    driverId: "",
+    address: ""
+  });
+
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Queries
+  const { data: events = [], isLoading } = useQuery({
+    queryKey: ["/api/calendar/events", currentDate.getFullYear(), currentDate.getMonth()],
+    queryFn: async () => {
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth() + 1;
+      const response = await fetch(`/api/calendar/events?year=${year}&month=${month}`);
+      if (!response.ok) throw new Error('Error loading events');
+      return response.json();
+    }
+  });
+
+  const { data: drivers = [] } = useQuery({
+    queryKey: ["/api/drivers"],
+    queryFn: async () => {
+      const response = await fetch('/api/drivers');
+      if (!response.ok) throw new Error('Error loading drivers');
+      return response.json();
+    }
+  });
+
+  const { data: customers = [] } = useQuery({
+    queryKey: ["/api/customers"],
+    queryFn: async () => {
+      const response = await fetch('/api/customers');
+      if (!response.ok) throw new Error('Error loading customers');
+      return response.json();
+    }
+  });
+
+  // Mutations
+  const saveEventMutation = useMutation({
+    mutationFn: async (eventData: any) => {
+      const url = editingEvent ? `/api/calendar/events/${editingEvent.id}` : "/api/calendar/events";
+      const method = editingEvent ? "PUT" : "POST";
+      
+      const response = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(eventData)
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Error al guardar evento");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/calendar/events"] });
+      toast({ 
+        title: editingEvent ? "Evento actualizado" : "Evento creado",
+        description: "El evento se ha guardado correctamente"
+      });
+      closeDialog();
+    },
+    onError: (error: Error) => {
+      toast({ 
+        title: "Error", 
+        description: error.message, 
+        variant: "destructive" 
+      });
+    }
+  });
+
+  const deleteEventMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await fetch(`/api/calendar/events/${id}`, { method: "DELETE" });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Error al eliminar evento");
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/calendar/events"] });
+      toast({ title: "Evento eliminado correctamente" });
+      closeDialog();
+    },
+    onError: (error: Error) => {
+      toast({ 
+        title: "Error", 
+        description: error.message, 
+        variant: "destructive" 
+      });
+    }
+  });
+
+  // Calendar calculations
+  const calendarData = useMemo(() => {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startDate = new Date(firstDay);
+    startDate.setDate(startDate.getDate() - firstDay.getDay());
+    
+    const days = [];
+    const current = new Date(startDate);
+    
+    for (let i = 0; i < 42; i++) {
+      days.push(new Date(current));
+      current.setDate(current.getDate() + 1);
+    }
+    
+    return { days, firstDay, lastDay };
+  }, [currentDate]);
+
+  // Event helpers
+  const getEventsForDate = (date: Date) => {
+    const dateStr = date.toISOString().split('T')[0];
+    return events.filter((event: CalendarEvent) => event.date === dateStr);
+  };
+
+  const getEventTypeColor = (type: string) => {
+    switch (type) {
+      case 'delivery': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'pickup': return 'bg-green-100 text-green-800 border-green-200';
+      case 'meeting': return 'bg-purple-100 text-purple-800 border-purple-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'scheduled': return 'bg-yellow-100 text-yellow-800';
+      case 'in_progress': return 'bg-blue-100 text-blue-800';
+      case 'completed': return 'bg-green-100 text-green-800';
+      case 'cancelled': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  // Navigation
+  const navigateMonth = (direction: 'prev' | 'next') => {
+    setCurrentDate(prev => {
+      const newDate = new Date(prev);
+      newDate.setMonth(prev.getMonth() + (direction === 'next' ? 1 : -1));
+      return newDate;
+    });
+  };
+
+  const goToToday = () => {
+    setCurrentDate(new Date());
+  };
+
+  // Dialog handlers
+  const openDialog = (event?: CalendarEvent, date?: Date) => {
+    if (event) {
+      setEditingEvent(event);
+      setFormData({
+        title: event.title,
+        date: event.date,
+        time: event.time,
+        type: event.type,
+        status: event.status,
+        description: event.description || "",
+        customerName: event.customerName || "",
+        driverId: event.driverId || "",
+        address: event.address || ""
+      });
+    } else {
+      setEditingEvent(null);
+      const dateStr = date ? date.toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+      setFormData({
+        title: "",
+        date: dateStr,
+        time: "09:00",
+        type: "delivery",
+        status: "scheduled",
+        description: "",
+        customerName: "",
+        driverId: "",
+        address: ""
+      });
+    }
+    setShowEventDialog(true);
+  };
+
+  const closeDialog = () => {
+    setShowEventDialog(false);
+    setEditingEvent(null);
+    setFormData({
+      title: "",
+      date: "",
+      time: "",
+      type: "delivery",
+      status: "scheduled",
+      description: "",
+      customerName: "",
+      driverId: "",
+      address: ""
+    });
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.title || !formData.date || !formData.time) {
+      toast({ 
+        title: "Error", 
+        description: "Por favor completa todos los campos requeridos", 
+        variant: "destructive" 
+      });
+      return;
+    }
+    saveEventMutation.mutate(formData);
+  };
+
+  const handleDelete = () => {
+    if (editingEvent) {
+      deleteEventMutation.mutate(editingEvent.id);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold">Calendario</h2>
+          <p className="text-gray-600">Gestiona entregas, retiros y eventos programados</p>
+        </div>
+        <Button onClick={() => openDialog()} className="flex items-center gap-2">
+          <Plus className="h-4 w-4" />
+          Nuevo Evento
+        </Button>
+      </div>
+
+      {/* Calendar Controls */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Button variant="outline" onClick={() => navigateMonth('prev')}>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <div className="text-xl font-semibold">
+                {MONTHS[currentDate.getMonth()]} {currentDate.getFullYear()}
+              </div>
+              <Button variant="outline" onClick={() => navigateMonth('next')}>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={goToToday}>
+                Hoy
+              </Button>
+              <Select value={viewMode} onValueChange={(value: any) => setViewMode(value)}>
+                <SelectTrigger className="w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="month">Mes</SelectItem>
+                  <SelectItem value="week">Semana</SelectItem>
+                  <SelectItem value="day">Día</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {/* Calendar Grid */}
+          <div className="grid grid-cols-7 gap-1">
+            {/* Day headers */}
+            {DAYS.map(day => (
+              <div key={day} className="p-2 text-center font-medium text-gray-600 bg-gray-50">
+                {day}
+              </div>
+            ))}
+            
+            {/* Calendar days */}
+            {calendarData.days.map((day, index) => {
+              const isCurrentMonth = day.getMonth() === currentDate.getMonth();
+              const isToday = day.toDateString() === new Date().toDateString();
+              const dayEvents = getEventsForDate(day);
+              
+              return (
+                <div
+                  key={index}
+                  className={`min-h-[120px] p-2 border border-gray-200 cursor-pointer hover:bg-gray-50 ${
+                    !isCurrentMonth ? 'bg-gray-50 text-gray-400' : ''
+                  } ${isToday ? 'bg-blue-50 border-blue-300' : ''}`}
+                  onClick={() => openDialog(undefined, day)}
+                >
+                  <div className={`text-sm font-medium mb-1 ${isToday ? 'text-blue-600' : ''}`}>
+                    {day.getDate()}
+                  </div>
+                  
+                  <div className="space-y-1">
+                    {dayEvents.slice(0, 3).map((event: CalendarEvent) => (
+                      <div
+                        key={event.id}
+                        className={`text-xs p-1 rounded border cursor-pointer hover:shadow-sm ${getEventTypeColor(event.type)}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openDialog(event);
+                        }}
+                      >
+                        <div className="font-medium truncate">{event.time} - {event.title}</div>
+                        {event.customerName && (
+                          <div className="text-xs opacity-75 truncate">{event.customerName}</div>
+                        )}
+                      </div>
+                    ))}
+                    {dayEvents.length > 3 && (
+                      <div className="text-xs text-gray-500 text-center">
+                        +{dayEvents.length - 3} más
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Event Dialog */}
+      <Dialog open={showEventDialog} onOpenChange={setShowEventDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {editingEvent ? 'Editar Evento' : 'Nuevo Evento'}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="title">Título *</Label>
+                <Input
+                  id="title"
+                  value={formData.title}
+                  onChange={(e) => setFormData({...formData, title: e.target.value})}
+                  placeholder="Entrega de cajas"
+                  required
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="type">Tipo</Label>
+                <Select value={formData.type} onValueChange={(value: any) => setFormData({...formData, type: value})}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="delivery">Entrega</SelectItem>
+                    <SelectItem value="pickup">Retiro</SelectItem>
+                    <SelectItem value="meeting">Reunión</SelectItem>
+                    <SelectItem value="other">Otro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label htmlFor="date">Fecha *</Label>
+                <Input
+                  id="date"
+                  type="date"
+                  value={formData.date}
+                  onChange={(e) => setFormData({...formData, date: e.target.value})}
+                  required
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="time">Hora *</Label>
+                <Input
+                  id="time"
+                  type="time"
+                  value={formData.time}
+                  onChange={(e) => setFormData({...formData, time: e.target.value})}
+                  required
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="customerName">Cliente</Label>
+                <Select value={formData.customerName} onValueChange={(value) => setFormData({...formData, customerName: value})}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar cliente" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {customers.map((customer: any) => (
+                      <SelectItem key={customer.id} value={customer.name}>
+                        {customer.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label htmlFor="driverId">Repartidor</Label>
+                <Select value={formData.driverId} onValueChange={(value) => setFormData({...formData, driverId: value})}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar repartidor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {drivers.map((driver: any) => (
+                      <SelectItem key={driver.id} value={driver.id}>
+                        {driver.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            <div>
+              <Label htmlFor="address">Dirección</Label>
+              <Input
+                id="address"
+                value={formData.address}
+                onChange={(e) => setFormData({...formData, address: e.target.value})}
+                placeholder="Dirección del evento"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="description">Descripción</Label>
+              <Textarea
+                id="description"
+                value={formData.description}
+                onChange={(e) => setFormData({...formData, description: e.target.value})}
+                placeholder="Detalles adicionales del evento"
+                rows={3}
+              />
+            </div>
+            
+            {editingEvent && (
+              <div>
+                <Label htmlFor="status">Estado</Label>
+                <Select value={formData.status} onValueChange={(value: any) => setFormData({...formData, status: value})}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="scheduled">Programado</SelectItem>
+                    <SelectItem value="in_progress">En Progreso</SelectItem>
+                    <SelectItem value="completed">Completado</SelectItem>
+                    <SelectItem value="cancelled">Cancelado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            
+            <div className="flex justify-between pt-4">
+              {editingEvent && (
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={handleDelete}
+                  disabled={deleteEventMutation.isPending}
+                >
+                  {deleteEventMutation.isPending ? "Eliminando..." : "Eliminar"}
+                </Button>
+              )}
+              
+              <div className="flex gap-2 ml-auto">
+                <Button type="button" variant="outline" onClick={closeDialog}>
+                  Cancelar
+                </Button>
+                <Button type="submit" disabled={saveEventMutation.isPending}>
+                  {saveEventMutation.isPending ? "Guardando..." : editingEvent ? "Actualizar" : "Crear"}
+                </Button>
+              </div>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

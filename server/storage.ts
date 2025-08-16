@@ -8,7 +8,8 @@ import {
   activities,
   notificationTemplates,
   inventory,
-  rentalItems
+  rentalItems,
+  calendarEvents
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, lte, like, sql } from "drizzle-orm";
@@ -485,10 +486,7 @@ class PostgresStorage implements IStorage {
     const paymentsData = await db.select()
       .from(payments)
       .where(
-        and(
-          gte(payments.paymentDate, startDate),
-          lte(payments.paymentDate, endDate)
-        )
+        sql`${payments.paymentDate} >= ${startDate} AND ${payments.paymentDate} <= ${endDate}`
       );
 
     const totalRevenue = paymentsData.reduce((sum, payment) => sum + parseFloat(payment.amount), 0);
@@ -525,10 +523,7 @@ class PostgresStorage implements IStorage {
       .from(rentals)
       .innerJoin(customers, eq(rentals.customerId, customers.id))
       .where(
-        and(
-          gte(rentals.startDate, startDate),
-          lte(rentals.startDate, endDate)
-        )
+        sql`${rentals.startDate} >= ${startDate} AND ${rentals.startDate} <= ${endDate}`
       );
 
     const activeCustomers = new Set(rentalsData.map(r => r.rental.customerId)).size;
@@ -577,6 +572,39 @@ class PostgresStorage implements IStorage {
     return {
       message: "Reporte operacional en desarrollo"
     };
+  }
+
+  async getCalendarEvents(year?: string, month?: string): Promise<any[]> {
+    let query = db.select().from(calendarEvents);
+    
+    if (year && month) {
+      const startDate = `${year}-${month.padStart(2, '0')}-01`;
+      const endDate = `${year}-${month.padStart(2, '0')}-31`;
+      query = query.where(
+        sql`${calendarEvents.date} >= ${startDate} AND ${calendarEvents.date} <= ${endDate}`
+      );
+    }
+    
+    const events = await query.orderBy(calendarEvents.date, calendarEvents.time);
+    return events;
+  }
+
+  async createCalendarEvent(eventData: any): Promise<any> {
+    const [event] = await db.insert(calendarEvents).values(eventData).returning();
+    return event;
+  }
+
+  async updateCalendarEvent(id: string, eventData: any): Promise<any> {
+    const [event] = await db
+      .update(calendarEvents)
+      .set({ ...eventData, updatedAt: new Date() })
+      .where(eq(calendarEvents.id, id))
+      .returning();
+    return event;
+  }
+
+  async deleteCalendarEvent(id: string): Promise<void> {
+    await db.delete(calendarEvents).where(eq(calendarEvents.id, id));
   }
 
   generateCSV(data: any, type: string): string {

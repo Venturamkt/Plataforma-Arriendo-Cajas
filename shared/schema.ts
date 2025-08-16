@@ -145,6 +145,21 @@ export const payments = pgTable("payments", {
 });
 
 // Log de actividades
+export const calendarEvents = pgTable("calendar_events", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  title: text("title").notNull(),
+  date: date("date").notNull(),
+  time: text("time").notNull(),
+  type: text("type").notNull().default("other"), // delivery, pickup, meeting, other
+  status: text("status").notNull().default("scheduled"), // scheduled, in_progress, completed, cancelled
+  description: text("description"),
+  customerName: text("customer_name"),
+  driverId: text("driver_id").references(() => drivers.id),
+  address: text("address"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
 export const activities = pgTable("activities", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id),

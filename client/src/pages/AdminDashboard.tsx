@@ -27,6 +27,7 @@ import { InventorySection } from "./admin/InventorySection";
 import { DriversSection } from "./admin/DriversSection";
 import PaymentsSection from "./admin/PaymentsSection";
 import ReportsSection from "./admin/ReportsSection";
+import CalendarSection from "./admin/CalendarSection";
 
 const sidebarItems = [
   { id: "dashboard", label: "Dashboard", icon: Home },
@@ -236,7 +237,7 @@ export default function AdminDashboard() {
       case "reports":
         return <ReportsSection />;
       case "calendar":
-        return <div className="p-8 text-center"><h2 className="text-2xl">Calendario - En desarrollo</h2></div>;
+        return <CalendarSection />;
       case "settings":
         return <div className="p-8 text-center"><h2 className="text-2xl">Configuración - En desarrollo</h2></div>;
       default:
