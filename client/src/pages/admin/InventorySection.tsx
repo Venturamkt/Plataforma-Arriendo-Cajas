@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { 
   Package2, 
   Search, 
@@ -218,59 +219,74 @@ export function InventorySection() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filteredInventory.map((item: Inventory) => (
-              <Card key={item.id} className="border hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-2xl">{TYPE_ICONS[item.type as keyof typeof TYPE_ICONS]}</span>
-                      <div>
-                        <div className="font-bold text-lg">{item.code}</div>
-                        <div className="text-sm text-gray-600">
-                          {TYPE_LABELS[item.type as keyof typeof TYPE_LABELS]}
-                        </div>
-                      </div>
-                    </div>
-                    <QrCode className="h-5 w-5 text-gray-400" />
-                  </div>
-                  
-                  <div className="flex items-center justify-between mb-3">
-                    <Badge className={STATUS_COLORS[item.status as keyof typeof STATUS_COLORS]}>
-                      {STATUS_LABELS[item.status as keyof typeof STATUS_LABELS]}
-                    </Badge>
-                  </div>
-
-                  {item.notes && (
-                    <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                      {item.notes}
-                    </p>
-                  )}
-
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        const newStatus = item.status === "disponible" ? "mantenimiento" : "disponible";
-                        updateStatusMutation.mutate({ id: item.id, status: newStatus });
-                      }}
-                      disabled={updateStatusMutation.isPending}
-                    >
-                      <Settings className="h-3 w-3 mr-1" />
-                      {item.status === "disponible" ? "Mantenimiento" : "Disponible"}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {filteredInventory.length === 0 && (
+          {filteredInventory.length === 0 ? (
             <div className="text-center py-8">
               <Package2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-600">No se encontraron items con los filtros actuales</p>
             </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-16"></TableHead>
+                  <TableHead>Código</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead>Notas</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredInventory.map((item: Inventory) => (
+                  <TableRow key={item.id} className="hover:bg-gray-50">
+                    <TableCell>
+                      <div className="flex items-center justify-center">
+                        <span className="text-2xl">{TYPE_ICONS[item.type as keyof typeof TYPE_ICONS]}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
+                        <div>
+                          <div className="font-bold text-base">{item.code}</div>
+                        </div>
+                        <QrCode className="h-4 w-4 text-gray-400" />
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-sm font-medium">
+                        {TYPE_LABELS[item.type as keyof typeof TYPE_LABELS]}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={STATUS_COLORS[item.status as keyof typeof STATUS_COLORS]}>
+                        {STATUS_LABELS[item.status as keyof typeof STATUS_LABELS]}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {item.notes ? (
+                        <span className="text-sm text-gray-600">{item.notes}</span>
+                      ) : (
+                        <span className="text-xs text-gray-400">Sin notas</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          const newStatus = item.status === "disponible" ? "mantenimiento" : "disponible";
+                          updateStatusMutation.mutate({ id: item.id, status: newStatus });
+                        }}
+                        disabled={updateStatusMutation.isPending}
+                      >
+                        <Settings className="h-3 w-3 mr-1" />
+                        {item.status === "disponible" ? "Mantenimiento" : "Disponible"}
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>
