@@ -36,8 +36,8 @@ const STATUS_LABELS = {
 const TYPE_LABELS = {
   caja: "Caja",
   base_movil: "Base Móvil",
-  carro_plegable: "Carro Plegable",
-  correa_amarre: "Correa de Amarre"
+  carro_plegable: "Carro de Transporte",
+  correa_amarre: "Cinta de Amarre"
 };
 
 const TYPE_ICONS = {
@@ -121,10 +121,6 @@ export function InventorySection() {
           <h2 className="text-2xl font-bold">Gestión de Inventario</h2>
           <p className="text-gray-600">Control total de cajas y accesorios</p>
         </div>
-        <Button size="lg" className="bg-green-600 hover:bg-green-700">
-          <Plus className="h-4 w-4 mr-2" />
-          Generar Códigos QR
-        </Button>
       </div>
 
       {/* Estadísticas */}
@@ -189,8 +185,8 @@ export function InventorySection() {
                 <option value="todos">Todos los tipos</option>
                 <option value="caja">Cajas</option>
                 <option value="base_movil">Bases Móviles</option>
-                <option value="carro_plegable">Carro Plegable</option>
-                <option value="correa_amarre">Correas de Amarre</option>
+                <option value="carro_plegable">Carros de Transporte</option>
+                <option value="correa_amarre">Cintas de Amarre</option>
               </select>
             </div>
             <div>
@@ -211,85 +207,91 @@ export function InventorySection() {
         </CardContent>
       </Card>
 
-      {/* Lista de Inventario */}
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            Inventario ({filteredInventory.length} items)
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {filteredInventory.length === 0 ? (
-            <div className="text-center py-8">
-              <Package2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600">No se encontraron items con los filtros actuales</p>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-16"></TableHead>
-                  <TableHead>Código</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead>Notas</TableHead>
-                  <TableHead className="text-right">Acciones</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredInventory.map((item: Inventory) => (
-                  <TableRow key={item.id} className="hover:bg-gray-50">
-                    <TableCell>
-                      <div className="flex items-center justify-center">
-                        <span className="text-2xl">{TYPE_ICONS[item.type as keyof typeof TYPE_ICONS]}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <div>
+      {/* Inventario por Categorías */}
+      {["caja", "base_movil", "carro_plegable", "correa_amarre"].map((categoryType) => {
+        const categoryItems = filteredInventory.filter((item: Inventory) => item.type === categoryType);
+        const categoryStats = {
+          total: categoryItems.length,
+          disponible: categoryItems.filter(item => item.status === "disponible").length,
+          arrendada: categoryItems.filter(item => item.status === "alquilada").length,
+          mantenimiento: categoryItems.filter(item => item.status === "mantenimiento").length,
+          dañada: categoryItems.filter(item => item.status === "dañada").length
+        };
+
+        if (categoryItems.length === 0 && filterType !== "todos" && filterType !== categoryType) {
+          return null;
+        }
+
+        return (
+          <Card key={categoryType}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <span className="text-2xl">{TYPE_ICONS[categoryType as keyof typeof TYPE_ICONS]}</span>
+                {TYPE_LABELS[categoryType as keyof typeof TYPE_LABELS]} ({categoryItems.length} items)
+              </CardTitle>
+              <div className="flex gap-4 text-sm">
+                <span className="text-green-600">Disponibles: {categoryStats.disponible}</span>
+                <span className="text-yellow-600">Arrendadas: {categoryStats.arrendada}</span>
+                <span className="text-blue-600">Mantenimiento: {categoryStats.mantenimiento}</span>
+                <span className="text-red-600">Dañadas: {categoryStats.dañada}</span>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {categoryItems.length === 0 ? (
+                <div className="text-center py-4">
+                  <p className="text-gray-500">No hay items de esta categoría con los filtros actuales</p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Código</TableHead>
+                      <TableHead>Estado</TableHead>
+                      <TableHead>Notas</TableHead>
+                      <TableHead className="text-right">Acciones</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {categoryItems.map((item: Inventory) => (
+                      <TableRow key={item.id} className="hover:bg-gray-50">
+                        <TableCell>
                           <div className="font-bold text-base">{item.code}</div>
-                        </div>
-                        <QrCode className="h-4 w-4 text-gray-400" />
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm font-medium">
-                        {TYPE_LABELS[item.type as keyof typeof TYPE_LABELS]}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={STATUS_COLORS[item.status as keyof typeof STATUS_COLORS]}>
-                        {STATUS_LABELS[item.status as keyof typeof STATUS_LABELS]}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {item.notes ? (
-                        <span className="text-sm text-gray-600">{item.notes}</span>
-                      ) : (
-                        <span className="text-xs text-gray-400">Sin notas</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          const newStatus = item.status === "disponible" ? "mantenimiento" : "disponible";
-                          updateStatusMutation.mutate({ id: item.id, status: newStatus });
-                        }}
-                        disabled={updateStatusMutation.isPending}
-                      >
-                        <Settings className="h-3 w-3 mr-1" />
-                        {item.status === "disponible" ? "Mantenimiento" : "Disponible"}
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={STATUS_COLORS[item.status as keyof typeof STATUS_COLORS]}>
+                            {STATUS_LABELS[item.status as keyof typeof STATUS_LABELS]}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {item.notes ? (
+                            <span className="text-sm text-gray-600">{item.notes}</span>
+                          ) : (
+                            <span className="text-xs text-gray-400">Sin notas</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              const newStatus = item.status === "disponible" ? "mantenimiento" : "disponible";
+                              updateStatusMutation.mutate({ id: item.id, status: newStatus });
+                            }}
+                            disabled={updateStatusMutation.isPending}
+                          >
+                            <Settings className="h-3 w-3 mr-1" />
+                            {item.status === "disponible" ? "Mantenimiento" : "Disponible"}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        );
+      })}
     </div>
   );
 }
