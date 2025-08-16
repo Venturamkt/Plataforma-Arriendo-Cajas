@@ -633,9 +633,51 @@ export default function CustomersCleanPage() {
                         
                         <TableCell>
                           {hasActiveRentals ? (
-                            <Badge className="bg-green-500 text-white">
-                              entregada
-                            </Badge>
+                            <div className="space-y-2">
+                              {activeRentals.map((rental) => (
+                                <div key={rental.id} className="flex items-center space-x-2">
+                                  <Select
+                                    value={rental.status}
+                                    onValueChange={async (value) => {
+                                      try {
+                                        const response = await fetch(`/api/rentals/${rental.id}`, {
+                                          method: 'PUT',
+                                          headers: { 'Content-Type': 'application/json' },
+                                          body: JSON.stringify({ status: value })
+                                        })
+                                        
+                                        if (response.ok) {
+                                          window.location.reload()
+                                          console.log(`Estado actualizado a ${value}. Email enviado al cliente.`)
+                                        } else {
+                                          const error = await response.json()
+                                          console.error('Error:', error.message || "No se pudo actualizar el estado")
+                                          alert('Error al cambiar estado: ' + (error.message || "No se pudo actualizar el estado"))
+                                        }
+                                      } catch (error) {
+                                        console.error('Error updating status:', error)
+                                        alert('Error de conexión. Verifica tu conexión e intenta nuevamente.')
+                                      }
+                                    }}
+                                  >
+                                    <SelectTrigger className="w-36 h-8 text-xs">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="pendiente">🟡 Pendiente</SelectItem>
+                                      <SelectItem value="pagada">🟢 Pagada</SelectItem>
+                                      <SelectItem value="entregada">🔵 Entregada</SelectItem>
+                                      <SelectItem value="retirada">🟣 Retirada</SelectItem>
+                                      <SelectItem value="completada">✅ Completada</SelectItem>
+                                      <SelectItem value="cancelada">🔴 Cancelada</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                  <Badge variant="outline" className="text-xs">
+                                    {rental.trackingCode}
+                                  </Badge>
+                                </div>
+                              ))}
+                            </div>
                           ) : (
                             <Badge variant="outline">
                               sin arriendos
