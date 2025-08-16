@@ -182,6 +182,21 @@ export const notificationTemplates = pgTable("notification_templates", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const companySettings = pgTable("companySettings", {
+  id: varchar("id", { length: 255 }).primaryKey().default(sql`gen_random_uuid()`),
+  companyName: varchar("companyName", { length: 255 }).notNull().default("Arriendo Cajas"),
+  logoUrl: text("logoUrl"),
+  primaryColor: varchar("primaryColor", { length: 7 }).default("#C8201D"),
+  secondaryColor: varchar("secondaryColor", { length: 7 }).default("#2E5CA6"),
+  address: text("address"),
+  phone: varchar("phone", { length: 50 }),
+  email: varchar("email", { length: 255 }),
+  website: varchar("website", { length: 255 }),
+  description: text("description"),
+  createdAt: timestamp("createdAt").defaultNow(),
+  updatedAt: timestamp("updatedAt").defaultNow()
+});
+
 // Relaciones
 export const customersRelations = relations(customers, ({ many }) => ({
   rentals: many(rentals),
@@ -250,3 +265,4 @@ export type Inventory = typeof inventory.$inferSelect;
 export type RentalItem = typeof rentalItems.$inferSelect;
 export type Activity = typeof activities.$inferSelect;
 export type NotificationTemplate = typeof notificationTemplates.$inferSelect;
+export type CompanySettings = typeof companySettings.$inferSelect;

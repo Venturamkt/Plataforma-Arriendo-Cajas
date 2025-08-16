@@ -28,6 +28,8 @@ import { DriversSection } from "./admin/DriversSection";
 import PaymentsSection from "./admin/PaymentsSection";
 import ReportsSection from "./admin/ReportsSection";
 import CalendarSection from "./admin/CalendarSectionNew";
+import ConfigurationSection from "./admin/ConfigurationSection";
+import CompanyLogo from "@/components/CompanyLogo";
 
 const sidebarItems = [
   { id: "dashboard", label: "Dashboard", icon: Home },
@@ -38,7 +40,7 @@ const sidebarItems = [
   { id: "payments", label: "Pagos / Finanzas", icon: DollarSign },
   { id: "reports", label: "Reportes", icon: BarChart3 },
   { id: "calendar", label: "Calendario", icon: Calendar },
-  { id: "settings", label: "Configuración", icon: Settings },
+  { id: "configuration", label: "Configuración", icon: Settings },
 ];
 
 export default function AdminDashboard() {
@@ -238,6 +240,8 @@ export default function AdminDashboard() {
         return <ReportsSection />;
       case "calendar":
         return <CalendarSection />;
+      case "configuration":
+        return <ConfigurationSection />;
       case "settings":
         return <div className="p-8 text-center"><h2 className="text-2xl">Configuración - En desarrollo</h2></div>;
       default:
@@ -254,12 +258,7 @@ export default function AdminDashboard() {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="flex items-center justify-between h-16 px-4 border-b">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">AC</span>
-              </div>
-              <span className="font-bold text-gray-900">Arriendo Cajas</span>
-            </div>
+            <CompanyLogo />
             <Button
               variant="ghost"
               size="sm"

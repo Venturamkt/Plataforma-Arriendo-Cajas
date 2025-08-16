@@ -1,4 +1,5 @@
 import { Link } from "wouter";
+import CompanyLogo from "@/components/CompanyLogo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Search, Users, ShieldCheck, Clock } from "lucide-react";
@@ -19,14 +20,9 @@ export default function HomePage() {
         
         <div className="relative z-10 container mx-auto px-4 py-8 lg:py-16 text-center text-white">
           <div className="mb-8 lg:mb-12">
-            <img 
-              src="/logo.png" 
-              alt="Arriendo Cajas" 
-              className="h-16 lg:h-20 w-auto mx-auto mb-6 lg:mb-8"
-            />
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl font-bold mb-4 lg:mb-6 text-white drop-shadow-lg">
-              Arriendo Cajas
-            </h1>
+            <div className="flex justify-center mb-6 lg:mb-8">
+              <CompanyLogo size="lg" className="text-white" />
+            </div>
             <p className="text-lg sm:text-xl lg:text-2xl mb-8 lg:mb-12 max-w-3xl mx-auto text-white/90">
               Sistema de gestión integral para arriendo de cajas plásticas
             </p>
@@ -93,13 +89,9 @@ export default function HomePage() {
       <footer className="bg-gray-900 text-white py-6 lg:py-8">
         <div className="container mx-auto px-4 text-center">
           <div className="mb-4">
-            <img 
-              src="/logo.png" 
-              alt="Arriendo Cajas" 
-              className="h-10 lg:h-12 w-auto mx-auto mb-4 opacity-80"
-            />
+            <CompanyLogo className="mx-auto mb-4 opacity-80 text-white" />
           </div>
-          <p className="mb-2 text-sm lg:text-base">Arriendo Cajas - Tu solución de almacenamiento temporal</p>
+          <p className="mb-2 text-sm lg:text-base">Tu solución de almacenamiento temporal</p>
           <p className="text-gray-400 text-sm lg:text-base">¿Preguntas? Contáctanos: contacto@arriendocajas.cl</p>
         </div>
       </footer>

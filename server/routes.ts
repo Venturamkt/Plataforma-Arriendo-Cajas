@@ -561,6 +561,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Configuration routes
+  app.get("/api/configuration", async (req, res) => {
+    try {
+      const settings = await storage.getCompanySettings();
+      res.json(settings);
+    } catch (error) {
+      console.error("Error fetching configuration:", error);
+      res.status(500).json({ error: "Error fetching configuration" });
+    }
+  });
+
+  app.post("/api/configuration", async (req, res) => {
+    try {
+      const settings = await storage.saveCompanySettings(req.body);
+      res.json(settings);
+    } catch (error) {
+      console.error("Error saving configuration:", error);
+      res.status(500).json({ error: "Error saving configuration" });
+    }
+  });
+
+  app.post("/api/configuration/logo", async (req, res) => {
+    try {
+      // Simular upload de logo - en producción esto sería con multer y cloud storage
+      const logoUrl = "/api/uploads/logo.png"; // URL simulada
+      
+      const settings = await storage.getCompanySettings();
+      const updatedSettings = await storage.saveCompanySettings({
+        ...settings,
+        logoUrl: logoUrl
+      });
+      
+      res.json({ logoUrl: logoUrl, settings: updatedSettings });
+    } catch (error) {
+      console.error("Error uploading logo:", error);
+      res.status(500).json({ error: "Error uploading logo" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
