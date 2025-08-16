@@ -58,6 +58,7 @@ Preferred communication style: Simple, everyday language.
 - ✅ **Customer form working**: Fixed "Create New Customer" dialog with all required fields
 - ✅ **Driver assignment dropdown**: Replaced broken "Asignar repartidor" button with functional Select dropdown
 - ✅ **Privacy protection**: Changed RUT examples from personal data to generic "12.345.678-9"
+✅ **Database privacy fix**: Updated actual customer RUT from personal "16.220.939-6" to generic "12.345.678-9" in production data
 - ✅ **Tracking system verified**: Confirmed URL tracking works correctly with proper RUT digits and tracking codes
 - ✅ **Form reset issue resolved**: Fixed rental forms auto-closing after save - now preserve all data for continued editing
 - ✅ **Inventory sync corrected**: Fixed API status mismatch ('available' vs 'disponible') - now shows correct box count (35 available)
