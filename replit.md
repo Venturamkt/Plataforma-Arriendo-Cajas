@@ -74,6 +74,10 @@ Preferred communication style: Simple, everyday language.
 - ✅ **User experience improved**: Forms stay open after successful operations with clear success messages
 - ✅ **Clean customers page created**: Built new customers-clean.tsx with simplified, error-free logic while preserving design and colors
 - ✅ **Logic separation**: Maintained all visual elements (colors, layout, shortcuts) but rebuilt core functionality from scratch
+- ✅ **Clickeable customer profiles**: Customer names are now clickeable to view detailed information without separate "Edit" buttons
+- ✅ **Customer details view**: Comprehensive customer information display including contact details, rental summary, and complete rental history
+- ✅ **Tracking URL display**: Formatted tracking information showing RUT digits and complete URL path as plain text (non-clickeable)
+- ✅ **Enhanced tracking section**: Dedicated tracking card with RUT digits, full URL, and tracking code clearly separated for easy reference
 
 ### Key Features
 - **Authentication**: Replit Auth (OpenID Connect), PostgreSQL-backed sessions, role-based access control (Admin, Driver, Customer), HTTP-only cookies, CSRF protection.

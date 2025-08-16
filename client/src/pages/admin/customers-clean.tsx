@@ -303,6 +303,7 @@ export default function CustomersCleanPage() {
   // Dialog states
   const [showCreateCustomer, setShowCreateCustomer] = useState(false)
   const [showEditCustomer, setShowEditCustomer] = useState(false)
+  const [showViewCustomer, setShowViewCustomer] = useState(false)
   const [showCreateRental, setShowCreateRental] = useState(false)
   const [showEditRental, setShowEditRental] = useState(false)
   
@@ -592,7 +593,7 @@ export default function CustomersCleanPage() {
                             className="flex items-center space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded-lg transition-colors"
                             onClick={() => {
                               setSelectedCustomer(customer)
-                              setShowEditCustomer(true)
+                              setShowViewCustomer(true)
                             }}
                           >
                             <div className="flex-shrink-0">
@@ -605,10 +606,15 @@ export default function CustomersCleanPage() {
                               <div className="text-sm text-gray-500">
                                 Cliente desde {customer.createdAt ? new Date(customer.createdAt).toLocaleDateString('es-CL') : 'N/A'}
                               </div>
-                              {/* Show tracking URL if customer has active rentals */}
+                              {/* Show tracking info if customer has active rentals */}
                               {hasActiveRentals && mostRecentRental?.trackingCode && (
-                                <div className="text-xs text-blue-600 font-mono mt-1">
-                                  tracking: /track/{customer.rut?.replace(/[.-]/g, '').slice(0, -1).slice(-4).padStart(4, '0') || '----'}/{mostRecentRental.trackingCode}
+                                <div className="mt-1">
+                                  <div className="text-xs text-gray-600">
+                                    RUT: {customer.rut?.replace(/[.-]/g, '').slice(0, -1).slice(-4).padStart(4, '0') || '----'}
+                                  </div>
+                                  <div className="text-xs text-blue-600 font-mono">
+                                    /track/{customer.rut?.replace(/[.-]/g, '').slice(0, -1).slice(-4).padStart(4, '0') || '----'}/{mostRecentRental.trackingCode}
+                                  </div>
                                 </div>
                               )}
                             </div>
@@ -786,6 +792,32 @@ export default function CustomersCleanPage() {
             onSubmit={(data) => createCustomerMutation.mutate(data)}
             isLoading={createCustomerMutation.isPending}
           />
+        </DialogContent>
+      </Dialog>
+
+      {/* View Customer Details Dialog */}
+      <Dialog open={showViewCustomer} onOpenChange={setShowViewCustomer}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Detalles del Cliente</DialogTitle>
+            <DialogDescription>
+              Información completa del cliente y su historial de arriendos.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedCustomer && (
+            <CustomerDetailsView 
+              customer={selectedCustomer}
+              rentals={rentals?.filter(r => r.customerId === selectedCustomer.id) || []}
+              onEdit={() => {
+                setShowViewCustomer(false)
+                setShowEditCustomer(true)
+              }}
+              onCreateRental={() => {
+                setShowViewCustomer(false)
+                setShowCreateRental(true)
+              }}
+            />
+          )}
         </DialogContent>
       </Dialog>
 
@@ -1487,5 +1519,192 @@ function RentalForm({
         </DialogContent>
       </Dialog>
     </form>
+  )
+}
+
+// Customer Details View Component
+function CustomerDetailsView({ 
+  customer, 
+  rentals, 
+  onEdit, 
+  onCreateRental 
+}: { 
+  customer: Customer
+  rentals: Rental[]
+  onEdit: () => void
+  onCreateRental: () => void
+}) {
+  const activeRentals = rentals.filter(r => 
+    ['pagada', 'entregada', 'retirada'].includes(r.status)
+  )
+  
+  const mostRecentRental = rentals
+    .sort((a, b) => new Date(b.deliveryDate).getTime() - new Date(a.deliveryDate).getTime())[0]
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'pendiente': return 'bg-yellow-100 text-yellow-800'
+      case 'pagada': return 'bg-green-100 text-green-800'
+      case 'entregada': return 'bg-blue-100 text-blue-800'
+      case 'retirada': return 'bg-purple-100 text-purple-800'
+      case 'completada': return 'bg-gray-100 text-gray-800'
+      case 'cancelada': return 'bg-red-100 text-red-800'
+      default: return 'bg-gray-100 text-gray-800'
+    }
+  }
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'pendiente': return '🟡 Pendiente'
+      case 'pagada': return '🟢 Pagada'
+      case 'entregada': return '🔵 Entregada'
+      case 'retirada': return '🟣 Retirada'
+      case 'completada': return '✅ Completada'
+      case 'cancelada': return '🔴 Cancelada'
+      default: return status
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Customer Info Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <div className="h-16 w-16 bg-blue-500 rounded-full flex items-center justify-center text-white text-2xl font-bold">
+            {customer.name.charAt(0).toUpperCase()}
+          </div>
+          <div>
+            <h3 className="text-2xl font-bold text-gray-900">{customer.name}</h3>
+            <p className="text-gray-600">Cliente desde {customer.createdAt ? new Date(customer.createdAt).toLocaleDateString('es-CL') : 'N/A'}</p>
+          </div>
+        </div>
+        <div className="flex space-x-2">
+          <Button variant="outline" onClick={onEdit}>
+            <Edit className="h-4 w-4 mr-2" />
+            Editar
+          </Button>
+          <Button onClick={onCreateRental}>
+            <Calendar className="h-4 w-4 mr-2" />
+            Nuevo Arriendo
+          </Button>
+        </div>
+      </div>
+
+      {/* Customer Details Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Contact Information */}
+        <Card className="p-6">
+          <h4 className="text-lg font-semibold mb-4">Información de Contacto</h4>
+          <div className="space-y-3">
+            <div>
+              <Label className="text-sm font-medium text-gray-500">Email</Label>
+              <p className="text-gray-900">{customer.email}</p>
+            </div>
+            <div>
+              <Label className="text-sm font-medium text-gray-500">Teléfono</Label>
+              <p className="text-gray-900">{customer.phone || 'No especificado'}</p>
+            </div>
+            <div>
+              <Label className="text-sm font-medium text-gray-500">RUT</Label>
+              <p className="text-gray-900 font-mono">{customer.rut}</p>
+            </div>
+            <div>
+              <Label className="text-sm font-medium text-gray-500">Dirección</Label>
+              <p className="text-gray-900">{customer.address || 'No especificada'}</p>
+            </div>
+          </div>
+        </Card>
+
+        {/* Rental Summary */}
+        <Card className="p-6">
+          <h4 className="text-lg font-semibold mb-4">Resumen de Arriendos</h4>
+          <div className="space-y-3">
+            <div>
+              <Label className="text-sm font-medium text-gray-500">Total Arriendos</Label>
+              <p className="text-2xl font-bold text-gray-900">{rentals.length}</p>
+            </div>
+            <div>
+              <Label className="text-sm font-medium text-gray-500">Arriendos Activos</Label>
+              <p className="text-2xl font-bold text-blue-600">{activeRentals.length}</p>
+            </div>
+            {activeRentals.length > 0 && (
+              <div>
+                <Label className="text-sm font-medium text-gray-500">Total Cajas Activas</Label>
+                <p className="text-2xl font-bold text-green-600">
+                  {activeRentals.reduce((sum, rental) => sum + (rental.totalBoxes || 0), 0)}
+                </p>
+              </div>
+            )}
+          </div>
+        </Card>
+      </div>
+
+      {/* Active Tracking Info */}
+      {activeRentals.length > 0 && mostRecentRental?.trackingCode && (
+        <Card className="p-6 bg-blue-50 border-blue-200">
+          <h4 className="text-lg font-semibold mb-4 text-blue-800">Tracking Actual</h4>
+          <div className="space-y-2">
+            <div>
+              <Label className="text-sm font-medium text-blue-600">RUT Dígitos</Label>
+              <p className="text-lg font-mono text-blue-900">
+                {customer.rut?.replace(/[.-]/g, '').slice(0, -1).slice(-4).padStart(4, '0') || '----'}
+              </p>
+            </div>
+            <div>
+              <Label className="text-sm font-medium text-blue-600">URL de Tracking</Label>
+              <p className="text-lg font-mono text-blue-900 bg-white p-2 rounded border">
+                /track/{customer.rut?.replace(/[.-]/g, '').slice(0, -1).slice(-4).padStart(4, '0') || '----'}/{mostRecentRental.trackingCode}
+              </p>
+            </div>
+            <div>
+              <Label className="text-sm font-medium text-blue-600">Código</Label>
+              <p className="text-lg font-mono text-blue-900">
+                {mostRecentRental.trackingCode}
+              </p>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Rental History */}
+      <Card className="p-6">
+        <h4 className="text-lg font-semibold mb-4">Historial de Arriendos</h4>
+        {rentals.length > 0 ? (
+          <div className="space-y-4">
+            {rentals.map((rental) => (
+              <div key={rental.id} className="border rounded-lg p-4 hover:bg-gray-50">
+                <div className="flex justify-between items-start">
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-3">
+                      <Badge className={getStatusColor(rental.status)}>
+                        {getStatusText(rental.status)}
+                      </Badge>
+                      {rental.trackingCode && (
+                        <Badge variant="outline" className="font-mono">
+                          {rental.trackingCode}
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      <p><strong>Cajas:</strong> {rental.totalBoxes}</p>
+                      <p><strong>Entrega:</strong> {new Date(rental.deliveryDate).toLocaleDateString('es-CL')}</p>
+                      {rental.returnDate && (
+                        <p><strong>Retiro:</strong> {new Date(rental.returnDate).toLocaleDateString('es-CL')}</p>
+                      )}
+                      <p><strong>Total:</strong> {formatPrice(Number(rental.totalAmount))}</p>
+                    </div>
+                  </div>
+                  <div className="text-right text-sm text-gray-500">
+                    <p>{rental.rentalDays} días</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-500 text-center py-8">No hay arriendos registrados</p>
+        )}
+      </Card>
+    </div>
   )
 }
