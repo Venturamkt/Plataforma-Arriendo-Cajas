@@ -85,8 +85,8 @@ export default function CustomersSection() {
       return data.map((customer: Customer) => ({
         ...customer,
         rentalsText: `${customer.activeRentals || 0} activos / ${customer.totalRentals || 0} total`,
-        lastRentalStatus: customer.activeRentals > 0 ? "entregada" : "finalizada",
-        debtAmount: parseFloat(customer.currentDebt) || 0
+        lastRentalStatus: (customer.activeRentals || 0) > 0 ? "entregada" : "finalizada",
+        debtAmount: parseFloat(customer.currentDebt || "0")
       }));
     }
   });
@@ -224,7 +224,7 @@ export default function CustomersSection() {
   };
 
   const handleDeleteCustomer = (customer: CustomerWithStats) => {
-    if (customer.activeRentals > 0 || customer.debtAmount > 0) {
+    if ((customer.activeRentals || 0) > 0 || (customer.debtAmount || 0) > 0) {
       toast({ 
         title: "No se puede eliminar", 
         description: "El cliente tiene arriendos activos o deuda pendiente",
@@ -263,7 +263,10 @@ export default function CustomersSection() {
         );
       });
 
-      updateStatusMutation.mutate(statusChangeData);
+      updateStatusMutation.mutate({
+        customerId: statusChangeData.customerId,
+        status: statusChangeData.newStatus
+      });
     }
   };
 
@@ -281,14 +284,14 @@ export default function CustomersSection() {
     for (const filter of activeFilters) {
       switch (filter) {
         case "active_rentals":
-          if (customer.activeRentals === 0) return false;
+          if ((customer.activeRentals || 0) === 0) return false;
           break;
         case "with_debt":
-          if (customer.debtAmount <= 0) return false;
+          if ((customer.debtAmount || 0) <= 0) return false;
           break;
         case "overdue":
           // Simulamos mora basada en deuda > 0
-          if (customer.debtAmount <= 0) return false;
+          if ((customer.debtAmount || 0) <= 0) return false;
           break;
         case "no_driver":
           // Esta lógica se implementaría con datos reales de arriendos
@@ -408,21 +411,20 @@ export default function CustomersSection() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {customer.lastRentalStatus && (
-                          <div className="relative">
+                          <div className="relative inline-block">
                             <select
                               value={customer.lastRentalStatus}
                               onChange={(e) => handleStatusChange(customer.id, e.target.value)}
-                              className={`appearance-none px-3 py-1 pr-8 rounded text-xs font-medium text-white border-none cursor-pointer ${statusBadgeConfig[customer.lastRentalStatus as keyof typeof statusBadgeConfig]?.color}`}
-                              style={{ backgroundColor: 'inherit' }}
+                              className={`appearance-none px-3 py-1 pr-8 rounded text-xs font-medium text-white border-none cursor-pointer outline-none ${statusBadgeConfig[customer.lastRentalStatus as keyof typeof statusBadgeConfig]?.color}`}
                             >
-                              <option value="pendiente" className="text-black">Pendiente</option>
-                              <option value="programada" className="text-black">Programada</option>
-                              <option value="en_ruta" className="text-black">En Ruta</option>
-                              <option value="entregada" className="text-black">Entregada</option>
-                              <option value="retiro_programado" className="text-black">Retiro Programado</option>
-                              <option value="retirada" className="text-black">Retirada</option>
-                              <option value="finalizada" className="text-black">Finalizada</option>
-                              <option value="cancelada" className="text-black">Cancelada</option>
+                              <option value="pendiente" className="text-black bg-white">Pendiente</option>
+                              <option value="programada" className="text-black bg-white">Programada</option>
+                              <option value="en_ruta" className="text-black bg-white">En Ruta</option>
+                              <option value="entregada" className="text-black bg-white">Entregada</option>
+                              <option value="retiro_programado" className="text-black bg-white">Retiro Programado</option>
+                              <option value="retirada" className="text-black bg-white">Retirada</option>
+                              <option value="finalizada" className="text-black bg-white">Finalizada</option>
+                              <option value="cancelada" className="text-black bg-white">Cancelada</option>
                             </select>
                             <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
                               <svg className="w-3 h-3 fill-white" viewBox="0 0 20 20">
@@ -433,8 +435,8 @@ export default function CustomersSection() {
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`text-sm font-medium ${customer.debtAmount > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                          ${customer.debtAmount.toLocaleString()}
+                        <span className={`text-sm font-medium ${(customer.debtAmount || 0) > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                          ${(customer.debtAmount || 0).toLocaleString()}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -460,7 +462,7 @@ export default function CustomersSection() {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleDeleteCustomer(customer)}
-                            disabled={customer.activeRentals > 0 || customer.debtAmount > 0}
+                            disabled={(customer.activeRentals || 0) > 0 || (customer.debtAmount || 0) > 0}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -670,11 +672,11 @@ export default function CustomersSection() {
               <span>Ficha de Cliente</span>
               {selectedCustomer && (
                 <div className="flex items-center space-x-2">
-                  {selectedCustomer.debtAmount > 0 && (
-                    <Badge variant="destructive">Deuda: ${selectedCustomer.debtAmount.toLocaleString()}</Badge>
+                  {(selectedCustomer.debtAmount || 0) > 0 && (
+                    <Badge variant="destructive">Deuda: ${(selectedCustomer.debtAmount || 0).toLocaleString()}</Badge>
                   )}
-                  {selectedCustomer.activeRentals > 0 && (
-                    <Badge variant="default">{selectedCustomer.activeRentals} arriendos activos</Badge>
+                  {(selectedCustomer.activeRentals || 0) > 0 && (
+                    <Badge variant="default">{selectedCustomer.activeRentals || 0} arriendos activos</Badge>
                   )}
                 </div>
               )}
@@ -702,7 +704,7 @@ export default function CustomersSection() {
               </Card>
 
               {/* Alerts */}
-              {(selectedCustomer.debtAmount > 0 || selectedCustomer.activeRentals > 0) && (
+              {((selectedCustomer.debtAmount || 0) > 0 || (selectedCustomer.activeRentals || 0) > 0) && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-lg flex items-center">
@@ -711,16 +713,16 @@ export default function CustomersSection() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2">
-                    {selectedCustomer.debtAmount > 0 && (
+                    {(selectedCustomer.debtAmount || 0) > 0 && (
                       <div className="flex items-center space-x-2 text-red-600">
                         <AlertCircle className="h-4 w-4" />
-                        <span>Saldo pendiente: ${selectedCustomer.debtAmount.toLocaleString()}</span>
+                        <span>Saldo pendiente: ${(selectedCustomer.debtAmount || 0).toLocaleString()}</span>
                       </div>
                     )}
-                    {selectedCustomer.activeRentals > 0 && (
+                    {(selectedCustomer.activeRentals || 0) > 0 && (
                       <div className="flex items-center space-x-2 text-blue-600">
                         <Package className="h-4 w-4" />
-                        <span>{selectedCustomer.activeRentals} arriendos activos con cajas en terreno</span>
+                        <span>{selectedCustomer.activeRentals || 0} arriendos activos con cajas en terreno</span>
                       </div>
                     )}
                   </CardContent>
@@ -753,14 +755,14 @@ export default function CustomersSection() {
                 </Card>
                 <Card>
                   <CardContent className="p-4 text-center">
-                    <div className="text-2xl font-bold text-green-600">{selectedCustomer.activeRentals}</div>
+                    <div className="text-2xl font-bold text-green-600">{selectedCustomer.activeRentals || 0}</div>
                     <div className="text-sm text-gray-600">Arriendos Activos</div>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="p-4 text-center">
-                    <div className={`text-2xl font-bold ${selectedCustomer.debtAmount > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                      ${selectedCustomer.debtAmount.toLocaleString()}
+                    <div className={`text-2xl font-bold ${(selectedCustomer.debtAmount || 0) > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                      ${(selectedCustomer.debtAmount || 0).toLocaleString()}
                     </div>
                     <div className="text-sm text-gray-600">Saldo Actual</div>
                   </CardContent>
