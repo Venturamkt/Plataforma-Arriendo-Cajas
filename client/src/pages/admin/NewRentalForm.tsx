@@ -354,23 +354,32 @@ export default function NewRentalForm() {
 
 
 
-                {/* Precio Editable */}
+                {/* Precio Total Manual */}
                 <div className="space-y-3">
                   <Label className="text-lg font-medium flex items-center">
                     <DollarSign className="h-5 w-5 mr-2 text-orange-600" />
-                    Precio Arriendo (Editable)
+                    Precio Total del Arriendo
                   </Label>
                   <Input
                     type="number"
-                    value={formData.pricePerDay}
+                    value={parseInt(formData.boxQuantity) * parseInt(formData.rentalDays) * parseFloat(formData.pricePerDay) || 0}
                     onChange={(e) => {
-                      const updatedData = recalculateFormData({ ...formData, pricePerDay: e.target.value });
+                      // Calcular precio por día basado en el total ingresado
+                      const totalPrice = parseFloat(e.target.value) || 0;
+                      const boxes = parseInt(formData.boxQuantity) || 1;
+                      const days = parseInt(formData.rentalDays) || 1;
+                      const pricePerDay = totalPrice / (boxes * days);
+                      
+                      const updatedData = recalculateFormData({ 
+                        ...formData, 
+                        pricePerDay: pricePerDay.toString() 
+                      });
                       setFormData(updatedData);
                     }}
-                    placeholder="1000"
+                    placeholder="50000"
                     className="h-12 text-lg border-orange-200 bg-orange-50"
                   />
-                  <p className="text-sm text-orange-600">Precio base por día por cada caja</p>
+                  <p className="text-sm text-orange-600">Precio total manual para {formData.boxQuantity} cajas por {formData.rentalDays} días</p>
                 </div>
 
                 {/* Productos Adicionales */}
@@ -467,11 +476,11 @@ export default function NewRentalForm() {
                           <p className="text-xs text-gray-500">$2.000 por caja</p>
                         </div>
                         <div>
-                          <p className="text-gray-600">Subtotal Arriendo</p>
+                          <p className="text-gray-600">Precio del Arriendo</p>
                           <p className="text-lg font-semibold text-blue-800">
                             {formatCurrency((parseInt(formData.boxQuantity) * parseInt(formData.rentalDays) * parseFloat(formData.pricePerDay)).toString())}
                           </p>
-                          <p className="text-xs text-gray-500">{formData.boxQuantity} cajas x {formData.rentalDays} días</p>
+                          <p className="text-xs text-gray-500">Precio manual establecido</p>
                         </div>
                         <div>
                           <p className="text-gray-600">Total</p>

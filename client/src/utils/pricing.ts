@@ -28,6 +28,7 @@ export const calculateTotalAmount = (
   pricePerDay: number,
   additionalProducts: {name: string, quantity: number, price: number}[] = []
 ): number => {
+  // El precio base es ahora el precio total manual (pricePerDay ya incluye el cálculo manual)
   const baseAmount = boxQuantity * rentalDays * pricePerDay;
   const additionalAmount = additionalProducts.reduce((sum, product) => 
     sum + (product.quantity * product.price * rentalDays), 0

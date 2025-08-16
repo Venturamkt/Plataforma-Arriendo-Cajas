@@ -1097,19 +1097,28 @@ export default function RentalsSection() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="edit-pricePerDay">Precio Arriendo (Cajas + Días)</Label>
+              <Label htmlFor="edit-totalPrice">Precio Total del Arriendo</Label>
               <Input
-                id="edit-pricePerDay"
+                id="edit-totalPrice"
                 type="number"
-                value={formData.pricePerDay}
+                value={parseInt(formData.boxQuantity) * parseInt(formData.rentalDays) * parseFloat(formData.pricePerDay) || 0}
                 onChange={(e) => {
-                  const updatedData = recalculateFormData({ ...formData, pricePerDay: e.target.value });
+                  // Calcular precio por día basado en el total ingresado
+                  const totalPrice = parseFloat(e.target.value) || 0;
+                  const boxes = parseInt(formData.boxQuantity) || 1;
+                  const days = parseInt(formData.rentalDays) || 1;
+                  const pricePerDay = totalPrice / (boxes * days);
+                  
+                  const updatedData = recalculateFormData({ 
+                    ...formData, 
+                    pricePerDay: pricePerDay.toString() 
+                  });
                   setFormData(updatedData);
                 }}
-                placeholder="1000"
+                placeholder="50000"
                 className="border-orange-200 bg-orange-50"
               />
-              <p className="text-xs text-orange-600">Precio base por día por cada caja - Editable</p>
+              <p className="text-xs text-orange-600">Precio total manual para {formData.boxQuantity} cajas por {formData.rentalDays} días</p>
             </div>
 
             <div className="space-y-2">
