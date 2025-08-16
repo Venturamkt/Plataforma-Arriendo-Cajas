@@ -267,6 +267,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update rental status
+  app.put("/api/rentals/:id/status", async (req, res) => {
+    try {
+      const { status } = req.body;
+      const rental = await storage.updateRental(req.params.id, { status });
+      
+      await storage.logActivity({
+        type: "rental_status_updated",
+        description: `Estado de arriendo actualizado: ${status}`,
+        entityId: req.params.id,
+        entityType: "rental"
+      });
+      
+      res.json(rental);
+    } catch (error) {
+      console.error("Error updating rental status:", error);
+      res.status(500).json({ error: "Error al actualizar estado del arriendo" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

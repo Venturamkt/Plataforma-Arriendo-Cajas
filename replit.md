@@ -36,7 +36,8 @@ Arriendo Cajas is a web platform for managing a box rental business. The project
 - ✅ **Database Cleaned**: Dropped all tables and recreated clean schema
 - ✅ **Home Page Created**: Beautiful landing page with 3 access portals matching user's design
 - ✅ **Portal Administrador**: Complete admin dashboard with sidebar navigation and KPIs
-- ✅ **Gestión de Clientes**: Full customer management with search, filters, CRUD operations
+- ✅ **Gestión de Clientes**: Full customer management with search, filters, CRUD operations (simplified forms)
+- ✅ **Gestión de Arriendos**: Complete rental management with box quantities, dates, addresses, payments, and status tracking
 - ✅ **Professional UI**: Clean, responsive design following Chilean business standards
 - ✅ **Backend API**: Complete REST API with validation and activity logging
 - ✅ **Sample Data**: Automatic seeding with realistic Chilean customer data
@@ -44,10 +45,11 @@ Arriendo Cajas is a web platform for managing a box rental business. The project
 ### Current Features
 - **Home Page**: Landing page with 3 access portals (Customers, Drivers, Admin)
 - **Admin Dashboard**: Complete portal with sidebar navigation, KPIs, and alerts
-- **Customer Management**: Full CRUD with search, filters, contact info, and debt tracking
+- **Customer Management**: Full CRUD with search, filters, contact info, and debt tracking (simplified)
+- **Rental Management**: Complete CRUD for rental operations with box quantities, dates, addresses, and status tracking
 - **Backend API**: Complete REST endpoints for customers, rentals, payments, and inventory
 - **Database**: PostgreSQL with comprehensive schema for business operations
-- **Sample Data**: Realistic Chilean customer data for testing and demo
+- **Sample Data**: Realistic Chilean customer and rental data for testing and demo
 
 ## External Dependencies
 - **UI Components**: Radix UI
