@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
   Search, 
@@ -18,7 +18,8 @@ import {
   Calendar,
   Truck,
   User,
-  DollarSign
+  DollarSign,
+  ShoppingCart
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Rental } from "@shared/schema";
+import { 
+  formatCurrency, 
+  calculateGuarantee, 
+  calculateReturnDate, 
+  calculateTotalAmount,
+  BOX_QUANTITY_SHORTCUTS,
+  RENTAL_DAYS_SHORTCUTS,
+  ADDITIONAL_PRODUCTS
+} from "@/utils/pricing";
+import { mockInventoryCheck, type InventoryCheck } from "@/utils/inventory";
 
 interface RentalWithDetails extends Rental {
   customerName?: string;
@@ -71,6 +82,9 @@ export default function RentalsSection() {
     customerId: "",
     driverId: "",
     boxQuantity: "",
+    rentalDays: "",
+    pricePerDay: "1000",
+    guaranteeAmount: "",
     totalAmount: "",
     paidAmount: "",
     deliveryDate: "",
@@ -78,10 +92,49 @@ export default function RentalsSection() {
     deliveryAddress: "",
     pickupAddress: "",
     notes: "",
-    status: "pendiente"
+    status: "pendiente",
+    additionalProducts: [] as {name: string, quantity: number, price: number}[]
   });
 
+  const [inventoryStatus, setInventoryStatus] = useState<InventoryCheck | null>(null);
+  const [showAdditionalProducts, setShowAdditionalProducts] = useState(false);
+
   const { toast } = useToast();
+
+  // Función para recalcular valores automáticamente
+  const recalculateFormData = (data: any) => {
+    const boxQuantity = parseInt(data.boxQuantity) || 0;
+    const rentalDays = parseInt(data.rentalDays) || 0;
+    const pricePerDay = parseFloat(data.pricePerDay) || 0;
+    
+    const guaranteeAmount = calculateGuarantee(boxQuantity);
+    const totalAmount = calculateTotalAmount(boxQuantity, rentalDays, pricePerDay, data.additionalProducts);
+    
+    let pickupDate = "";
+    if (data.deliveryDate && rentalDays > 0) {
+      pickupDate = calculateReturnDate(data.deliveryDate, rentalDays);
+    }
+    
+    return {
+      ...data,
+      guaranteeAmount: guaranteeAmount.toString(),
+      totalAmount: totalAmount.toString(),
+      pickupDate
+    };
+  };
+
+  // Verificar inventario cuando cambian cantidades o fechas
+  useEffect(() => {
+    if (formData.boxQuantity && formData.deliveryDate && formData.pickupDate) {
+      const boxQuantity = parseInt(formData.boxQuantity);
+      if (boxQuantity > 0) {
+        const status = mockInventoryCheck(boxQuantity, formData.deliveryDate, formData.pickupDate);
+        setInventoryStatus(status);
+      }
+    } else {
+      setInventoryStatus(null);
+    }
+  }, [formData.boxQuantity, formData.deliveryDate, formData.pickupDate]);
   const queryClient = useQueryClient();
 
   // Fetch rentals
@@ -205,6 +258,9 @@ export default function RentalsSection() {
       customerId: "",
       driverId: "",
       boxQuantity: "",
+      rentalDays: "",
+      pricePerDay: "1000",
+      guaranteeAmount: "",
       totalAmount: "",
       paidAmount: "",
       deliveryDate: "",
@@ -212,8 +268,43 @@ export default function RentalsSection() {
       deliveryAddress: "",
       pickupAddress: "",
       notes: "",
-      status: "pendiente"
+      status: "pendiente",
+      additionalProducts: []
     });
+    setInventoryStatus(null);
+    setShowAdditionalProducts(false);
+  };
+
+  // Funciones para shortcuts
+  const setBoxQuantityShortcut = (quantity: number) => {
+    const updatedData = recalculateFormData({ ...formData, boxQuantity: quantity.toString() });
+    setFormData(updatedData);
+  };
+
+  const setRentalDaysShortcut = (days: number) => {
+    const updatedData = recalculateFormData({ ...formData, rentalDays: days.toString() });
+    setFormData(updatedData);
+  };
+
+  // Funciones para productos adicionales
+  const addAdditionalProduct = (product: {name: string, price: number}) => {
+    const newProduct = { ...product, quantity: 1 };
+    const updatedProducts = [...formData.additionalProducts, newProduct];
+    const updatedData = recalculateFormData({ ...formData, additionalProducts: updatedProducts });
+    setFormData(updatedData);
+  };
+
+  const updateAdditionalProduct = (index: number, field: 'quantity' | 'price', value: number) => {
+    const updatedProducts = [...formData.additionalProducts];
+    updatedProducts[index] = { ...updatedProducts[index], [field]: value };
+    const updatedData = recalculateFormData({ ...formData, additionalProducts: updatedProducts });
+    setFormData(updatedData);
+  };
+
+  const removeAdditionalProduct = (index: number) => {
+    const updatedProducts = formData.additionalProducts.filter((_, i) => i !== index);
+    const updatedData = recalculateFormData({ ...formData, additionalProducts: updatedProducts });
+    setFormData(updatedData);
   };
 
   const handleCreateRental = () => {
@@ -233,6 +324,9 @@ export default function RentalsSection() {
       customerId: rental.customerId,
       driverId: rental.driverId || "",
       boxQuantity: rental.boxQuantity.toString(),
+      rentalDays: "7",
+      pricePerDay: "1000",
+      guaranteeAmount: (rental.boxQuantity * 2000).toString(),
       totalAmount: rental.totalAmount || "",
       paidAmount: rental.paidAmount || "",
       deliveryDate: rental.deliveryDate ? new Date(rental.deliveryDate).toISOString().split('T')[0] : "",
@@ -240,7 +334,8 @@ export default function RentalsSection() {
       deliveryAddress: rental.deliveryAddress || "",
       pickupAddress: rental.pickupAddress || "",
       notes: rental.notes || "",
-      status: rental.status || "pendiente"
+      status: rental.status || "pendiente",
+      additionalProducts: []
     });
     setShowEditDialog(true);
   };
@@ -309,10 +404,10 @@ export default function RentalsSection() {
     for (const filter of activeFilters) {
       switch (filter) {
         case "pending":
-          if (!["pendiente", "programada"].includes(rental.status)) return false;
+          if (!["pendiente", "programada"].includes(rental.status ?? "")) return false;
           break;
         case "in_progress":
-          if (!["en_ruta", "entregada", "retiro_programado"].includes(rental.status)) return false;
+          if (!["en_ruta", "entregada", "retiro_programado"].includes(rental.status ?? "")) return false;
           break;
         case "overdue":
           if (!rental.remainingDays || rental.remainingDays > 0) return false;
@@ -568,23 +663,105 @@ export default function RentalsSection() {
 
             <div className="space-y-2">
               <Label htmlFor="boxQuantity">Cantidad de Cajas *</Label>
-              <Input
-                id="boxQuantity"
-                type="number"
-                value={formData.boxQuantity}
-                onChange={(e) => setFormData(prev => ({ ...prev, boxQuantity: e.target.value }))}
-                placeholder="15"
-              />
+              <div className="space-y-2">
+                <div className="flex gap-2 flex-wrap">
+                  {BOX_QUANTITY_SHORTCUTS.map(quantity => (
+                    <Button
+                      key={quantity}
+                      type="button"
+                      variant={formData.boxQuantity === quantity.toString() ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setBoxQuantityShortcut(quantity)}
+                      className="text-xs"
+                    >
+                      {quantity} Cajas
+                    </Button>
+                  ))}
+                  <Button
+                    type="button"
+                    variant={!BOX_QUANTITY_SHORTCUTS.includes(parseInt(formData.boxQuantity)) && formData.boxQuantity ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => document.getElementById('boxQuantity')?.focus()}
+                    className="text-xs"
+                  >
+                    Otro
+                  </Button>
+                </div>
+                <Input
+                  id="boxQuantity"
+                  type="number"
+                  value={formData.boxQuantity}
+                  onChange={(e) => {
+                    const updatedData = recalculateFormData({ ...formData, boxQuantity: e.target.value });
+                    setFormData(updatedData);
+                  }}
+                  placeholder="Cantidad de cajas"
+                />
+              </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="totalAmount">Monto Total *</Label>
+              <Label htmlFor="rentalDays">Días de Arriendo *</Label>
+              <div className="space-y-2">
+                <div className="flex gap-2 flex-wrap">
+                  {RENTAL_DAYS_SHORTCUTS.map(days => (
+                    <Button
+                      key={days}
+                      type="button"
+                      variant={formData.rentalDays === days.toString() ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setRentalDaysShortcut(days)}
+                      className="text-xs"
+                    >
+                      {days} días
+                    </Button>
+                  ))}
+                  <Button
+                    type="button"
+                    variant={!RENTAL_DAYS_SHORTCUTS.includes(parseInt(formData.rentalDays)) && formData.rentalDays ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => document.getElementById('rentalDays')?.focus()}
+                    className="text-xs"
+                  >
+                    Otro
+                  </Button>
+                </div>
+                <Input
+                  id="rentalDays"
+                  type="number"
+                  value={formData.rentalDays}
+                  onChange={(e) => {
+                    const updatedData = recalculateFormData({ ...formData, rentalDays: e.target.value });
+                    setFormData(updatedData);
+                  }}
+                  placeholder="Días de arriendo"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="pricePerDay">Precio por Día por Caja *</Label>
               <Input
-                id="totalAmount"
-                value={formData.totalAmount}
-                onChange={(e) => setFormData(prev => ({ ...prev, totalAmount: e.target.value }))}
-                placeholder="75000"
+                id="pricePerDay"
+                type="number"
+                value={formData.pricePerDay}
+                onChange={(e) => {
+                  const updatedData = recalculateFormData({ ...formData, pricePerDay: e.target.value });
+                  setFormData(updatedData);
+                }}
+                placeholder="1000"
               />
+              <p className="text-xs text-gray-500">Precio base por día por cada caja</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Garantía (Automática)</Label>
+              <Input
+                value={formData.guaranteeAmount ? formatCurrency(formData.guaranteeAmount) : '$0'}
+                disabled
+                className="bg-gray-50"
+              />
+              <p className="text-xs text-gray-500">$2.000 por caja automáticamente</p>
             </div>
 
             <div className="space-y-2">
@@ -598,23 +775,38 @@ export default function RentalsSection() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="deliveryDate">Fecha de Entrega</Label>
+              <Label htmlFor="deliveryDate">Fecha de Entrega *</Label>
               <Input
                 id="deliveryDate"
                 type="date"
                 value={formData.deliveryDate}
-                onChange={(e) => setFormData(prev => ({ ...prev, deliveryDate: e.target.value }))}
+                onChange={(e) => {
+                  const updatedData = recalculateFormData({ ...formData, deliveryDate: e.target.value });
+                  setFormData(updatedData);
+                }}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="pickupDate">Fecha de Retiro</Label>
+              <Label htmlFor="pickupDate">Fecha de Retiro (Automática)</Label>
               <Input
                 id="pickupDate"
                 type="date"
                 value={formData.pickupDate}
-                onChange={(e) => setFormData(prev => ({ ...prev, pickupDate: e.target.value }))}
+                disabled
+                className="bg-gray-50"
               />
+              <p className="text-xs text-gray-500">Se calcula automáticamente según los días de arriendo</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Monto Total</Label>
+              <Input
+                value={formData.totalAmount ? formatCurrency(formData.totalAmount) : '$0'}
+                disabled
+                className="bg-gray-50 text-lg font-semibold"
+              />
+              <p className="text-xs text-gray-500">Incluye precio + garantía + productos adicionales</p>
             </div>
 
             <div className="space-y-2">
@@ -656,6 +848,91 @@ export default function RentalsSection() {
               />
             </div>
 
+            {/* Verificación de inventario */}
+            <div className="md:col-span-2">
+              {inventoryStatus && (
+                <div className={`p-3 rounded-lg border ${
+                  inventoryStatus.severity === 'success' ? 'bg-green-50 border-green-200' :
+                  inventoryStatus.severity === 'warning' ? 'bg-yellow-50 border-yellow-200' :
+                  'bg-red-50 border-red-200'
+                }`}>
+                  <p className={`text-sm font-medium ${
+                    inventoryStatus.severity === 'success' ? 'text-green-800' :
+                    inventoryStatus.severity === 'warning' ? 'text-yellow-800' :
+                    'text-red-800'
+                  }`}>
+                    {inventoryStatus.message}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Productos adicionales */}
+            <div className="md:col-span-2">
+              <div className="flex items-center justify-between mb-2">
+                <Label>Productos Adicionales</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowAdditionalProducts(!showAdditionalProducts)}
+                >
+                  <ShoppingCart className="h-4 w-4 mr-2" />
+                  {showAdditionalProducts ? 'Ocultar' : 'Agregar Productos'}
+                </Button>
+              </div>
+              
+              {showAdditionalProducts && (
+                <div className="space-y-3 p-3 border rounded-lg bg-gray-50">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    {ADDITIONAL_PRODUCTS.map((product, index) => (
+                      <Button
+                        key={index}
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => addAdditionalProduct(product)}
+                        className="text-xs h-auto p-2 flex-col"
+                      >
+                        <span className="font-medium">{product.name}</span>
+                        <span className="text-gray-500">{formatCurrency(product.price)}/día</span>
+                      </Button>
+                    ))}
+                  </div>
+                  
+                  {formData.additionalProducts.length > 0 && (
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-medium">Productos seleccionados:</h4>
+                      {formData.additionalProducts.map((product, index) => (
+                        <div key={index} className="flex items-center justify-between p-2 bg-white rounded border">
+                          <span className="text-sm">{product.name}</span>
+                          <div className="flex items-center space-x-2">
+                            <Input
+                              type="number"
+                              value={product.quantity}
+                              onChange={(e) => updateAdditionalProduct(index, 'quantity', parseInt(e.target.value) || 1)}
+                              className="w-16 h-8 text-xs"
+                              min="1"
+                            />
+                            <span className="text-xs text-gray-500">x {formatCurrency(product.price)}</span>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeAdditionalProduct(index)}
+                              className="h-8 w-8 p-0 text-red-500"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="notes">Notas del Arriendo</Label>
               <Textarea
@@ -673,7 +950,7 @@ export default function RentalsSection() {
             </Button>
             <Button 
               onClick={handleCreateRental}
-              disabled={!formData.customerId || !formData.boxQuantity || !formData.totalAmount || !formData.deliveryAddress || createRentalMutation.isPending}
+              disabled={!formData.customerId || !formData.boxQuantity || !formData.rentalDays || !formData.deliveryAddress || !formData.pricePerDay || createRentalMutation.isPending}
             >
               {createRentalMutation.isPending ? "Creando..." : "Crear Arriendo"}
             </Button>

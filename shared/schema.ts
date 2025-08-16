@@ -87,6 +87,9 @@ export const rentals = pgTable("rentals", {
     enum: ["pendiente", "programada", "en_ruta", "entregada", "retiro_programado", "retirada", "finalizada", "cancelada"] 
   }).default("pendiente"),
   boxQuantity: integer("box_quantity").notNull(),
+  rentalDays: integer("rental_days"),
+  pricePerDay: decimal("price_per_day", { precision: 10, scale: 2 }),
+  guaranteeAmount: decimal("guarantee_amount", { precision: 10, scale: 2 }),
   totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
   paidAmount: decimal("paid_amount", { precision: 10, scale: 2 }).default("0"),
   deliveryDate: timestamp("delivery_date"),
@@ -96,6 +99,7 @@ export const rentals = pgTable("rentals", {
   deliveryAddress: text("delivery_address"),
   pickupAddress: text("pickup_address"),
   notes: text("notes"),
+  additionalProducts: jsonb("additional_products").default([]),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
