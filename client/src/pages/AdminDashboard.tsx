@@ -27,7 +27,7 @@ import { InventorySection } from "./admin/InventorySection";
 import { DriversSection } from "./admin/DriversSection";
 import PaymentsSection from "./admin/PaymentsSection";
 import ReportsSection from "./admin/ReportsSection";
-import CalendarSection from "./admin/CalendarSection";
+import CalendarSection from "./admin/CalendarSectionNew";
 
 const sidebarItems = [
   { id: "dashboard", label: "Dashboard", icon: Home },

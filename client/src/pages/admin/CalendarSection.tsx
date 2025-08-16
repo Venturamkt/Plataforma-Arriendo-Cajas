@@ -299,7 +299,7 @@ export default function CalendarSection() {
         </div>
         <Button onClick={() => openDialog()} className="flex items-center gap-2">
           <Plus className="h-4 w-4" />
-          Evento Administrativo
+          Nuevo Evento
         </Button>
       </div>
 
