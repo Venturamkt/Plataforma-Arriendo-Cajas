@@ -887,6 +887,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Debug endpoint to analyze tracking data
+  app.get("/api/debug/tracking/:trackingCode", async (req, res) => {
+    try {
+      const { trackingCode } = req.params;
+      console.log(`🔍 Debug: Analyzing tracking code ${trackingCode}`);
+      
+      const rentals = await storage.getRentals();
+      const customers = await storage.getCustomers();
+      
+      const rental = rentals.find(r => r.trackingCode?.toUpperCase() === trackingCode.toUpperCase());
+      
+      if (!rental) {
+        return res.json({ 
+          found: false, 
+          message: "No rental found with this tracking code",
+          environment: process.env.NODE_ENV || 'unknown',
+          totalRentals: rentals.length,
+          availableTrackingCodes: rentals.map(r => r.trackingCode).filter(Boolean).slice(0, 5)
+        });
+      }
+
+      const customer = customers.find(c => c.id === rental.customerId);
+      const rutClean = customer?.rut?.replace(/[.-]/g, '') || '';
+      const rutDigits = rutClean.slice(0, -1).slice(-4).padStart(4, '0');
+      
+      const analysis = {
+        rentalId: rental.id,
+        customerName: customer?.name || 'Unknown',
+        originalRut: customer?.rut,
+        extractedDigits: rutDigits,
+        status: rental.status,
+        createdAt: rental.createdAt
+      };
+
+      res.json({ 
+        found: true, 
+        trackingCode,
+        analysis,
+        environment: process.env.NODE_ENV || 'unknown'
+      });
+    } catch (error) {
+      console.error("Error in debug tracking:", error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(500).json({ message: "Debug failed", error: errorMessage });
+    }
+  });
+
   // Public tracking endpoint
   app.get("/api/track/:rutDigits/:trackingCode", async (req, res) => {
     try {

@@ -26,6 +26,7 @@ import CustomerDashboard from "@/pages/customer/dashboard";
 import TrackRental from "@/pages/track-rental";
 import { TrackingTest } from "@/pages/tracking-test";
 import { ProductionTest } from "@/pages/production-test";
+import { FinalDiagnosis } from "@/pages/final-diagnosis";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -64,6 +65,7 @@ function Router() {
       <Route path="/track/:rut/:code" component={TrackRental} />
       <Route path="/tracking-test" component={TrackingTest} />
       <Route path="/production-test" component={ProductionTest} />
+      <Route path="/final-diagnosis" component={FinalDiagnosis} />
       
       {/* Driver routes */}
       <Route path="/driver/dashboard" component={DriverDashboard} />
