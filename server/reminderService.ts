@@ -73,10 +73,10 @@ export class ReminderService {
       for (const rental of deliveredRentals) {
         // Calculate return date: delivery date + rental days
         const returnDate = new Date(rental.deliveryDate);
-        returnDate.setDate(returnDate.getDate() + rental.rentalDays);
+        returnDate.setDate(returnDate.getDate() + (rental.rentalDays || 7));
         returnDate.setHours(0, 0, 0, 0);
         
-        console.log(`Rental ${rental.trackingCode}: Delivery ${new Date(rental.deliveryDate).toLocaleDateString()}, Days: ${rental.rentalDays}, Return date: ${returnDate.toLocaleDateString()}`);
+        console.log(`Rental ${rental.trackingCode}: Delivery ${new Date(rental.deliveryDate).toLocaleDateString()}, Days: ${rental.rentalDays || 7}, Return date: ${returnDate.toLocaleDateString()}`);
         
         // Send reminder 2 days before pickup
         if (returnDate.getTime() === twoDaysFromNow.getTime()) {
@@ -104,7 +104,7 @@ export class ReminderService {
         return;
       }
       
-      // Extract last 4 digits before verification digit: "16.220.939-6" -> "0939"
+      // Extract last 4 digits before verification digit: "12.345.678-9" -> "5678"
       const rutDigits = customer.rut ? 
         customer.rut.replace(/[.-]/g, '').slice(0, -1).slice(-4).padStart(4, '0') : "0000";
       const trackingUrl = generateTrackingUrl(rutDigits, rental.trackingCode);
@@ -115,6 +115,8 @@ export class ReminderService {
         trackingCode: rental.trackingCode || '',
         trackingUrl: trackingUrl,
         totalBoxes: rental.totalBoxes,
+        totalAmount: parseInt(rental.totalAmount || '0'),
+        guaranteeAmount: rental.totalBoxes * 2000,
         deliveryDate: rental.deliveryDate.toLocaleDateString('es-CL', { 
           year: 'numeric', 
           month: 'long',
@@ -150,14 +152,14 @@ export class ReminderService {
         return;
       }
       
-      // Extract last 4 digits before verification digit: "16.220.939-6" -> "0939"  
+      // Extract last 4 digits before verification digit: "12.345.678-9" -> "5678"  
       const rutDigits = customer.rut ? 
         customer.rut.replace(/[.-]/g, '').slice(0, -1).slice(-4).padStart(4, '0') : "0000";
       const trackingUrl = generateTrackingUrl(rutDigits, rental.trackingCode);
       
       // Calculate return date
       const returnDate = new Date(rental.deliveryDate);
-      returnDate.setDate(returnDate.getDate() + rental.rentalDays);
+      returnDate.setDate(returnDate.getDate() + (rental.rentalDays || 7));
       
       const emailData = {
         customerName: customer.name,

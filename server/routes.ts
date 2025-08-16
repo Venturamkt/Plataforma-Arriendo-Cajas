@@ -1040,7 +1040,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           if (customer?.email && updatedRental?.trackingCode) {
             // Extract last 4 digits before the verification digit
-            // RUT format: "16.220.939-6" -> extract "0939"
+            // RUT format: "12.345.678-9" -> extract "5678"
             // RUT format: "1.234.567-8" -> extract "4567"
             const rutDigits = customer.rut ? 
               customer.rut.replace(/[.-]/g, '').slice(0, -1).slice(-4).padStart(4, '0') : "0000";
