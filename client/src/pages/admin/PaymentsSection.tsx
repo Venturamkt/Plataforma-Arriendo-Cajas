@@ -585,21 +585,30 @@ export default function PaymentsSection() {
                 </SelectTrigger>
                 <SelectContent>
                   {rentals.map((rental: any) => {
-                    const pendingAmount = parseFloat(rental.totalAmount) - parseFloat(rental.paidAmount || "0");
+                    const totalAmount = parseFloat(rental.totalAmount);
+                    const paidAmount = parseFloat(rental.paidAmount || "0");
+                    const pendingAmount = totalAmount - paidAmount;
+                    
                     return (
                       <SelectItem key={rental.id} value={rental.id}>
-                        {rental.customerName} - Total: {formatCurrency(rental.totalAmount)} 
-                        {pendingAmount > 0 && (
-                          <span className="text-red-600 ml-2">(Pendiente: {formatCurrency(pendingAmount.toString())})</span>
-                        )}
+                        <div className="flex flex-col">
+                          <span className="font-medium">{rental.customerName}</span>
+                          <span className="text-sm text-gray-600">
+                            {pendingAmount > 0 ? (
+                              <>Saldo pendiente: {formatCurrency(pendingAmount.toString())}</>
+                            ) : (
+                              <>Pagado completamente: {formatCurrency(totalAmount.toString())}</>
+                            )}
+                          </span>
+                        </div>
                       </SelectItem>
                     );
                   })}
                 </SelectContent>
               </Select>
-              {formData.rentalId && (
-                <p className="text-xs text-gray-600 mt-1">
-                  El monto se auto-completó con el saldo pendiente del arriendo
+              {formData.rentalId && formData.amount && (
+                <p className="text-xs text-green-600 mt-1">
+                  ✓ Monto auto-completado: {formatCurrency(formData.amount)}
                 </p>
               )}
             </div>
@@ -615,7 +624,7 @@ export default function PaymentsSection() {
                 required
               />
               <p className="text-xs text-gray-500 mt-1">
-                Se auto-completa al seleccionar arriendo. Puedes modificarlo si es un pago parcial.
+                💡 Tip: El monto se completa automáticamente al seleccionar un arriendo. Puedes modificarlo para pagos parciales.
               </p>
             </div>
 
