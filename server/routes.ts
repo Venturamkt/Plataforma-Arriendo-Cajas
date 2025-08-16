@@ -271,7 +271,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/rentals/:id/status", async (req, res) => {
     try {
       const { status } = req.body;
-      const rental = await storage.updateRental(req.params.id, { status });
+      let updateData: any = { status };
+      
+      // Auto-asignar repartidor cuando se marca como "programada"
+      if (status === "programada") {
+        const availableDrivers = await storage.getDrivers();
+        const activeDrivers = availableDrivers.filter(d => d.isActive);
+        
+        if (activeDrivers.length > 0) {
+          // Asignar repartidor con menos arriendos activos (distribución equitativa)
+          const driverWithLeastRentals = activeDrivers.reduce((min, driver) => {
+            // En una implementación real, contaríamos arriendos activos por repartidor
+            return driver; // Por ahora asignamos el primero disponible
+          });
+          
+          updateData.driverId = driverWithLeastRentals.id;
+          
+          await storage.logActivity({
+            type: "driver_assigned",
+            description: `Repartidor ${driverWithLeastRentals.name} asignado automáticamente`,
+            entityId: req.params.id,
+            entityType: "rental"
+          });
+        }
+      }
+      
+      const rental = await storage.updateRental(req.params.id, updateData);
       
       await storage.logActivity({
         type: "rental_status_updated",

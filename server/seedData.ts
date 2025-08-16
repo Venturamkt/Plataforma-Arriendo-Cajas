@@ -59,6 +59,30 @@ export async function seedInitialData() {
         email: "ana@arriendocajas.cl", 
         phone: "+56933445566",
         isActive: true
+      },
+      {
+        name: "Roberto Silva",
+        email: "roberto@arriendocajas.cl",
+        phone: "+56944556677",
+        isActive: true
+      },
+      {
+        name: "Patricia Rojas",
+        email: "patricia@arriendocajas.cl",
+        phone: "+56955667788",
+        isActive: true
+      },
+      {
+        name: "Miguel Fernández",
+        email: "miguel@arriendocajas.cl",
+        phone: "+56966778899",
+        isActive: true
+      },
+      {
+        name: "Carmen Valdés",
+        email: "carmen@arriendocajas.cl",
+        phone: "+56977889900",
+        isActive: false
       }
     ]).returning();
 

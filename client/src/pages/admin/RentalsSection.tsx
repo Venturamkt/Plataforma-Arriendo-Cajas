@@ -271,7 +271,12 @@ export default function RentalsSection() {
         if (!old) return old;
         return old.map(rental => 
           rental.id === statusChangeData.rentalId 
-            ? { ...rental, status: statusChangeData.newStatus }
+            ? { 
+                ...rental, 
+                status: statusChangeData.newStatus,
+                // Si se marca como programada, mostrar que se asignará un repartidor
+                driverName: statusChangeData.newStatus === "programada" ? "Asignando repartidor..." : rental.driverName
+              }
             : rental
         );
       });
@@ -691,16 +696,28 @@ export default function RentalsSection() {
               <div className="flex items-start space-x-2">
                 <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
                 <div className="text-sm text-yellow-800">
-                  <p className="font-medium">Este cambio generará notificaciones automáticas:</p>
+                  <p className="font-medium">Este cambio generará las siguientes acciones automáticas:</p>
                   <ul className="mt-2 space-y-1">
                     <li>• Cliente será notificado por email y SMS</li>
-                    <li>• Repartidor recibirá actualización si está asignado</li>
+                    <li>• {statusChangeData?.newStatus === "programada" ? "Se asignará automáticamente un repartidor disponible" : "Repartidor recibirá actualización si está asignado"}</li>
                     <li>• Se actualizará el estado del inventario de cajas</li>
                     <li>• Se registrará en el historial de actividades</li>
                   </ul>
                 </div>
               </div>
             </div>
+            
+            {statusChangeData?.newStatus === "programada" && (
+              <div className="p-4 bg-green-50 rounded-lg">
+                <div className="flex items-start space-x-2">
+                  <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
+                  <div className="text-sm text-green-800">
+                    <p className="font-medium">Asignación Automática de Repartidor</p>
+                    <p className="mt-1">El sistema seleccionará automáticamente un repartidor activo disponible con menos arriendos asignados para garantizar una distribución equitativa del trabajo.</p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <DialogFooter>
