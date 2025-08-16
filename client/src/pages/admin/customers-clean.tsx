@@ -1053,6 +1053,14 @@ function RentalForm({
   const availableBoxes = formData.deliveryDate && formData.returnDate 
     ? getAvailableBoxes(formData.deliveryDate, formData.returnDate)
     : 0
+  
+  // Debug: Log available boxes calculation
+  console.log('Debug availableBoxes:', {
+    availableBoxes,
+    totalInventory: inventory.length,
+    availableInInventory: inventory.filter(box => box.status === 'available').length,
+    dates: { delivery: formData.deliveryDate, return: formData.returnDate }
+  })
 
   const additionalProductsTotal = formData.additionalProducts.reduce(
     (sum: number, product: any) => sum + (product.price * product.quantity), 0
@@ -1188,7 +1196,7 @@ function RentalForm({
               id="totalBoxes"
               type="number"
               min="1"
-              max={availableBoxes || 100}
+              max="100"
               value={formData.totalBoxes}
               onChange={e => setFormData(prev => ({ ...prev, totalBoxes: parseInt(e.target.value) || 1 }))}
               required
