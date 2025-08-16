@@ -320,13 +320,14 @@ export default function RentalsSection() {
 
   const handleEditRental = (rental: RentalWithDetails) => {
     setSelectedRental(rental);
+    // Cargar TODOS los datos del arriendo automáticamente - no buscar en listas
     setFormData({
       customerId: rental.customerId,
       driverId: rental.driverId || "",
-      boxQuantity: rental.boxQuantity.toString(),
-      rentalDays: "7",
-      pricePerDay: "1000",
-      guaranteeAmount: (rental.boxQuantity * 2000).toString(),
+      boxQuantity: rental.boxQuantity?.toString() || "",
+      rentalDays: rental.rentalDays?.toString() || "7",
+      pricePerDay: rental.pricePerDay?.toString() || "1000",
+      guaranteeAmount: rental.guaranteeAmount?.toString() || (rental.boxQuantity * 2000).toString(),
       totalAmount: rental.totalAmount || "",
       paidAmount: rental.paidAmount || "",
       deliveryDate: rental.deliveryDate ? new Date(rental.deliveryDate).toISOString().split('T')[0] : "",
@@ -335,7 +336,7 @@ export default function RentalsSection() {
       pickupAddress: rental.pickupAddress || "",
       notes: rental.notes || "",
       status: rental.status || "pendiente",
-      additionalProducts: []
+      additionalProducts: rental.additionalProducts || []
     });
     setShowEditDialog(true);
   };
@@ -457,7 +458,7 @@ export default function RentalsSection() {
           className="bg-green-600 hover:bg-green-700"
         >
           <Plus className="h-4 w-4 mr-2" />
-          Nuevo Arriendo Profesional ✨
+          Nuevo Arriendo
         </Button>
       </div>
 
@@ -983,18 +984,22 @@ export default function RentalsSection() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="edit-customer">Cliente *</Label>
-              <Select value={formData.customerId} onValueChange={(value) => setFormData(prev => ({ ...prev, customerId: value }))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar cliente" />
-                </SelectTrigger>
-                <SelectContent>
-                  {customers.map((customer: any) => (
-                    <SelectItem key={customer.id} value={customer.id}>
-                      {customer.name} - {customer.rut}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-blue-900">
+                      {customers.find(c => c.id === formData.customerId)?.name || 'Cliente cargado'}
+                    </p>
+                    <p className="text-sm text-blue-600">
+                      {customers.find(c => c.id === formData.customerId)?.rut || 'RUT del cliente'}
+                    </p>
+                  </div>
+                  <div className="text-blue-600">
+                    <User className="h-5 w-5" />
+                  </div>
+                </div>
+                <p className="text-xs text-blue-600 mt-2">Cliente cargado automáticamente del arriendo</p>
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -1149,15 +1154,15 @@ export default function RentalsSection() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="edit-pickupDate">Fecha de Retiro (Automática)</Label>
+              <Label htmlFor="edit-pickupDate">Fecha de Retiro (Sugerida)</Label>
               <Input
                 id="edit-pickupDate"
                 type="date"
                 value={formData.pickupDate}
-                disabled
-                className="bg-gray-50"
+                onChange={(e) => setFormData(prev => ({ ...prev, pickupDate: e.target.value }))}
+                className="border-green-200 bg-green-50"
               />
-              <p className="text-xs text-gray-500">Se calcula automáticamente según los días de arriendo</p>
+              <p className="text-xs text-green-600">Sugerida automáticamente, pero puedes modificarla</p>
             </div>
 
             <div className="space-y-2">

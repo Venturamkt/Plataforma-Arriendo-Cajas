@@ -352,24 +352,7 @@ export default function NewRentalForm() {
                   />
                 </div>
 
-                {/* Precio por Día */}
-                <div className="space-y-3">
-                  <Label className="text-lg font-medium flex items-center">
-                    <DollarSign className="h-5 w-5 mr-2 text-blue-600" />
-                    Precio por Día por Caja
-                  </Label>
-                  <Input
-                    type="number"
-                    value={formData.pricePerDay}
-                    onChange={(e) => {
-                      const updatedData = recalculateFormData({ ...formData, pricePerDay: e.target.value });
-                      setFormData(updatedData);
-                    }}
-                    placeholder="1000"
-                    className="h-12 text-lg"
-                  />
-                  <p className="text-sm text-gray-500">Precio base diario por cada caja</p>
-                </div>
+
 
                 {/* Resumen de Precios */}
                 {formData.boxQuantity && formData.rentalDays && (
@@ -436,15 +419,15 @@ export default function NewRentalForm() {
                   <div className="space-y-3">
                     <Label className="text-lg font-medium flex items-center">
                       <Clock className="h-5 w-5 mr-2 text-green-600" />
-                      Fecha de Retiro (Automática)
+                      Fecha de Retiro (Sugerida)
                     </Label>
                     <Input
                       type="date"
                       value={formData.pickupDate}
-                      disabled
-                      className="h-12 text-lg bg-green-50 border-green-200"
+                      onChange={(e) => setFormData(prev => ({ ...prev, pickupDate: e.target.value }))}
+                      className="h-12 text-lg border-green-200 bg-green-50"
                     />
-                    <p className="text-sm text-green-600">Se calcula automáticamente</p>
+                    <p className="text-sm text-green-600">Sugerida automáticamente, pero puedes modificarla</p>
                   </div>
                 </div>
 
@@ -560,7 +543,7 @@ export default function NewRentalForm() {
                     </CardHeader>
                     <CardContent>
                       <p>{formData.boxQuantity} cajas por {formData.rentalDays} días</p>
-                      <p className="text-sm text-gray-500">Precio: {formatCurrency(formData.pricePerDay)}/día/caja</p>
+                      <p className="text-sm text-gray-500">Arriendo completo</p>
                     </CardContent>
                   </Card>
 
