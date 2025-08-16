@@ -30,6 +30,8 @@ export interface IStorage {
   getDriverById(id: string): Promise<any>;
   createDriver(driverData: any): Promise<any>;
   updateDriver(id: string, driverData: any): Promise<any>;
+  deleteDriver(id: string): Promise<void>;
+  getDriverStats(id: string): Promise<any>;
   
   // Rentals
   getRentals(): Promise<any[]>;
@@ -102,7 +104,18 @@ class PostgresStorage implements IStorage {
   }
 
   async createDriver(driverData: any) {
-    const result = await db.insert(drivers).values(driverData).returning();
+    const result = await db.insert(drivers).values({
+      ...driverData,
+      updatedAt: new Date()
+    }).returning();
+    
+    await this.logActivity({
+      type: "driver_created",
+      description: `Repartidor ${driverData.name} creado`,
+      entityId: result[0].id,
+      entityType: "driver"
+    });
+    
     return result[0];
   }
 
@@ -111,7 +124,56 @@ class PostgresStorage implements IStorage {
       .set({ ...driverData, updatedAt: new Date() })
       .where(eq(drivers.id, id))
       .returning();
+    
+    await this.logActivity({
+      type: "driver_updated",
+      description: `Repartidor ${driverData.name || 'sin nombre'} actualizado`,
+      entityId: id,
+      entityType: "driver"
+    });
+    
     return result[0];
+  }
+
+  async deleteDriver(id: string) {
+    const driver = await this.getDriverById(id);
+    await db.delete(drivers).where(eq(drivers.id, id));
+    
+    await this.logActivity({
+      type: "driver_deleted",
+      description: `Repartidor ${driver?.name || 'sin nombre'} eliminado`,
+      entityId: id,
+      entityType: "driver"
+    });
+  }
+
+  async getDriverStats(id: string) {
+    const totalRentals = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(rentals)
+      .where(eq(rentals.driverId, id));
+
+    const activeRentals = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(rentals)
+      .where(and(
+        eq(rentals.driverId, id),
+        sql`status IN ('programada', 'en_ruta', 'entregada', 'retiro_programado')`
+      ));
+
+    const completedRentals = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(rentals)
+      .where(and(
+        eq(rentals.driverId, id),
+        eq(rentals.status, 'finalizada')
+      ));
+
+    return {
+      totalRentals: totalRentals[0]?.count || 0,
+      activeRentals: activeRentals[0]?.count || 0,
+      completedRentals: completedRentals[0]?.count || 0
+    };
   }
 
   // Rentals

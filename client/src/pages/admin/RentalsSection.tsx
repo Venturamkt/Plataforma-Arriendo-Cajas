@@ -31,6 +31,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Rental } from "@shared/schema";
+import { DriverAssignmentDialog } from "./DriverAssignmentDialog";
 import { 
   formatCurrency, 
   calculateGuarantee, 
@@ -78,6 +79,8 @@ export default function RentalsSection() {
   const [selectedRental, setSelectedRental] = useState<RentalWithDetails | null>(null);
   const [showStatusDialog, setShowStatusDialog] = useState(false);
   const [statusChangeData, setStatusChangeData] = useState<{rentalId: string, newStatus: string} | null>(null);
+  const [showDriverAssignment, setShowDriverAssignment] = useState(false);
+  const [rentalForDriverAssignment, setRentalForDriverAssignment] = useState<RentalWithDetails | null>(null);
   const [formData, setFormData] = useState({
     customerId: "",
     driverId: "",
@@ -286,6 +289,11 @@ export default function RentalsSection() {
     setFormData(updatedData);
   };
 
+  const handleAssignDriver = (rental: RentalWithDetails) => {
+    setRentalForDriverAssignment(rental);
+    setShowDriverAssignment(true);
+  };
+
   // Funciones para productos adicionales
   const addAdditionalProduct = (product: {name: string, price: number}) => {
     const newProduct = { ...product, quantity: 1 };
@@ -336,7 +344,7 @@ export default function RentalsSection() {
       pickupAddress: rental.pickupAddress || "",
       notes: rental.notes || "",
       status: rental.status || "pendiente",
-      additionalProducts: rental.additionalProducts || []
+      additionalProducts: (rental.additionalProducts as {name: string, quantity: number, price: number}[]) || []
     });
     setShowEditDialog(true);
   };
@@ -597,6 +605,16 @@ export default function RentalsSection() {
                             <Truck className="h-4 w-4 mr-2 text-blue-600" />
                             <span className="text-sm">{rental.driverName}</span>
                           </div>
+                        ) : rental.status === "pendiente" ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleAssignDriver(rental)}
+                            className="text-blue-600 hover:text-blue-700"
+                          >
+                            <Truck className="h-3 w-3 mr-1" />
+                            Asignar
+                          </Button>
                         ) : (
                           <span className="text-sm text-gray-400">Sin asignar</span>
                         )}
@@ -1518,6 +1536,13 @@ export default function RentalsSection() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Driver Assignment Dialog */}
+      <DriverAssignmentDialog 
+        open={showDriverAssignment}
+        onOpenChange={setShowDriverAssignment}
+        rental={rentalForDriverAssignment}
+      />
     </div>
   );
 }

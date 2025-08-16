@@ -116,6 +116,97 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/drivers/:id", async (req, res) => {
+    try {
+      const driver = await storage.getDriverById(req.params.id);
+      if (!driver) {
+        return res.status(404).json({ error: "Repartidor no encontrado" });
+      }
+      res.json(driver);
+    } catch (error) {
+      console.error("Error getting driver:", error);
+      res.status(500).json({ error: "Error al obtener repartidor" });
+    }
+  });
+
+  app.post("/api/drivers", async (req, res) => {
+    try {
+      const validatedData = insertDriverSchema.parse(req.body);
+      const driver = await storage.createDriver(validatedData);
+      res.status(201).json(driver);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Datos inválidos", details: error.errors });
+      }
+      console.error("Error creating driver:", error);
+      if (error.code === '23505') {
+        return res.status(400).json({ error: "Email o teléfono ya registrado" });
+      }
+      res.status(500).json({ error: "Error al crear repartidor" });
+    }
+  });
+
+  app.put("/api/drivers/:id", async (req, res) => {
+    try {
+      const validatedData = insertDriverSchema.partial().parse(req.body);
+      const driver = await storage.updateDriver(req.params.id, validatedData);
+      if (!driver) {
+        return res.status(404).json({ error: "Repartidor no encontrado" });
+      }
+      res.json(driver);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Datos inválidos", details: error.errors });
+      }
+      console.error("Error updating driver:", error);
+      if (error.code === '23505') {
+        return res.status(400).json({ error: "Email o teléfono ya registrado" });
+      }
+      res.status(500).json({ error: "Error al actualizar repartidor" });
+    }
+  });
+
+  app.delete("/api/drivers/:id", async (req, res) => {
+    try {
+      await storage.deleteDriver(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting driver:", error);
+      res.status(500).json({ error: "Error al eliminar repartidor" });
+    }
+  });
+
+  app.get("/api/drivers/:id/stats", async (req, res) => {
+    try {
+      const stats = await storage.getDriverStats(req.params.id);
+      res.json(stats);
+    } catch (error) {
+      console.error("Error getting driver stats:", error);
+      res.status(500).json({ error: "Error al obtener estadísticas del repartidor" });
+    }
+  });
+
+  app.get("/api/drivers/:id/stats", async (req, res) => {
+    try {
+      const stats = await storage.getDriverStats(req.params.id);
+      res.json(stats);
+    } catch (error) {
+      console.error("Error getting driver stats:", error);
+      res.status(500).json({ error: "Error al obtener estadísticas del repartidor" });
+    }
+  });
+
+  // Driver routes
+  app.get("/api/drivers", async (req, res) => {
+    try {
+      const drivers = await storage.getDrivers();
+      res.json(drivers);
+    } catch (error) {
+      console.error("Error getting drivers:", error);
+      res.status(500).json({ error: "Error al obtener repartidores" });
+    }
+  });
+
   app.post("/api/drivers", async (req, res) => {
     try {
       const validatedData = insertDriverSchema.parse(req.body);
