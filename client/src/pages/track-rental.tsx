@@ -91,7 +91,6 @@ export default function TrackRental() {
   // Auto-populate from URL parameters if present
   useEffect(() => {
     if (params.rut && params.code) {
-      console.log('URL params:', { rut: params.rut, code: params.code });
       setRutDigits(params.rut);
       setTrackingCode(params.code);
       setIsSearching(true);
