@@ -447,6 +447,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Reports endpoints
+  app.get("/api/reports", async (req, res) => {
+    try {
+      const { startDate, endDate, type } = req.query;
+      
+      if (!startDate || !endDate || !type) {
+        return res.status(400).json({ error: "Faltan parámetros requeridos" });
+      }
+
+      let reportData;
+      
+      switch (type) {
+        case "financial":
+          reportData = await storage.getFinancialReport(startDate as string, endDate as string);
+          break;
+        case "customers":
+          reportData = await storage.getCustomersReport(startDate as string, endDate as string);
+          break;
+        case "inventory":
+          reportData = await storage.getInventoryReport(startDate as string, endDate as string);
+          break;
+        case "operations":
+          reportData = await storage.getOperationsReport(startDate as string, endDate as string);
+          break;
+        default:
+          return res.status(400).json({ error: "Tipo de reporte no válido" });
+      }
+
+      res.json(reportData);
+    } catch (error) {
+      console.error("Error generating report:", error);
+      res.status(500).json({ error: "Error al generar reporte" });
+    }
+  });
+
+  app.get("/api/reports/export", async (req, res) => {
+    try {
+      const { startDate, endDate, type, format } = req.query;
+      
+      if (!startDate || !endDate || !type) {
+        return res.status(400).json({ error: "Faltan parámetros requeridos" });
+      }
+
+      // Obtener datos del reporte
+      let reportData;
+      switch (type) {
+        case "financial":
+          reportData = await storage.getFinancialReport(startDate as string, endDate as string);
+          break;
+        case "customers":
+          reportData = await storage.getCustomersReport(startDate as string, endDate as string);
+          break;
+        default:
+          return res.status(400).json({ error: "Tipo de reporte no válido para exportación" });
+      }
+
+      if (format === "excel") {
+        // Generar archivo Excel simple (CSV)
+        const csvData = storage.generateCSV(reportData, type as string);
+        
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename=reporte_${type}_${startDate}_${endDate}.csv`);
+        res.send(csvData);
+      } else {
+        res.json(reportData);
+      }
+    } catch (error) {
+      console.error("Error exporting report:", error);
+      res.status(500).json({ error: "Error al exportar reporte" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

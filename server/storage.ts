@@ -480,6 +480,129 @@ class PostgresStorage implements IStorage {
     const result = await db.insert(activities).values(activityData).returning();
     return result[0];
   }
+
+  async getFinancialReport(startDate: string, endDate: string): Promise<any> {
+    const paymentsData = await db.select()
+      .from(payments)
+      .where(
+        and(
+          gte(payments.paymentDate, startDate),
+          lte(payments.paymentDate, endDate)
+        )
+      );
+
+    const totalRevenue = paymentsData.reduce((sum, payment) => sum + parseFloat(payment.amount), 0);
+    const paymentsCount = paymentsData.length;
+    const averagePayment = paymentsCount > 0 ? totalRevenue / paymentsCount : 0;
+
+    // Agrupar por día
+    const dailyRevenue = paymentsData.reduce((acc: any[], payment) => {
+      const date = payment.paymentDate;
+      const existing = acc.find(d => d.date === date);
+      if (existing) {
+        existing.revenue += parseFloat(payment.amount);
+        existing.payments += 1;
+      } else {
+        acc.push({
+          date,
+          revenue: parseFloat(payment.amount),
+          payments: 1
+        });
+      }
+      return acc;
+    }, []);
+
+    return {
+      totalRevenue,
+      paymentsCount,
+      averagePayment,
+      dailyRevenue: dailyRevenue.sort((a, b) => a.date.localeCompare(b.date))
+    };
+  }
+
+  async getCustomersReport(startDate: string, endDate: string): Promise<any> {
+    const rentalsData = await db.select()
+      .from(rentals)
+      .innerJoin(customers, eq(rentals.customerId, customers.id))
+      .where(
+        and(
+          gte(rentals.startDate, startDate),
+          lte(rentals.startDate, endDate)
+        )
+      );
+
+    const activeCustomers = new Set(rentalsData.map(r => r.rental.customerId)).size;
+    const totalRentals = rentalsData.length;
+
+    // Clientes por ingresos
+    const customerRevenue = rentalsData.reduce((acc: any[], rental) => {
+      const customerId = rental.rental.customerId;
+      const existing = acc.find(c => c.customerId === customerId);
+      const paidAmount = parseFloat(rental.rental.paidAmount || "0");
+      
+      if (existing) {
+        existing.totalPaid += paidAmount;
+        existing.rentals += 1;
+      } else {
+        acc.push({
+          customerId,
+          name: rental.customer.name,
+          rut: rental.customer.rut,
+          totalPaid: paidAmount,
+          rentals: 1
+        });
+      }
+      return acc;
+    }, []);
+
+    const topCustomers = customerRevenue
+      .sort((a, b) => b.totalPaid - a.totalPaid)
+      .slice(0, 10);
+
+    return {
+      activeCustomers,
+      newCustomers: 0, // Sería necesario comparar con período anterior
+      totalRentals,
+      topCustomers
+    };
+  }
+
+  async getInventoryReport(startDate: string, endDate: string): Promise<any> {
+    return {
+      message: "Reporte de inventario en desarrollo"
+    };
+  }
+
+  async getOperationsReport(startDate: string, endDate: string): Promise<any> {
+    return {
+      message: "Reporte operacional en desarrollo"
+    };
+  }
+
+  generateCSV(data: any, type: string): string {
+    switch (type) {
+      case "financial":
+        let csv = "Fecha,Ingresos,Cantidad de Pagos\n";
+        if (data.dailyRevenue) {
+          data.dailyRevenue.forEach((day: any) => {
+            csv += `${day.date},${day.revenue},${day.payments}\n`;
+          });
+        }
+        return csv;
+      
+      case "customers":
+        let customersCsv = "Cliente,RUT,Arriendos,Total Pagado\n";
+        if (data.topCustomers) {
+          data.topCustomers.forEach((customer: any) => {
+            customersCsv += `${customer.name},${customer.rut},${customer.rentals},${customer.totalPaid}\n`;
+          });
+        }
+        return customersCsv;
+      
+      default:
+        return "Tipo de reporte no soportado";
+    }
+  }
 }
 
 export const storage = new PostgresStorage();
