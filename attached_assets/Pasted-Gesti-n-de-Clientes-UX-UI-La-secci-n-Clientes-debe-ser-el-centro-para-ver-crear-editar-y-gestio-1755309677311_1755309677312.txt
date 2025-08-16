@@ -1,0 +1,91 @@
+Gestión de Clientes — UX/UI
+
+La sección Clientes debe ser el centro para ver, crear, editar y gestionar toda la información de los clientes, con un diseño limpio, ordenado y fácil de escanear.
+
+Vista principal (lista de clientes)
+
+Barra superior con buscador de texto libre que filtra por nombre, RUT, email o teléfono.
+
+Filtros rápidos en forma de chips para: Con arriendos activos, Con saldo, En mora, Sin repartidor, Con retiro esta semana.
+
+Tabla principal con columnas:
+
+Cliente (nombre o razón social).
+
+Contacto (teléfono y email con iconos clicables).
+
+RUT.
+
+Arriendos (ej.: “2 activos / 5 total”, clic para ver detalle).
+
+Estado (badge con color según estado del arriendo activo más reciente).
+
+Deuda (monto en rojo si >0).
+
+Acciones (iconos: Ver ficha, Crear arriendo, Editar, Eliminar).
+
+Interacciones rápidas:
+
+Hover sobre nombre para ver mini resumen del cliente.
+
+Clic en “Arriendos” abre modal/lista de arriendos del cliente.
+
+Iconos de contacto abren app predeterminada (llamada, correo).
+
+Botón “+ Nuevo Cliente” fijo arriba a la derecha.
+
+Formulario Crear/Editar Cliente
+
+Diseño en dos columnas (responsive a una en móvil).
+
+Campos:
+
+Nombre/razón social*
+
+RUT* (con validación de formato y unicidad)
+
+Email* (validación de formato y unicidad)
+
+Teléfono* (prefijo +56 por defecto, validación numérica)
+
+Dirección principal (autocompletar y mapa opcional)
+
+Botón “+ Agregar otra dirección”
+
+Notas internas (campo de texto libre)
+
+Validaciones en tiempo real y mensajes de error claros.
+
+Botones: Guardar, Guardar y crear arriendo.
+
+Feedback visual al guardar (toast verde “Cliente creado/actualizado con éxito”).
+
+Ficha de Cliente
+
+Cabecera con: nombre, RUT, contacto, badges de estado, deuda actual.
+
+Alertas visibles si: tiene saldo pendiente, cajas en terreno o arriendo con fecha próxima.
+
+Pestañas:
+
+Arriendos (lista con estados y fechas).
+
+Pagos / Deuda (historial de pagos y saldos).
+
+Direcciones (editar o marcar principal).
+
+Notas / Actividades (registro de cambios y eventos).
+
+Acciones rápidas en ficha: Crear nuevo arriendo, Registrar pago, Enviar correo, Llamar.
+
+Elementos de UX clave
+
+Estado visual claro con colores consistentes: verde (activo/ok), amarillo (pendiente), rojo (mora o alerta).
+
+Tooltips explicando iconos y estados.
+
+Confirmaciones antes de eliminar (y solo si no tiene deuda ni arriendos activos).
+
+Scroll suave y modales centrados.
+
+Diseño responsive optimizado para escritorio y móvil.

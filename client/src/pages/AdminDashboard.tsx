@@ -20,6 +20,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import CustomersSection from "./admin/CustomersSection";
 
 const sidebarItems = [
   { id: "dashboard", label: "Dashboard", icon: Home },
@@ -202,7 +203,7 @@ export default function AdminDashboard() {
       case "dashboard":
         return renderDashboard();
       case "customers":
-        return <div className="p-8 text-center"><h2 className="text-2xl">Gestión de Clientes - En desarrollo</h2></div>;
+        return <CustomersSection />;
       case "rentals":
         return <div className="p-8 text-center"><h2 className="text-2xl">Gestión de Arriendos - En desarrollo</h2></div>;
       case "inventory":

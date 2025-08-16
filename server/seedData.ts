@@ -3,6 +3,13 @@ import { customers, drivers, rentals, boxes, payments } from "@shared/schema";
 
 export async function seedInitialData() {
   try {
+    // Verificar si ya hay datos
+    const existingCustomers = await db.select().from(customers).limit(1);
+    if (existingCustomers.length > 0) {
+      console.log("Data already exists, skipping seed");
+      return;
+    }
+
     console.log("Seeding initial data...");
 
     // Crear algunos clientes de ejemplo
