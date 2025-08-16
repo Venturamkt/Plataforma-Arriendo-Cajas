@@ -681,6 +681,313 @@ export default function RentalsSection() {
         </DialogContent>
       </Dialog>
 
+      {/* Edit Rental Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Editar Arriendo</DialogTitle>
+            <DialogDescription>
+              Modifica los detalles del arriendo.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-customer">Cliente *</Label>
+              <Select value={formData.customerId} onValueChange={(value) => setFormData(prev => ({ ...prev, customerId: value }))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar cliente" />
+                </SelectTrigger>
+                <SelectContent>
+                  {customers.map((customer: any) => (
+                    <SelectItem key={customer.id} value={customer.id}>
+                      {customer.name} - {customer.rut}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-driver">Repartidor</Label>
+              <Select value={formData.driverId} onValueChange={(value) => setFormData(prev => ({ ...prev, driverId: value }))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar repartidor (opcional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  {drivers.map((driver: any) => (
+                    <SelectItem key={driver.id} value={driver.id}>
+                      {driver.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-boxQuantity">Cantidad de Cajas *</Label>
+              <Input
+                id="edit-boxQuantity"
+                type="number"
+                value={formData.boxQuantity}
+                onChange={(e) => setFormData(prev => ({ ...prev, boxQuantity: e.target.value }))}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-totalAmount">Monto Total *</Label>
+              <Input
+                id="edit-totalAmount"
+                value={formData.totalAmount}
+                onChange={(e) => setFormData(prev => ({ ...prev, totalAmount: e.target.value }))}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-paidAmount">Monto Pagado</Label>
+              <Input
+                id="edit-paidAmount"
+                value={formData.paidAmount}
+                onChange={(e) => setFormData(prev => ({ ...prev, paidAmount: e.target.value }))}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-deliveryDate">Fecha de Entrega</Label>
+              <Input
+                id="edit-deliveryDate"
+                type="date"
+                value={formData.deliveryDate}
+                onChange={(e) => setFormData(prev => ({ ...prev, deliveryDate: e.target.value }))}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-pickupDate">Fecha de Retiro</Label>
+              <Input
+                id="edit-pickupDate"
+                type="date"
+                value={formData.pickupDate}
+                onChange={(e) => setFormData(prev => ({ ...prev, pickupDate: e.target.value }))}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-status">Estado</Label>
+              <Select value={formData.status} onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pendiente">Pendiente</SelectItem>
+                  <SelectItem value="programada">Programada</SelectItem>
+                  <SelectItem value="en_ruta">En Ruta</SelectItem>
+                  <SelectItem value="entregada">Entregada</SelectItem>
+                  <SelectItem value="retiro_programado">Retiro Programado</SelectItem>
+                  <SelectItem value="retirada">Retirada</SelectItem>
+                  <SelectItem value="finalizada">Finalizada</SelectItem>
+                  <SelectItem value="cancelada">Cancelada</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="edit-deliveryAddress">Dirección de Entrega *</Label>
+              <Input
+                id="edit-deliveryAddress"
+                value={formData.deliveryAddress}
+                onChange={(e) => setFormData(prev => ({ ...prev, deliveryAddress: e.target.value }))}
+              />
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="edit-pickupAddress">Dirección de Retiro</Label>
+              <Input
+                id="edit-pickupAddress"
+                value={formData.pickupAddress}
+                onChange={(e) => setFormData(prev => ({ ...prev, pickupAddress: e.target.value }))}
+              />
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="edit-notes">Notas del Arriendo</Label>
+              <Textarea
+                id="edit-notes"
+                value={formData.notes}
+                onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleUpdateRental}
+              disabled={!formData.customerId || !formData.boxQuantity || !formData.totalAmount || !formData.deliveryAddress || updateRentalMutation.isPending}
+            >
+              {updateRentalMutation.isPending ? "Actualizando..." : "Guardar Cambios"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Rental Detail Dialog */}
+      <Dialog open={showRentalDetail} onOpenChange={setShowRentalDetail}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              <span>Detalle del Arriendo</span>
+              {selectedRental && (
+                <div className="flex items-center space-x-2">
+                  <Badge className={statusBadgeConfig[(selectedRental.status || "pendiente") as keyof typeof statusBadgeConfig]?.color + " text-white"}>
+                    {statusBadgeConfig[(selectedRental.status || "pendiente") as keyof typeof statusBadgeConfig]?.label}
+                  </Badge>
+                </div>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedRental && (
+            <div className="space-y-6">
+              {/* Customer Info */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center">
+                    <User className="h-5 w-5 mr-2" />
+                    Información del Cliente
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <p><strong>Nombre:</strong> {selectedRental.customerName}</p>
+                    <p><strong>ID Arriendo:</strong> {selectedRental.id}</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Rental Details */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <div className="text-2xl font-bold text-blue-600">{selectedRental.boxQuantity}</div>
+                    <div className="text-sm text-gray-600">Cajas</div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <div className="text-2xl font-bold text-green-600">{formatCurrency(selectedRental.totalAmount || "0")}</div>
+                    <div className="text-sm text-gray-600">Monto Total</div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <div className={`text-2xl font-bold ${parseFloat(selectedRental.paidAmount || "0") >= parseFloat(selectedRental.totalAmount || "0") ? 'text-green-600' : 'text-red-600'}`}>
+                      {formatCurrency(selectedRental.paidAmount || "0")}
+                    </div>
+                    <div className="text-sm text-gray-600">Pagado</div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Dates and Addresses */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center">
+                      <Calendar className="h-5 w-5 mr-2" />
+                      Fechas
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    {selectedRental.deliveryDate && (
+                      <p><strong>Entrega:</strong> {formatDate(selectedRental.deliveryDate.toString())}</p>
+                    )}
+                    {selectedRental.pickupDate && (
+                      <p><strong>Retiro:</strong> {formatDate(selectedRental.pickupDate.toString())}</p>
+                    )}
+                    {selectedRental.remainingDays !== null && selectedRental.remainingDays !== undefined && (
+                      <p><strong>Días restantes:</strong> 
+                        <span className={selectedRental.remainingDays < 0 ? 'text-red-600 font-medium' : 'text-gray-700'}>
+                          {selectedRental.remainingDays < 0 ? ` ${Math.abs(selectedRental.remainingDays)} días atrasado` : 
+                           selectedRental.remainingDays === 0 ? ' Retiro hoy' : 
+                           ` ${selectedRental.remainingDays} días`}
+                        </span>
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center">
+                      <MapPin className="h-5 w-5 mr-2" />
+                      Direcciones
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <p><strong>Entrega:</strong> {selectedRental.deliveryAddress}</p>
+                    {selectedRental.pickupAddress && (
+                      <p><strong>Retiro:</strong> {selectedRental.pickupAddress}</p>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Driver Info */}
+              {selectedRental.driverName && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center">
+                      <Truck className="h-5 w-5 mr-2" />
+                      Repartidor Asignado
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p><strong>Nombre:</strong> {selectedRental.driverName}</p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Notes */}
+              {selectedRental.notes && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Notas</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-gray-700">{selectedRental.notes}</p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Quick Actions */}
+              <div className="flex flex-wrap gap-2">
+                <Button 
+                  onClick={() => {
+                    setShowRentalDetail(false);
+                    handleEditRental(selectedRental);
+                  }}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  <Edit2 className="h-4 w-4 mr-2" />
+                  Editar Arriendo
+                </Button>
+                <Button variant="outline">
+                  <Phone className="h-4 w-4 mr-2" />
+                  Llamar Cliente
+                </Button>
+                <Button variant="outline">
+                  <Mail className="h-4 w-4 mr-2" />
+                  Enviar Email
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Status Change Confirmation Dialog */}
       <Dialog open={showStatusDialog} onOpenChange={setShowStatusDialog}>
         <DialogContent>
