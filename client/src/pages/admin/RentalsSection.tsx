@@ -1097,7 +1097,7 @@ export default function RentalsSection() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="edit-pricePerDay">Precio por Día por Caja</Label>
+              <Label htmlFor="edit-pricePerDay">Precio Arriendo (Cajas + Días)</Label>
               <Input
                 id="edit-pricePerDay"
                 type="number"
@@ -1107,8 +1107,9 @@ export default function RentalsSection() {
                   setFormData(updatedData);
                 }}
                 placeholder="1000"
+                className="border-orange-200 bg-orange-50"
               />
-              <p className="text-xs text-gray-500">Precio base por día por cada caja</p>
+              <p className="text-xs text-orange-600">Precio base por día por cada caja - Editable</p>
             </div>
 
             <div className="space-y-2">
@@ -1200,6 +1201,81 @@ export default function RentalsSection() {
                 value={formData.pickupAddress}
                 onChange={(e) => setFormData(prev => ({ ...prev, pickupAddress: e.target.value }))}
               />
+            </div>
+
+            {/* Productos Adicionales */}
+            <div className="space-y-3 md:col-span-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-base font-medium">Productos Adicionales</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowAdditionalProducts(!showAdditionalProducts)}
+                  className="text-xs"
+                >
+                  {showAdditionalProducts ? "Ocultar" : "Agregar Productos"}
+                </Button>
+              </div>
+
+              {showAdditionalProducts && (
+                <div className="space-y-3 p-4 border border-gray-200 rounded-lg bg-gray-50">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    {ADDITIONAL_PRODUCTS.map((product, index) => (
+                      <Button
+                        key={index}
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => addAdditionalProduct(product)}
+                        className="text-xs h-auto py-2 flex flex-col"
+                      >
+                        <span className="font-medium">{product.name}</span>
+                        <span className="text-gray-500">{formatCurrency(product.price.toString())}</span>
+                      </Button>
+                    ))}
+                  </div>
+
+                  {formData.additionalProducts.length > 0 && (
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Productos Seleccionados:</Label>
+                      {formData.additionalProducts.map((product, index) => (
+                        <div key={index} className="flex items-center gap-2 p-2 bg-white rounded border">
+                          <span className="flex-1 text-sm">{product.name}</span>
+                          <div className="flex items-center gap-1">
+                            <Label className="text-xs">Cant:</Label>
+                            <Input
+                              type="number"
+                              value={product.quantity}
+                              onChange={(e) => updateAdditionalProduct(index, 'quantity', parseInt(e.target.value) || 1)}
+                              className="w-16 h-8 text-xs"
+                              min="1"
+                            />
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Label className="text-xs">Precio:</Label>
+                            <Input
+                              type="number"
+                              value={product.price}
+                              onChange={(e) => updateAdditionalProduct(index, 'price', parseFloat(e.target.value) || 0)}
+                              className="w-20 h-8 text-xs"
+                            />
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeAdditionalProduct(index)}
+                            className="h-8 w-8 p-0 text-red-600 hover:text-red-800"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="space-y-2 md:col-span-2">

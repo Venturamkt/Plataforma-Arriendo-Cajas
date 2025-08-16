@@ -354,6 +354,102 @@ export default function NewRentalForm() {
 
 
 
+                {/* Precio Editable */}
+                <div className="space-y-3">
+                  <Label className="text-lg font-medium flex items-center">
+                    <DollarSign className="h-5 w-5 mr-2 text-orange-600" />
+                    Precio Arriendo (Editable)
+                  </Label>
+                  <Input
+                    type="number"
+                    value={formData.pricePerDay}
+                    onChange={(e) => {
+                      const updatedData = recalculateFormData({ ...formData, pricePerDay: e.target.value });
+                      setFormData(updatedData);
+                    }}
+                    placeholder="1000"
+                    className="h-12 text-lg border-orange-200 bg-orange-50"
+                  />
+                  <p className="text-sm text-orange-600">Precio base por día por cada caja</p>
+                </div>
+
+                {/* Productos Adicionales */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-lg font-medium flex items-center">
+                      <ShoppingCart className="h-5 w-5 mr-2 text-purple-600" />
+                      Productos Adicionales
+                    </Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowAdditionalProducts(!showAdditionalProducts)}
+                    >
+                      {showAdditionalProducts ? "Ocultar" : "Agregar"}
+                    </Button>
+                  </div>
+
+                  {showAdditionalProducts && (
+                    <div className="space-y-4 p-4 border border-purple-200 rounded-lg bg-purple-50">
+                      <div className="grid grid-cols-2 gap-3">
+                        {ADDITIONAL_PRODUCTS.map((product, index) => (
+                          <Button
+                            key={index}
+                            type="button"
+                            variant="outline"
+                            size="lg"
+                            onClick={() => addAdditionalProduct(product)}
+                            className="h-auto py-3 flex flex-col"
+                          >
+                            <span className="font-medium">{product.name}</span>
+                            <span className="text-sm text-gray-500">{formatCurrency(product.price.toString())}/día</span>
+                          </Button>
+                        ))}
+                      </div>
+
+                      {formData.additionalProducts.length > 0 && (
+                        <div className="space-y-2">
+                          <Label className="font-medium">Productos Seleccionados:</Label>
+                          {formData.additionalProducts.map((product, index) => (
+                            <div key={index} className="flex items-center gap-3 p-3 bg-white rounded border">
+                              <span className="flex-1">{product.name}</span>
+                              <div className="flex items-center gap-2">
+                                <Label className="text-sm">Cantidad:</Label>
+                                <Input
+                                  type="number"
+                                  value={product.quantity}
+                                  onChange={(e) => updateAdditionalProduct(index, 'quantity', parseInt(e.target.value) || 1)}
+                                  className="w-20 h-8"
+                                  min="1"
+                                />
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Label className="text-sm">Precio:</Label>
+                                <Input
+                                  type="number"
+                                  value={product.price}
+                                  onChange={(e) => updateAdditionalProduct(index, 'price', parseFloat(e.target.value) || 0)}
+                                  className="w-24 h-8"
+                                />
+                              </div>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeAdditionalProduct(index)}
+                                className="text-red-600 hover:text-red-800"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
                 {/* Resumen de Precios */}
                 {formData.boxQuantity && formData.rentalDays && (
                   <Card className="bg-blue-50 border-blue-200">
@@ -381,6 +477,9 @@ export default function NewRentalForm() {
                           <p className="text-gray-600">Total</p>
                           <p className="text-2xl font-bold text-blue-800">
                             {formatCurrency(formData.totalAmount || "0")}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {formData.additionalProducts.length > 0 && "Incluye productos adicionales"}
                           </p>
                         </div>
                       </div>
@@ -568,10 +667,13 @@ export default function NewRentalForm() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-2xl font-bold text-blue-800">
+                      <p className="text-3xl font-bold text-blue-800">
                         {formatCurrency(formData.totalAmount)}
                       </p>
-                      <p className="text-sm text-gray-600">Incluye garantía de {formatCurrency(formData.guaranteeAmount)}</p>
+                      <p className="text-sm text-gray-600">
+                        Incluye garantía de {formatCurrency(formData.guaranteeAmount)}
+                        {formData.additionalProducts.length > 0 && " + productos adicionales"}
+                      </p>
                     </CardContent>
                   </Card>
                 </div>
