@@ -28,7 +28,7 @@ const STATUS_COLORS = {
 
 const STATUS_LABELS = {
   disponible: "Disponible",
-  alquilada: "Alquilada",
+  alquilada: "Arrendada",
   mantenimiento: "Mantenimiento",
   dañada: "Dañada"
 };
@@ -78,7 +78,7 @@ export function InventorySection() {
   const stats = {
     total: inventory.length,
     disponible: inventory.filter((item: Inventory) => item.status === "disponible").length,
-    alquilada: inventory.filter((item: Inventory) => item.status === "alquilada").length,
+    arrendada: inventory.filter((item: Inventory) => item.status === "alquilada").length,
     mantenimiento: inventory.filter((item: Inventory) => item.status === "mantenimiento").length,
     dañada: inventory.filter((item: Inventory) => item.status === "dañada").length
   };
@@ -143,8 +143,8 @@ export function InventorySection() {
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-yellow-600">{stats.alquilada}</div>
-            <div className="text-sm text-gray-600">Alquiladas</div>
+            <div className="text-2xl font-bold text-yellow-600">{stats.arrendada}</div>
+            <div className="text-sm text-gray-600">Arrendadas</div>
           </CardContent>
         </Card>
         <Card>
@@ -202,7 +202,7 @@ export function InventorySection() {
               >
                 <option value="todos">Todos los estados</option>
                 <option value="disponible">Disponible</option>
-                <option value="alquilada">Alquilada</option>
+                <option value="alquilada">Arrendada</option>
                 <option value="mantenimiento">Mantenimiento</option>
                 <option value="dañada">Dañada</option>
               </select>
