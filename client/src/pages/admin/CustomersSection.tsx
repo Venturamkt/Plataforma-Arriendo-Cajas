@@ -64,10 +64,7 @@ export default function CustomersSection() {
     name: "",
     rut: "",
     email: "",
-    phone: "+56",
-    mainAddress: "",
-    secondaryAddress: "",
-    notes: ""
+    phone: "+56"
   });
 
   const { toast } = useToast();
@@ -85,7 +82,7 @@ export default function CustomersSection() {
       return data.map((customer: Customer) => ({
         ...customer,
         rentalsText: `${customer.activeRentals || 0} activos / ${customer.totalRentals || 0} total`,
-        lastRentalStatus: (customer.activeRentals || 0) > 0 ? "entregada" : "finalizada",
+        lastRentalStatus: (customer.activeRentals || 0) > 0 ? "entregada" : "pendiente",
         debtAmount: parseFloat(customer.currentDebt || "0")
       }));
     }
@@ -192,10 +189,7 @@ export default function CustomersSection() {
       name: "",
       rut: "",
       email: "",
-      phone: "+56",
-      mainAddress: "",
-      secondaryAddress: "",
-      notes: ""
+      phone: "+56"
     });
   };
 
@@ -215,10 +209,7 @@ export default function CustomersSection() {
       name: customer.name,
       rut: customer.rut,
       email: customer.email,
-      phone: customer.phone || "+56",
-      mainAddress: customer.mainAddress || "",
-      secondaryAddress: customer.secondaryAddress || "",
-      notes: customer.notes || ""
+      phone: customer.phone || "+56"
     });
     setShowEditDialog(true);
   };
@@ -529,35 +520,7 @@ export default function CustomersSection() {
               />
             </div>
             
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="mainAddress">Dirección Principal</Label>
-              <Input
-                id="mainAddress"
-                value={formData.mainAddress}
-                onChange={(e) => setFormData(prev => ({ ...prev, mainAddress: e.target.value }))}
-                placeholder="Av. Providencia 123, Santiago"
-              />
-            </div>
-            
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="secondaryAddress">Dirección Secundaria</Label>
-              <Input
-                id="secondaryAddress"
-                value={formData.secondaryAddress}
-                onChange={(e) => setFormData(prev => ({ ...prev, secondaryAddress: e.target.value }))}
-                placeholder="Otra dirección (opcional)"
-              />
-            </div>
-            
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="notes">Notas Internas</Label>
-              <Textarea
-                id="notes"
-                value={formData.notes}
-                onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-                placeholder="Información adicional sobre el cliente..."
-              />
-            </div>
+
           </div>
 
           <DialogFooter>
@@ -622,32 +585,7 @@ export default function CustomersSection() {
               />
             </div>
             
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="edit-mainAddress">Dirección Principal</Label>
-              <Input
-                id="edit-mainAddress"
-                value={formData.mainAddress}
-                onChange={(e) => setFormData(prev => ({ ...prev, mainAddress: e.target.value }))}
-              />
-            </div>
-            
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="edit-secondaryAddress">Dirección Secundaria</Label>
-              <Input
-                id="edit-secondaryAddress"
-                value={formData.secondaryAddress}
-                onChange={(e) => setFormData(prev => ({ ...prev, secondaryAddress: e.target.value }))}
-              />
-            </div>
-            
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="edit-notes">Notas Internas</Label>
-              <Textarea
-                id="edit-notes"
-                value={formData.notes}
-                onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-              />
-            </div>
+
           </div>
 
           <DialogFooter>
@@ -735,11 +673,11 @@ export default function CustomersSection() {
                   <Plus className="h-4 w-4 mr-2" />
                   Crear Nuevo Arriendo
                 </Button>
-                <Button variant="outline">
+                <Button variant="outline" onClick={() => window.open(`tel:${selectedCustomer.phone}`)}>
                   <Phone className="h-4 w-4 mr-2" />
                   Llamar
                 </Button>
-                <Button variant="outline">
+                <Button variant="outline" onClick={() => window.open(`mailto:${selectedCustomer.email}`)}>
                   <Mail className="h-4 w-4 mr-2" />
                   Enviar Correo
                 </Button>
@@ -769,17 +707,38 @@ export default function CustomersSection() {
                 </Card>
               </div>
 
-              {/* Notes */}
-              {selectedCustomer.notes && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Notas</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-gray-700">{selectedCustomer.notes}</p>
-                  </CardContent>
-                </Card>
-              )}
+              {/* Activity Summary */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Resumen de Actividad</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                    <span className="text-sm text-gray-600">Cliente desde</span>
+                    <span className="font-medium">Enero 2024</span>
+                  </div>
+                  <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                    <span className="text-sm text-gray-600">Último arriendo</span>
+                    <span className="font-medium">15 Ago 2024</span>
+                  </div>
+                  <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                    <span className="text-sm text-gray-600">Estado general</span>
+                    <Badge className="bg-green-500 text-white">Cliente activo</Badge>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Next Steps */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Próximas Acciones</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-sm text-gray-600">
+                    Para ver detalles específicos de arriendos (cantidad de cajas, días, fechas de entrega y retiro), ve a la sección <strong>Arriendos</strong> en el menú lateral.
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           )}
         </DialogContent>
