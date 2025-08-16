@@ -1,0 +1,221 @@
+Portal Administrador — Arriendo Cajas
+
+Quiero que generes un Portal Administrador completo para “Arriendo Cajas”. Usa un diseño limpio y responsive, con sidebar a la izquierda y header superior. Todo en español (Chile). No uses términos técnicos; describe funcionalidades y reglas de negocio.
+
+Objetivo
+
+Administrar clientes, arriendos, inventario de cajas, repartidores, pagos y reportes. El portal debe ser claro para operar el día a día y dejar trazabilidad.
+
+Navegación (sidebar)
+
+Dashboard
+
+Clientes
+
+Arriendos
+
+Inventario
+
+Repartidores
+
+Pagos / Finanzas
+
+Reportes
+
+Calendario
+
+Configuración (roles y preferencias)
+
+El ítem activo queda resaltado. En móvil el sidebar se colapsa.
+
+Dashboard
+
+Tarjetas con KPIs del período seleccionable (hoy / semana / mes):
+
+Arriendos activos, nuevos, finalizados, cancelados.
+
+Cajas disponibles, reservadas, en terreno.
+
+Entregas y retiros de hoy.
+
+Saldo pendiente total y clientes en mora.
+Sección “Alertas”: atrasos, arriendos sin repartidor, baja de stock, reprogramaciones.
+
+Clientes
+Lista
+
+Buscador por nombre, RUT, email, teléfono.
+
+Columnas: Cliente, Contacto, RUT, Arriendos (X activos / Y total), Estado (badge del arriendo activo más reciente), Deuda, Acciones.
+
+Filtros rápidos: Con arriendos activos, Con saldo, En mora, Sin repartidor, Con retiro esta semana.
+
+Acciones por fila: Ver ficha, Nuevo arriendo, Editar, Eliminar (solo si no tiene arriendos activos ni deuda).
+
+Crear/Editar cliente (form en dos columnas)
+
+Nombre/razón social*, RUT* (validación), Email*, Teléfono*, Dirección principal (con opción + otra dirección), Notas.
+
+Reglas de unicidad: no permitir RUT/email/teléfono repetidos.
+
+Botones: Guardar, Guardar y crear arriendo.
+
+Ficha de cliente
+
+Cabecera con datos y alertas: deuda, cajas en terreno, próximos hitos.
+
+Pestañas: Arriendos, Pagos/Deuda, Direcciones, Notas/Actividades.
+
+El texto “X activos / Y total” abre la lista de arriendos de ese cliente.
+
+Arriendos
+Estados (flujo estándar)
+
+Pendiente → Programada → En ruta → Entregada → Retiro programado → Retirada → Finalizada
+(Cancelada puede ocurrir en cualquier punto previo a Finalizada).
+
+Reglas:
+
+Programada requiere fecha/hora de entrega.
+
+En ruta requiere repartidor asignado.
+
+Entregada y Retirada requieren fecha/hora efectiva.
+
+Retiro programado requiere fecha/hora.
+
+Finalizada solo si saldo = 0 y el estado previo es Retirada.
+
+Cancelada cierra el ciclo (libera reservas) y puede dejar costos.
+
+Lista
+
+Buscador por cliente, estado, fecha, repartidor.
+
+Columnas: Cliente, Estado (badge), Fechas (entrega/retirada), Cantidad de cajas, Repartidor, Saldo, Acciones.
+
+Acciones: Ver / Editar, Cambiar estado (modal con campos obligatorios), Asignar repartidor, Programar hito (entrega o retiro), Cancelar.
+
+Crear/Editar arriendo (desde cliente o desde Arriendos)
+
+Seleccionar plan/cantidad de cajas y fechas tentativas.
+
+Validación de inventario:
+
+Si no hay stock suficiente, sugerir cantidad disponible o otra fecha (día anterior/siguiente).
+
+Reserva de inventario al confirmar (pasa a En terreno al marcar Entregada).
+
+Si el cliente tiene deuda vencida, pedir condición de pago o autorización (quedar registrado).
+
+Inventario
+
+Vista general: totales de cajas disponibles, reservadas, en terreno, en revisión.
+
+Lista por tipo/plan si aplica.
+
+Filtros: por estado y por fecha (para ver proyecciones).
+
+Acciones automáticas según arriendo:
+
+Reservado al confirmar arriendo con fecha de entrega.
+
+En terreno al marcar Entregada.
+
+Devuelto al marcar Retirada (vuelve a Disponible tras control).
+
+Alertas: bajo stock configurable.
+
+Repartidores
+
+Lista con nombre, contacto, activos/inactivos, asignaciones del día.
+
+Acciones: activar/inactivar, editar, ver agenda.
+
+Regla: no permitir En ruta si el arriendo no tiene repartidor asignado.
+
+Pagos / Finanzas
+
+Por arriendo: total, pagado, saldo, método de pago.
+
+Bloqueo: no permitir Finalizar si el saldo ≠ 0.
+
+Vista “Clientes con deuda”: monto y días en mora.
+
+Acciones: registrar pago/abono, notas de cobro.
+
+Reportes
+
+Por período: arriendos creados, entregas, retiros, finalizados, cancelados.
+
+KPI operativos: tiempos promedio por estado, atrasos, reprogramaciones, utilización de repartidores.
+
+Finanzas: total facturado, pagado, saldo pendiente.
+
+Ranking: cajas en terreno por cliente (top 10).
+
+Calendario
+
+Vista calendario (mes/semana/día) con entregas y retiros.
+
+Crear/editar eventos desde aquí o desde un arriendo.
+
+Reglas:
+
+Al programar: crear evento con dirección, contacto y ventana horaria.
+
+Recordatorios automáticos:
+
+Cliente: 24 h y 2 h antes.
+
+Repartidor: resumen del día y 1 h antes de cada servicio.
+
+Si no se marca el hito en la fecha, mostrar como atraso y pedir reprogramación.
+
+Notificaciones
+
+Al crear arriendo: confirmación al cliente.
+
+Al asignar/cambiar repartidor: aviso al cliente y al repartidor.
+
+Al pasar a En ruta: aviso con ventana horaria.
+
+Al marcar Entregada / Retirada: confirmación.
+
+Si hay saldo al intentar Finalizar: alerta y bloqueo.
+
+Interacciones comunes (UX)
+
+Tablas con paginación, ordenar columnas, filtros guardables (chips).
+
+Modales para cambios de estado, asignar repartidor y programar hitos.
+
+Toasts claros: éxito, error, advertencia.
+
+Estados vacíos con texto útil y botones de acción (ej.: “Sin arriendos activos. Crear arriendo”).
+
+Accesibilidad: buen contraste, foco visible, navegación por teclado.
+
+Seguridad y permisos
+
+Administrador puede ver/editar todo, reabrir arriendo cerrado por error (deja traza).
+
+Toda acción relevante deja registro (quién, cuándo, qué cambió).
+
+Estilo y branding
+
+Mantener el look & feel de la portada: degradado azul, tarjetas con sombra suave, tipografía clara.
+
+Botones por semántica de estado:
+
+Primario (crear/guardar) en color de marca.
+
+Secundarios neutros.
+
+Acciones críticas (cancelar/eliminar) en rojo con confirmación.
+
+Restricciones
+
+No describas endpoints ni detalles técnicos; conviértelo tú en pantallas funcionales con las validaciones y reglas de negocio indicadas.
+
+Todo el contenido en español y listo para usar por un administrador en Chile.

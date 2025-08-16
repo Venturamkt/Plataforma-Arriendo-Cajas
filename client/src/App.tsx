@@ -1,7 +1,8 @@
 import { Route, Switch } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import Home from "./pages/Home";
+import Home from "./pages/Home.tsx";
+import AdminDashboard from "./pages/AdminDashboard.tsx";
 
 // Create a client
 const queryClient = new QueryClient({
@@ -20,7 +21,7 @@ function App() {
           <Route path="/" component={Home} />
           <Route path="/customers" component={() => <div className="min-h-screen flex items-center justify-center text-white"><h1 className="text-2xl">Portal de Clientes - En desarrollo</h1></div>} />
           <Route path="/drivers" component={() => <div className="min-h-screen flex items-center justify-center text-white"><h1 className="text-2xl">Portal de Repartidores - En desarrollo</h1></div>} />
-          <Route path="/admin" component={() => <div className="min-h-screen flex items-center justify-center text-white"><h1 className="text-2xl">Panel Administrador - En desarrollo</h1></div>} />
+          <Route path="/admin" component={AdminDashboard} />
           <Route>
             <div className="min-h-screen flex items-center justify-center text-white">
               <h1 className="text-2xl">Página no encontrada</h1>

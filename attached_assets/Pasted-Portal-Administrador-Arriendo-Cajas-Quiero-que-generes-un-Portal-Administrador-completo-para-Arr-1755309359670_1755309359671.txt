@@ -1,0 +1,218 @@
+Portal Administrador — Arriendo Cajas
+
+Quiero que generes un Portal Administrador completo para “Arriendo Cajas”. Usa un diseño limpio y responsive, con sidebar a la izquierda y header superior. Todo en español (Chile). No uses términos técnicos; describe funcionalidades y reglas de negocio.
+
+Objetivo
+Administrar clientes, arriendos, inventario de cajas, repartidores, pagos y reportes. El portal debe ser claro para operar el día a día, dejar trazabilidad y enviar correos automáticos al cambiar estados.
+
+Navegación (sidebar)
+
+Dashboard
+
+Clientes
+
+Arriendos
+
+Inventario
+
+Repartidores
+
+Pagos / Finanzas
+
+Reportes
+
+Calendario
+
+Configuración (roles, preferencias, plantillas de correo)
+
+El ítem activo queda resaltado. En móvil el sidebar se colapsa.
+
+Dashboard
+
+Tarjetas con KPIs del período seleccionable (hoy / semana / mes): arriendos activos, nuevos, finalizados, cancelados.
+
+Cajas disponibles, reservadas, en terreno.
+
+Entregas y retiros de hoy.
+
+Saldo pendiente total y clientes en mora.
+
+Sección “Alertas”: atrasos, arriendos sin repartidor, baja de stock, reprogramaciones.
+
+Clientes
+Lista
+
+Buscador por nombre, RUT, email, teléfono.
+
+Columnas: Cliente, Contacto, RUT, Arriendos (X activos / Y total), Estado (badge del arriendo activo más reciente), Deuda, Acciones.
+
+Filtros rápidos: Con arriendos activos, Con saldo, En mora, Sin repartidor, Con retiro esta semana.
+
+Acciones: Ver ficha, Nuevo arriendo, Editar, Eliminar (solo sin deuda ni arriendos activos).
+
+Crear/Editar cliente
+
+Formulario en dos columnas: Nombre/razón social*, RUT* (validación), Email*, Teléfono*, Dirección principal (+ otra dirección), Notas.
+
+Reglas de unicidad: no permitir RUT/email/teléfono repetidos.
+
+Botones: Guardar, Guardar y crear arriendo.
+
+Ficha de cliente
+
+Cabecera con datos y alertas: deuda, cajas en terreno, próximos hitos.
+
+Pestañas: Arriendos, Pagos/Deuda, Direcciones, Notas/Actividades.
+
+Texto “X activos / Y total” abre la lista de arriendos.
+
+Arriendos
+Estados (flujo estándar)
+Pendiente → Programada → En ruta → Entregada → Retiro programado → Retirada → Finalizada
+(Cancelada puede ocurrir en cualquier punto previo a Finalizada).
+
+Reglas
+
+Programada: requiere fecha/hora de entrega.
+
+En ruta: requiere repartidor asignado.
+
+Entregada y Retirada: requieren fecha/hora efectiva.
+
+Retiro programado: requiere fecha/hora.
+
+Finalizada: solo si saldo = 0 y estado previo es Retirada.
+
+Cancelada: cierra el ciclo y puede dejar costos.
+
+Lista
+
+Buscador por cliente, estado, fecha, repartidor.
+
+Columnas: Cliente, Estado (badge), Fechas (entrega/retirada), Cantidad de cajas, Repartidor, Saldo, Acciones.
+
+Acciones: Ver / Editar, Cambiar estado (modal con campos obligatorios), Asignar repartidor, Programar hito, Cancelar.
+
+Crear/Editar arriendo
+
+Seleccionar plan/cantidad de cajas y fechas tentativas.
+
+Validación de inventario: si no hay stock suficiente, sugerir cantidad disponible o fecha alternativa.
+
+Reserva de inventario al confirmar (pasa a En terreno al marcar Entregada).
+
+Si hay deuda vencida, pedir condición de pago o autorización (registrar).
+
+Inventario
+
+Vista general: totales de cajas disponibles, reservadas, en terreno, en revisión.
+
+Lista por tipo/plan.
+
+Filtros por estado y fecha.
+
+Acciones automáticas: Reservado al confirmar, En terreno al marcar Entregada, Devuelto al marcar Retirada.
+
+Alertas: bajo stock configurable.
+
+Repartidores
+
+Lista con nombre, contacto, activos/inactivos, asignaciones del día.
+
+Acciones: activar/inactivar, editar, ver agenda.
+
+Regla: no permitir En ruta sin repartidor asignado.
+
+Pagos / Finanzas
+
+Por arriendo: total, pagado, saldo, método de pago.
+
+Bloqueo: no permitir Finalizar si saldo ≠ 0.
+
+Vista “Clientes con deuda”: monto y días en mora.
+
+Acciones: registrar pago/abono, notas de cobro.
+
+Reportes
+
+Por período: arriendos creados, entregas, retiros, finalizados, cancelados.
+
+KPIs: tiempos promedio por estado, atrasos, reprogramaciones, uso de repartidores.
+
+Finanzas: total facturado, pagado, saldo pendiente.
+
+Ranking: cajas en terreno por cliente (top 10).
+
+Calendario
+
+Vista mes/semana/día con entregas y retiros.
+
+Crear/editar eventos desde calendario o arriendo.
+
+Reglas: crear evento con dirección, contacto y ventana horaria.
+
+Recordatorios: Cliente (24h y 2h antes), Repartidor (resumen diario y 1h antes).
+
+Si no se marca el hito, mostrar como atraso y pedir reprogramación.
+
+Notificaciones y correos automáticos
+
+Cada cambio de estado abre modal con switches para activar/desactivar envío de correo a Cliente, Repartidor, Admin.
+
+Configuración > Notificaciones: lista de eventos (creado, programada, en ruta, entregada, retiro programado, retirada, finalizada, cancelada, reprogramada, atraso) con toggle y editor de plantilla (asunto + cuerpo) y variables {{cliente_nombre}}, {{rut}}, {{direccion}}, {{fecha_entrega}}, {{fecha_retiro}}, {{repartidor_nombre}}, {{estado}}, {{saldo}}.
+
+Botón “Enviar correo de prueba” por plantilla.
+
+Ficha de arriendo: log cronológico de envíos con iconos de estado (enviado, falló, reintento), detalle y opción de reenviar o editar y reenviar.
+
+Reglas por evento:
+
+Programada: confirma fecha/hora al cliente, avisa a repartidor.
+
+En ruta: avisa ventana horaria al cliente.
+
+Entregada / Retirada: confirma al cliente.
+
+Retiro programado: avisa a cliente y repartidor.
+
+Finalizada: envía cierre si saldo = 0; si no, alerta y botón “Recordatorio de pago”.
+
+Cancelada: avisa a cliente (y admin si hay costos).
+
+Reprogramada / Atraso: avisa nueva fecha o contacto requerido.
+
+Recordatorios configurables con offset editable (ej. 24h, 2h antes) y switches por destinatario.
+
+Preferencias por cliente: activar/desactivar canales, idioma, correo alternativo; mostrar badge “opt-out” en modal de cambio de estado.
+
+Dashboard: widget con tasa de entrega, fallos y reenviados, con acceso directo al log filtrado.
+
+Interacciones comunes (UX)
+
+Tablas con paginación, ordenar, filtros guardables.
+
+Modales para cambios de estado, asignar repartidor, programar hitos.
+
+Toasts claros: éxito, error, advertencia.
+
+Estados vacíos con texto y botones de acción.
+
+Accesibilidad: contraste alto, foco visible, navegación por teclado.
+
+Seguridad y permisos
+
+Admin puede ver/editar todo, reabrir arriendo cerrado (deja traza).
+
+Toda acción relevante deja registro (quién, cuándo, qué cambió).
+
+Estilo y branding
+
+Mismo look & feel que portada: degradado azul, tarjetas con sombra suave, tipografía clara.
+
+Botones según semántica: primario (crear/guardar) en color de marca, secundarios neutros, críticos (cancelar/eliminar) en rojo con confirmación.
+
+Restricciones
+
+No describir endpoints ni detalles técnicos; generar pantallas funcionales con validaciones y reglas.
+
+Todo en español, listo para usar por un administrador en Chile.
