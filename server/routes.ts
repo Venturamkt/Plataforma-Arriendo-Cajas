@@ -246,6 +246,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update customer status (for rental status changes)
+  app.put("/api/customers/:id/status", async (req, res) => {
+    try {
+      const { status } = req.body;
+      
+      // En una app real, esto buscaría el arriendo activo del cliente y actualizaría su estado
+      // Por ahora respondemos con éxito para la demo
+      await storage.logActivity({
+        type: "customer_status_updated",
+        description: `Estado de arriendo actualizado: ${status}`,
+        entityId: req.params.id,
+        entityType: "customer"
+      });
+      
+      res.json({ success: true, status });
+    } catch (error) {
+      console.error("Error updating customer status:", error);
+      res.status(500).json({ error: "Error al actualizar estado" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
