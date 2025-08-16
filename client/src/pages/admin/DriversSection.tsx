@@ -162,7 +162,7 @@ export function DriversSection() {
   };
 
   const handleDelete = (driver: Driver) => {
-    if (window.confirm(`¿Estás seguro de eliminar al repartidor ${driver.name}?`)) {
+    if (window.confirm(`¿Estás seguro de eliminar al repartidor ${driver.name}?\n\nSi tiene arriendos asignados, no se podrá eliminar.`)) {
       deleteDriverMutation.mutate(driver.id);
     }
   };

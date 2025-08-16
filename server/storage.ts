@@ -137,6 +137,17 @@ class PostgresStorage implements IStorage {
 
   async deleteDriver(id: string) {
     const driver = await this.getDriverById(id);
+    
+    // Verificar si el repartidor tiene arriendos asignados
+    const assignedRentals = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(rentals)
+      .where(eq(rentals.driverId, id));
+    
+    if (assignedRentals[0]?.count > 0) {
+      throw new Error(`No se puede eliminar el repartidor ${driver?.name} porque tiene arriendos asignados. Primero reasigna o cancela los arriendos.`);
+    }
+    
     await db.delete(drivers).where(eq(drivers.id, id));
     
     await this.logActivity({
