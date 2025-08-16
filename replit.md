@@ -1,12 +1,14 @@
 # Arriendo Cajas - Box Rental Management Platform
 
 ## Overview
-Arriendo Cajas is a web platform for managing a box rental business. The project has been completely reset to start fresh with a clean architecture and simple home page with three access portals.
+Arriendo Cajas is a comprehensive web platform for managing a box rental business, featuring complete customer management, rental tracking, inventory control, driver management, and financial reporting. Built specifically for Chilean business operations.
 
 ## User Preferences
-- Preferred communication style: Simple, everyday language.
-- Complete reset requested: Remove all complex functionality and start from basics
-- Keep only the home page with 3 access options: Customers, Drivers, Admin
+- Preferred communication style: Simple, everyday language (non-technical)
+- Chilean business terminology: "arrendada" not "alquilada", "carros de transporte", "cintas de amarre"
+- Currency format: Chilean peso ($2.000 format)
+- Horizontal navigation preferred over vertical scrolling for large inventories
+- Date ranges with preset options: 7, 28, 30, 60, 90 days, 6 months, 1 year, and custom
 
 ## System Architecture
 
@@ -32,24 +34,27 @@ Arriendo Cajas is a web platform for managing a box rental business. The project
 - **Current State**: Completely clean, no business data
 
 ### Recent Updates (Aug 16, 2025)
-- 🔄 **Complete Project Reset**: Removed all complex functionality at user's request
-- ✅ **Database Cleaned**: Dropped all tables and recreated clean schema
-- ✅ **Home Page Created**: Beautiful landing page with 3 access portals matching user's design
-- ✅ **Portal Administrador**: Complete admin dashboard with sidebar navigation and KPIs
-- ✅ **Gestión de Clientes**: Full customer management with search, filters, CRUD operations (simplified forms)
-- ✅ **Gestión de Arriendos**: Complete rental management with box quantities, dates, addresses, payments, and status tracking
-- ✅ **Professional UI**: Clean, responsive design following Chilean business standards
-- ✅ **Backend API**: Complete REST API with validation and activity logging
-- ✅ **Sample Data**: Automatic seeding with realistic Chilean customer data
+- ✅ **Complete Business Platform**: Full rental management system built from scratch
+- ✅ **Portal Administrador**: Admin dashboard with sidebar navigation and real-time KPIs
+- ✅ **Gestión de Clientes**: Complete customer management with Chilean RUT validation
+- ✅ **Gestión de Arriendos**: Full rental CRUD with inventory assignment and status tracking
+- ✅ **Gestión de Inventario**: Comprehensive inventory management with horizontal tabs and pagination
+- ✅ **Gestión de Repartidores**: Complete driver management with rental assignment system
+- ✅ **Módulo de Pagos/Finanzas**: Financial module with flexible date ranges (7d-1y, custom) and comprehensive payment tracking
+- ✅ **Backend Completo**: REST APIs for all modules with PostgreSQL database
+- ✅ **Data Integrity**: Proper foreign key constraints and validation throughout
 
 ### Current Features
-- **Home Page**: Landing page with 3 access portals (Customers, Drivers, Admin)
-- **Admin Dashboard**: Complete portal with sidebar navigation, KPIs, and alerts
-- **Customer Management**: Full CRUD with search, filters, contact info, and debt tracking (simplified)
-- **Rental Management**: Complete CRUD for rental operations with box quantities, dates, addresses, and status tracking
-- **Backend API**: Complete REST endpoints for customers, rentals, payments, and inventory
-- **Database**: PostgreSQL with comprehensive schema for business operations
-- **Sample Data**: Realistic Chilean customer and rental data for testing and demo
+- **Home Page**: Professional landing page with 3 access portals (Customers, Drivers, Admin)
+- **Admin Dashboard**: Complete portal with sidebar navigation, real-time KPIs, and system alerts
+- **Customer Management**: Full CRUD with search, filters, Chilean RUT validation, and debt tracking
+- **Rental Management**: Complete rental lifecycle management with inventory assignment and status tracking
+- **Inventory Management**: Comprehensive system with horizontal tabs, pagination (20 items/page), and category-specific views
+- **Driver Management**: Complete repartidor system with assignment to scheduled rentals and constraint validation
+- **Payments/Finance Module**: Complete financial tracking with flexible date ranges, payment methods, and comprehensive statistics
+- **Backend API**: Complete REST endpoints for all modules with proper validation and logging
+- **Database**: PostgreSQL with comprehensive schema and foreign key constraints
+- **Sample Data**: Realistic Chilean business data for testing and demonstration
 
 ## External Dependencies
 - **UI Components**: Radix UI

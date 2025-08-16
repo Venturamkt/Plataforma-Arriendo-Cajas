@@ -52,6 +52,14 @@ export interface IStorage {
   
   // Activities
   logActivity(activityData: any): Promise<any>;
+  
+  // Payments
+  getPayments(filters?: any): Promise<any[]>;
+  getPaymentById(id: string): Promise<any>;
+  createPayment(paymentData: any): Promise<any>;
+  updatePayment(id: string, paymentData: any): Promise<any>;
+  deletePayment(id: string): Promise<void>;
+  getPaymentStats(filters?: any): Promise<any>;
 }
 
 class PostgresStorage implements IStorage {
@@ -344,6 +352,137 @@ class PostgresStorage implements IStorage {
     const rentalResult = await updateRental;
     
     return rentalResult[0];
+  }
+
+  // Payments
+  async getPayments(filters: any = {}) {
+    let query = db
+      .select({
+        id: payments.id,
+        rentalId: payments.rentalId,
+        amount: payments.amount,
+        paymentMethod: payments.paymentMethod,
+        paymentDate: payments.paymentDate,
+        status: payments.status,
+        notes: payments.notes,
+        createdAt: payments.createdAt,
+        customerName: customers.name,
+        customerRut: customers.rut
+      })
+      .from(payments)
+      .leftJoin(rentals, eq(payments.rentalId, rentals.id))
+      .leftJoin(customers, eq(rentals.customerId, customers.id));
+
+    // Aplicar filtros de fecha
+    if (filters.startDate) {
+      query = query.where(gte(payments.paymentDate, new Date(filters.startDate)));
+    }
+    if (filters.endDate) {
+      const endDate = new Date(filters.endDate);
+      endDate.setHours(23, 59, 59, 999);
+      query = query.where(lte(payments.paymentDate, endDate));
+    }
+    
+    // Aplicar filtros adicionales
+    if (filters.status) {
+      query = query.where(eq(payments.status, filters.status));
+    }
+    if (filters.method) {
+      query = query.where(eq(payments.paymentMethod, filters.method));
+    }
+
+    return await query.orderBy(desc(payments.paymentDate));
+  }
+
+  async getPaymentById(id: string) {
+    const result = await db.select().from(payments).where(eq(payments.id, id));
+    return result[0] || null;
+  }
+
+  async createPayment(paymentData: any) {
+    const result = await db.insert(payments).values(paymentData).returning();
+    
+    await this.logActivity({
+      type: "payment_created",
+      description: `Pago de ${paymentData.amount} registrado`,
+      entityId: result[0].id,
+      entityType: "payment"
+    });
+    
+    return result[0];
+  }
+
+  async updatePayment(id: string, paymentData: any) {
+    const result = await db.update(payments)
+      .set({ ...paymentData, updatedAt: new Date() })
+      .where(eq(payments.id, id))
+      .returning();
+
+    await this.logActivity({
+      type: "payment_updated",
+      description: `Pago actualizado`,
+      entityId: id,
+      entityType: "payment"
+    });
+
+    return result[0];
+  }
+
+  async deletePayment(id: string) {
+    await db.delete(payments).where(eq(payments.id, id));
+    
+    await this.logActivity({
+      type: "payment_deleted",
+      description: `Pago eliminado`,
+      entityId: id,
+      entityType: "payment"
+    });
+  }
+
+  async getPaymentStats(filters: any = {}) {
+    // Ingresos totales en el período
+    const totalRevenue = await db
+      .select({ total: sql<string>`COALESCE(SUM(CAST(${payments.amount} AS DECIMAL)), 0)` })
+      .from(payments)
+      .where(eq(payments.status, "completado"));
+
+    // Pagos pendientes (de todos los arriendos)
+    const pendingPayments = await db
+      .select({ 
+        total: sql<string>`COALESCE(SUM(CAST(${rentals.totalAmount} AS DECIMAL) - CAST(${rentals.paidAmount} AS DECIMAL)), 0)` 
+      })
+      .from(rentals)
+      .where(sql`CAST(${rentals.paidAmount} AS DECIMAL) < CAST(${rentals.totalAmount} AS DECIMAL)`);
+
+    // Contar pagos completados en el período
+    const completedPayments = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(payments)
+      .where(and(
+        eq(payments.status, "completado"),
+        filters.startDate ? gte(payments.paymentDate, new Date(filters.startDate)) : sql`true`,
+        filters.endDate ? lte(payments.paymentDate, new Date(filters.endDate)) : sql`true`
+      ));
+
+    // Pago promedio
+    const averagePayment = await db
+      .select({ avg: sql<string>`COALESCE(AVG(CAST(${payments.amount} AS DECIMAL)), 0)` })
+      .from(payments)
+      .where(eq(payments.status, "completado"));
+
+    return {
+      totalRevenue: totalRevenue[0]?.total || "0",
+      pendingPayments: pendingPayments[0]?.total || "0",
+      completedPayments: completedPayments[0]?.count || 0,
+      averagePayment: averagePayment[0]?.avg || "0",
+      revenueChange: 0,
+      paymentsThisPeriod: completedPayments[0]?.count || 0
+    };
+  }
+
+  async logActivity(activityData: any) {
+    const result = await db.insert(activities).values(activityData).returning();
+    return result[0];
   }
 }
 
