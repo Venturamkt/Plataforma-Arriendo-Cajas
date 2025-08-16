@@ -97,26 +97,16 @@ export default function TrackRental() {
     }
   }, [params.rut, params.code]);
 
-  console.log('Query state:', { 
-    rutDigits, 
-    trackingCode, 
-    rutDigitsLength: rutDigits.length,
-    trackingCodeLength: trackingCode.length,
-    enabled: rutDigits.length === 4 && trackingCode.length >= 6
-  });
-
   const { data: rental, error, isLoading } = useQuery<Rental>({
     queryKey: ["/api/track", rutDigits, trackingCode],
-    queryFn: () => {
-      console.log('Making API request to:', `/api/track/${rutDigits}/${trackingCode}`);
-      return fetch(`/api/track/${rutDigits}/${trackingCode}`).then(res => {
-        console.log('API response status:', res.status);
-        if (!res.ok) throw new Error('No encontrado');
-        return res.json();
-      });
-    },
+    queryFn: () => fetch(`/api/track/${rutDigits}/${trackingCode}`).then(res => {
+      if (!res.ok) throw new Error('No encontrado');
+      return res.json();
+    }),
     enabled: rutDigits.length === 4 && trackingCode.length >= 6,
     retry: false,
+    staleTime: 5 * 60 * 1000, // 5 minutes - don't refetch for 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes - keep in cache for 10 minutes
   });
 
   const handleSubmit = (e: React.FormEvent) => {
