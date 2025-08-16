@@ -46,6 +46,8 @@ Preferred communication style: Simple, everyday language.
 - ✅ **Backend API production verified**: All tracking and rental APIs working perfectly in production (plataforma.arriendocajas.cl)
 - ⚠️ **Frontend deployment issue**: Backend updates deploy correctly but frontend requires separate deployment to sync changes
 - ✅ **Tracking page fixed in development**: Page works correctly in Replit but production frontend needs redeployment
+- ✅ **Critical bug fixed**: Resolved infinite API request loop caused by React Query refetchInterval configuration (Aug 16, 2025)
+- ✅ **Query optimization**: Disabled auto-refresh and configured proper cache times for better performance
 - ✅ **Enhanced rental form UI**: Beautiful redesigned form with color-coded sections and improved visual hierarchy
 - ✅ **Direct text input**: All price fields now accept direct typing without spinner arrows for faster data entry
 - ✅ **Automatic date calculation**: Smart date picker that auto-calculates rental periods and suggests return dates
