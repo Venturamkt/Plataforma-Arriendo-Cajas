@@ -251,15 +251,16 @@ export default function PaymentsSection() {
     return new Date(dateString).toLocaleDateString('es-CL');
   };
 
-  const openDialog = (payment?: Payment) => {
+  const openDialog = (payment?: any) => {
     if (payment) {
       setEditingPayment(payment);
       setFormData({
         rentalId: payment.rentalId,
         amount: payment.amount,
-        paymentMethod: payment.paymentMethod,
-        paymentDate: payment.paymentDate.split('T')[0],
-        status: payment.status,
+        method: payment.method,
+        paymentMethod: payment.method, // Compatibilidad
+        paymentDate: new Date().toISOString().split('T')[0], // Usar fecha actual para edición
+        status: "completado", // Default
         notes: payment.notes || ""
       });
     } else {
@@ -267,7 +268,8 @@ export default function PaymentsSection() {
       setFormData({
         rentalId: "",
         amount: "",
-        paymentMethod: "",
+        method: "efectivo",
+        paymentMethod: "efectivo", // Mantener compatibilidad
         paymentDate: new Date().toISOString().split('T')[0],
         status: "completado",
         notes: ""
@@ -491,33 +493,33 @@ export default function PaymentsSection() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredPayments.map((payment: Payment) => {
-                    const method = PAYMENT_METHODS.find(m => m.id === payment.paymentMethod);
-                    const status = PAYMENT_STATUS.find(s => s.id === payment.status);
-                    const MethodIcon = method?.icon || CreditCard;
+                  {filteredPayments.map((payment: any) => {
+                    const methodLabel = payment.method === "efectivo" ? "Efectivo" : 
+                                       payment.method === "transferencia" ? "Transferencia" : 
+                                       payment.method === "tarjeta" ? "Tarjeta" : payment.method;
                     
                     return (
                       <tr key={payment.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="font-medium text-gray-900">{payment.customerName}</div>
-                          <div className="text-sm text-gray-500">{payment.customerRut}</div>
+                          <div className="font-medium text-gray-900">Cliente</div>
+                          <div className="text-sm text-gray-500">ID: {payment.customerId?.slice(0, 8)}...</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-lg font-semibold text-gray-900">{formatCurrency(payment.amount)}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
-                            <MethodIcon className="h-4 w-4 mr-2 text-gray-500" />
-                            <span className="text-sm">{method?.label}</span>
+                            <CreditCard className="h-4 w-4 mr-2 text-gray-500" />
+                            <span className="text-sm">{methodLabel}</span>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 py-1 text-xs rounded-full font-medium ${status?.color}`}>
-                            {status?.label}
+                          <span className="px-2 py-1 text-xs rounded-full font-medium bg-green-100 text-green-800">
+                            Completado
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {formatDate(payment.paymentDate)}
+                          {formatDate(payment.createdAt)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex items-center space-x-2">
@@ -531,7 +533,7 @@ export default function PaymentsSection() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleDelete(payment)}
+                              onClick={() => handleDelete(payment.id)}
                               className="text-red-600 hover:text-red-700"
                             >
                               <Trash2 className="h-4 w-4" />
@@ -563,18 +565,43 @@ export default function PaymentsSection() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <Label htmlFor="rental">Arriendo</Label>
-              <Select value={formData.rentalId} onValueChange={(value) => setFormData({...formData, rentalId: value})}>
+              <Select 
+                value={formData.rentalId} 
+                onValueChange={(value) => {
+                  const selectedRental = rentals.find((r: any) => r.id === value);
+                  const pendingAmount = selectedRental ? 
+                    (parseFloat(selectedRental.totalAmount) - parseFloat(selectedRental.paidAmount || "0")).toString() : "";
+                  
+                  setFormData({
+                    ...formData, 
+                    rentalId: value,
+                    amount: pendingAmount,
+                    method: formData.paymentMethod || "efectivo"
+                  });
+                }}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar arriendo" />
                 </SelectTrigger>
                 <SelectContent>
-                  {rentals.map((rental: any) => (
-                    <SelectItem key={rental.id} value={rental.id}>
-                      {rental.customerName} - {formatCurrency(rental.totalAmount)}
-                    </SelectItem>
-                  ))}
+                  {rentals.map((rental: any) => {
+                    const pendingAmount = parseFloat(rental.totalAmount) - parseFloat(rental.paidAmount || "0");
+                    return (
+                      <SelectItem key={rental.id} value={rental.id}>
+                        {rental.customerName} - Total: {formatCurrency(rental.totalAmount)} 
+                        {pendingAmount > 0 && (
+                          <span className="text-red-600 ml-2">(Pendiente: {formatCurrency(pendingAmount.toString())})</span>
+                        )}
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
+              {formData.rentalId && (
+                <p className="text-xs text-gray-600 mt-1">
+                  El monto se auto-completó con el saldo pendiente del arriendo
+                </p>
+              )}
             </div>
 
             <div>
@@ -587,20 +614,21 @@ export default function PaymentsSection() {
                 placeholder="150000"
                 required
               />
+              <p className="text-xs text-gray-500 mt-1">
+                Se auto-completa al seleccionar arriendo. Puedes modificarlo si es un pago parcial.
+              </p>
             </div>
 
             <div>
-              <Label htmlFor="paymentMethod">Método de Pago</Label>
-              <Select value={formData.paymentMethod} onValueChange={(value) => setFormData({...formData, paymentMethod: value})}>
+              <Label htmlFor="method">Método de Pago</Label>
+              <Select value={formData.method || formData.paymentMethod} onValueChange={(value) => setFormData({...formData, method: value, paymentMethod: value})}>
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar método" />
                 </SelectTrigger>
                 <SelectContent>
-                  {PAYMENT_METHODS.map(method => (
-                    <SelectItem key={method.id} value={method.id}>
-                      {method.label}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="efectivo">Efectivo</SelectItem>
+                  <SelectItem value="transferencia">Transferencia</SelectItem>
+                  <SelectItem value="tarjeta">Tarjeta</SelectItem>
                 </SelectContent>
               </Select>
             </div>

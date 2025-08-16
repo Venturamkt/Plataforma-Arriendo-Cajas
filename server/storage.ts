@@ -356,42 +356,25 @@ class PostgresStorage implements IStorage {
 
   // Payments
   async getPayments(filters: any = {}) {
-    let query = db
-      .select({
-        id: payments.id,
-        rentalId: payments.rentalId,
-        amount: payments.amount,
-        paymentMethod: payments.paymentMethod,
-        paymentDate: payments.paymentDate,
-        status: payments.status,
-        notes: payments.notes,
-        createdAt: payments.createdAt,
-        customerName: customers.name,
-        customerRut: customers.rut
-      })
-      .from(payments)
-      .leftJoin(rentals, eq(payments.rentalId, rentals.id))
-      .leftJoin(customers, eq(rentals.customerId, customers.id));
+    try {
+      const result = await db
+        .select({
+          id: payments.id,
+          rentalId: payments.rentalId,
+          customerId: payments.customerId,
+          amount: payments.amount,
+          method: payments.method,
+          notes: payments.notes,
+          createdAt: payments.createdAt
+        })
+        .from(payments)
+        .orderBy(desc(payments.createdAt));
 
-    // Aplicar filtros de fecha
-    if (filters.startDate) {
-      query = query.where(gte(payments.paymentDate, new Date(filters.startDate)));
+      return result;
+    } catch (error) {
+      console.error("Error fetching payments:", error);
+      return [];
     }
-    if (filters.endDate) {
-      const endDate = new Date(filters.endDate);
-      endDate.setHours(23, 59, 59, 999);
-      query = query.where(lte(payments.paymentDate, endDate));
-    }
-    
-    // Aplicar filtros adicionales
-    if (filters.status) {
-      query = query.where(eq(payments.status, filters.status));
-    }
-    if (filters.method) {
-      query = query.where(eq(payments.paymentMethod, filters.method));
-    }
-
-    return await query.orderBy(desc(payments.paymentDate));
   }
 
   async getPaymentById(id: string) {
@@ -400,11 +383,25 @@ class PostgresStorage implements IStorage {
   }
 
   async createPayment(paymentData: any) {
-    const result = await db.insert(payments).values(paymentData).returning();
+    // Obtener información del arriendo para obtener el customerId
+    const rental = await db.select().from(rentals).where(eq(rentals.id, paymentData.rentalId)).limit(1);
+    if (!rental.length) {
+      throw new Error("Arriendo no encontrado");
+    }
+
+    const paymentToInsert = {
+      rentalId: paymentData.rentalId,
+      customerId: rental[0].customerId,
+      amount: paymentData.amount,
+      method: paymentData.method || paymentData.paymentMethod,
+      notes: paymentData.notes
+    };
+
+    const result = await db.insert(payments).values(paymentToInsert).returning();
     
     await this.logActivity({
       type: "payment_created",
-      description: `Pago de ${paymentData.amount} registrado`,
+      description: `Pago de $${paymentData.amount} registrado`,
       entityId: result[0].id,
       entityType: "payment"
     });
@@ -413,8 +410,14 @@ class PostgresStorage implements IStorage {
   }
 
   async updatePayment(id: string, paymentData: any) {
+    const updateData = {
+      amount: paymentData.amount,
+      method: paymentData.method || paymentData.paymentMethod,
+      notes: paymentData.notes
+    };
+
     const result = await db.update(payments)
-      .set({ ...paymentData, updatedAt: new Date() })
+      .set(updateData)
       .where(eq(payments.id, id))
       .returning();
 
@@ -440,13 +443,12 @@ class PostgresStorage implements IStorage {
   }
 
   async getPaymentStats(filters: any = {}) {
-    // Ingresos totales en el período
+    // Ingresos totales
     const totalRevenue = await db
       .select({ total: sql<string>`COALESCE(SUM(CAST(${payments.amount} AS DECIMAL)), 0)` })
-      .from(payments)
-      .where(eq(payments.status, "completado"));
+      .from(payments);
 
-    // Pagos pendientes (de todos los arriendos)
+    // Pagos pendientes (saldo de arriendos)
     const pendingPayments = await db
       .select({ 
         total: sql<string>`COALESCE(SUM(CAST(${rentals.totalAmount} AS DECIMAL) - CAST(${rentals.paidAmount} AS DECIMAL)), 0)` 
@@ -454,29 +456,23 @@ class PostgresStorage implements IStorage {
       .from(rentals)
       .where(sql`CAST(${rentals.paidAmount} AS DECIMAL) < CAST(${rentals.totalAmount} AS DECIMAL)`);
 
-    // Contar pagos completados en el período
-    const completedPayments = await db
+    // Contar pagos totales
+    const totalPayments = await db
       .select({ count: sql<number>`count(*)` })
-      .from(payments)
-      .where(and(
-        eq(payments.status, "completado"),
-        filters.startDate ? gte(payments.paymentDate, new Date(filters.startDate)) : sql`true`,
-        filters.endDate ? lte(payments.paymentDate, new Date(filters.endDate)) : sql`true`
-      ));
+      .from(payments);
 
     // Pago promedio
     const averagePayment = await db
       .select({ avg: sql<string>`COALESCE(AVG(CAST(${payments.amount} AS DECIMAL)), 0)` })
-      .from(payments)
-      .where(eq(payments.status, "completado"));
+      .from(payments);
 
     return {
       totalRevenue: totalRevenue[0]?.total || "0",
       pendingPayments: pendingPayments[0]?.total || "0",
-      completedPayments: completedPayments[0]?.count || 0,
+      completedPayments: totalPayments[0]?.count || 0,
       averagePayment: averagePayment[0]?.avg || "0",
       revenueChange: 0,
-      paymentsThisPeriod: completedPayments[0]?.count || 0
+      paymentsThisPeriod: totalPayments[0]?.count || 0
     };
   }
 
