@@ -428,10 +428,12 @@ export default function RentalsSection() {
   });
 
   const formatCurrency = (amount: string) => {
-    return new Intl.NumberFormat('es-CL', {
-      style: 'currency',
-      currency: 'CLP'
-    }).format(parseInt(amount));
+    const num = parseInt(amount) || 0;
+    // Formato chileno: $2.000, $15.000, etc.
+    return '$' + num.toLocaleString('es-CL', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    });
   };
 
   const formatDate = (dateString: string) => {
@@ -443,9 +445,19 @@ export default function RentalsSection() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-900">Gestión de Arriendos</h1>
-        <Button onClick={() => setShowCreateDialog(true)} className="bg-green-600 hover:bg-green-700">
+        <Button 
+          onClick={() => {
+            // Usar función global del AdminDashboard
+            if ((window as any).changeSection) {
+              (window as any).changeSection('new-rental');
+            } else {
+              setShowCreateDialog(true);
+            }
+          }} 
+          className="bg-green-600 hover:bg-green-700"
+        >
           <Plus className="h-4 w-4 mr-2" />
-          Nuevo Arriendo
+          Nuevo Arriendo Profesional ✨
         </Button>
       </div>
 
@@ -671,7 +683,7 @@ export default function RentalsSection() {
                       type="button"
                       variant={formData.boxQuantity === quantity.toString() ? "default" : "outline"}
                       size="sm"
-                      onClick={() => setBoxQuantityShortcut(quantity)}
+                      onClick={() => setBoxQuantityShortcut(quantity.toString())}
                       className="text-xs"
                     >
                       {quantity} Cajas
@@ -710,7 +722,7 @@ export default function RentalsSection() {
                       type="button"
                       variant={formData.rentalDays === days.toString() ? "default" : "outline"}
                       size="sm"
-                      onClick={() => setRentalDaysShortcut(days)}
+                      onClick={() => setRentalDaysShortcut(days.toString())}
                       className="text-xs"
                     >
                       {days} días
@@ -1003,21 +1015,115 @@ export default function RentalsSection() {
 
             <div className="space-y-2">
               <Label htmlFor="edit-boxQuantity">Cantidad de Cajas *</Label>
-              <Input
-                id="edit-boxQuantity"
-                type="number"
-                value={formData.boxQuantity}
-                onChange={(e) => setFormData(prev => ({ ...prev, boxQuantity: e.target.value }))}
-              />
+              <div className="space-y-2">
+                <div className="flex gap-2 flex-wrap">
+                  {BOX_QUANTITY_SHORTCUTS.map(quantity => (
+                    <Button
+                      key={quantity}
+                      type="button"
+                      variant={formData.boxQuantity === quantity.toString() ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setBoxQuantityShortcut(quantity.toString())}
+                      className="text-xs"
+                    >
+                      {quantity} Cajas
+                    </Button>
+                  ))}
+                  <Button
+                    type="button"
+                    variant={!BOX_QUANTITY_SHORTCUTS.includes(parseInt(formData.boxQuantity)) && formData.boxQuantity ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => document.getElementById('edit-boxQuantity')?.focus()}
+                    className="text-xs"
+                  >
+                    Otro
+                  </Button>
+                </div>
+                <Input
+                  id="edit-boxQuantity"
+                  type="number"
+                  value={formData.boxQuantity}
+                  onChange={(e) => {
+                    const updatedData = recalculateFormData({ ...formData, boxQuantity: e.target.value });
+                    setFormData(updatedData);
+                  }}
+                  placeholder="Cantidad de cajas"
+                />
+              </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="edit-totalAmount">Monto Total *</Label>
+              <Label htmlFor="edit-rentalDays">Días de Arriendo *</Label>
+              <div className="space-y-2">
+                <div className="flex gap-2 flex-wrap">
+                  {RENTAL_DAYS_SHORTCUTS.map(days => (
+                    <Button
+                      key={days}
+                      type="button"
+                      variant={formData.rentalDays === days.toString() ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setRentalDaysShortcut(days.toString())}
+                      className="text-xs"
+                    >
+                      {days} días
+                    </Button>
+                  ))}
+                  <Button
+                    type="button"
+                    variant={!RENTAL_DAYS_SHORTCUTS.includes(parseInt(formData.rentalDays)) && formData.rentalDays ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => document.getElementById('edit-rentalDays')?.focus()}
+                    className="text-xs"
+                  >
+                    Otro
+                  </Button>
+                </div>
+                <Input
+                  id="edit-rentalDays"
+                  type="number"
+                  value={formData.rentalDays}
+                  onChange={(e) => {
+                    const updatedData = recalculateFormData({ ...formData, rentalDays: e.target.value });
+                    setFormData(updatedData);
+                  }}
+                  placeholder="Días de arriendo"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-pricePerDay">Precio por Día por Caja</Label>
               <Input
-                id="edit-totalAmount"
-                value={formData.totalAmount}
-                onChange={(e) => setFormData(prev => ({ ...prev, totalAmount: e.target.value }))}
+                id="edit-pricePerDay"
+                type="number"
+                value={formData.pricePerDay}
+                onChange={(e) => {
+                  const updatedData = recalculateFormData({ ...formData, pricePerDay: e.target.value });
+                  setFormData(updatedData);
+                }}
+                placeholder="1000"
               />
+              <p className="text-xs text-gray-500">Precio base por día por cada caja</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Garantía (Automática)</Label>
+              <Input
+                value={formData.guaranteeAmount ? formatCurrency(formData.guaranteeAmount) : '$0'}
+                disabled
+                className="bg-gray-50"
+              />
+              <p className="text-xs text-gray-500">$2.000 por caja automáticamente</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Monto Total</Label>
+              <Input
+                value={formData.totalAmount ? formatCurrency(formData.totalAmount) : '$0'}
+                disabled
+                className="bg-gray-50 text-lg font-semibold"
+              />
+              <p className="text-xs text-gray-500">Incluye precio + garantía + productos adicionales</p>
             </div>
 
             <div className="space-y-2">
@@ -1030,23 +1136,28 @@ export default function RentalsSection() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="edit-deliveryDate">Fecha de Entrega</Label>
+              <Label htmlFor="edit-deliveryDate">Fecha de Entrega *</Label>
               <Input
                 id="edit-deliveryDate"
                 type="date"
                 value={formData.deliveryDate}
-                onChange={(e) => setFormData(prev => ({ ...prev, deliveryDate: e.target.value }))}
+                onChange={(e) => {
+                  const updatedData = recalculateFormData({ ...formData, deliveryDate: e.target.value });
+                  setFormData(updatedData);
+                }}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="edit-pickupDate">Fecha de Retiro</Label>
+              <Label htmlFor="edit-pickupDate">Fecha de Retiro (Automática)</Label>
               <Input
                 id="edit-pickupDate"
                 type="date"
                 value={formData.pickupDate}
-                onChange={(e) => setFormData(prev => ({ ...prev, pickupDate: e.target.value }))}
+                disabled
+                className="bg-gray-50"
               />
+              <p className="text-xs text-gray-500">Se calcula automáticamente según los días de arriendo</p>
             </div>
 
             <div className="space-y-2">

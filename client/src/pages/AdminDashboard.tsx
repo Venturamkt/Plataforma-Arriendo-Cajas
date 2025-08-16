@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { 
   Calendar, 
@@ -22,6 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import CustomersSection from "./admin/CustomersSection";
 import RentalsSection from "./admin/RentalsSection";
+import NewRentalForm from "./admin/NewRentalForm";
 
 const sidebarItems = [
   { id: "dashboard", label: "Dashboard", icon: Home },
@@ -37,6 +38,19 @@ const sidebarItems = [
 
 export default function AdminDashboard() {
   const [activeSection, setActiveSection] = useState("dashboard");
+  
+  // Función para cambiar sección con parámetros
+  const changeSection = (section: string, params?: any) => {
+    setActiveSection(section);
+  };
+
+  // Hacer la función disponible globalmente para los componentes hijos
+  useEffect(() => {
+    (window as any).changeSection = changeSection;
+    return () => {
+      delete (window as any).changeSection;
+    };
+  }, []);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [period, setPeriod] = useState("today");
 
@@ -207,6 +221,8 @@ export default function AdminDashboard() {
         return <CustomersSection />;
       case "rentals":
         return <RentalsSection />;
+      case "new-rental":
+        return <NewRentalForm />;
       case "inventory":
         return <div className="p-8 text-center"><h2 className="text-2xl">Gestión de Inventario - En desarrollo</h2></div>;
       case "drivers":

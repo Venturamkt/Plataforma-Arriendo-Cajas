@@ -4,16 +4,15 @@ export const formatCurrency = (amount: string | number): string => {
   const num = typeof amount === 'string' ? parseFloat(amount) : amount;
   if (isNaN(num)) return '$0';
   
-  return new Intl.NumberFormat('es-CL', {
-    style: 'currency',
-    currency: 'CLP',
+  // Formato chileno: $2.000, $15.000, etc.
+  return '$' + num.toLocaleString('es-CL', {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-  }).format(num);
+  });
 };
 
 export const calculateGuarantee = (boxQuantity: number): number => {
-  return boxQuantity * 2000; // $2,000 por caja
+  return boxQuantity * 2000; // $2.000 por caja (formato chileno)
 };
 
 export const calculateReturnDate = (startDate: string, rentalDays: number): string => {
