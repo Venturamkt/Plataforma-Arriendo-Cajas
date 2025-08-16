@@ -1,0 +1,13 @@
+Quiero un Portal Administrador para “Arriendo Cajas” con diseño limpio, moderno y 100% responsive. Un sidebar fijo a la izquierda con iconos y texto, resaltando el módulo activo, y en la parte superior un header con el título de la sección y botones de acción visibles. En móvil, el sidebar se colapsa a menú.
+
+El dashboard debe recibir al usuario con tarjetas grandes y claras que muestren arriendos activos, nuevos, finalizados y cancelados, cajas disponibles/reservadas/en terreno, entregas y retiros del día, saldo pendiente y clientes en mora. Debajo, una sección de alertas: atrasos, arriendos sin repartidor y bajo stock.
+
+La sección Clientes muestra una tabla con buscador, filtros rápidos y columnas claras: nombre, contacto, RUT, arriendos activos/total, estado, deuda y acciones. Desde aquí se puede ver ficha, crear arriendo, editar o eliminar (si no tiene deuda ni arriendos activos). El formulario de crear/editar cliente es de dos columnas, con validaciones en tiempo real y opción de “guardar y crear arriendo” directo. La ficha de cliente incluye alertas, pestañas de arriendos, pagos, direcciones y notas.
+
+En Arriendos, la lista debe permitir buscar por cliente, estado, fecha o repartidor, con badges de color para cada estado. Cambiar estado, asignar repartidor o programar hitos debe ser en modales rápidos y claros. El flujo visual de estados es lineal y bloquea opciones si falta información (por ejemplo, no permitir “En ruta” sin repartidor).
+
+El módulo Inventario muestra cifras grandes y estado de las cajas con colores diferenciados: disponible, reservado, en terreno, en revisión. Incluye alertas de bajo stock. Repartidores tiene lista con estado activo/inactivo, datos de contacto y asignaciones.
+
+Pagos muestra saldos por arriendo y cliente, permite registrar abonos y filtrar clientes con deuda o mora. Reportes ofrece gráficas y tablas simples sobre operación y finanzas, con posibilidad de exportar. Calendario es visual y muestra entregas y retiros, con colores distintos y recordatorios automáticos.
+
+Todo debe tener interacciones suaves: hover con sombras, botones con feedback, mensajes claros de éxito o error, estados vacíos con sugerencia de acción, y accesibilidad cuidada. Los colores de botones siguen semántica: principal para crear/guardar, neutro para secundarios y rojo para acciones críticas.

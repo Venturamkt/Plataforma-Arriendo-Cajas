@@ -1,90 +1,34 @@
-import { Switch, Route } from "wouter";
-import { queryClient } from "./lib/queryClient";
-import { QueryClientProvider } from "@tanstack/react-query";
+import { Route, Switch } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import HomePage from "@/pages/home-page";
-import LoginSelector from "@/pages/auth/login-selector";
-import CustomerLogin from "@/pages/auth/customer-login";
-import AdminLogin from "@/pages/auth/admin-login";
-import DriverLogin from "@/pages/auth/driver-login";
-import AdminDashboard from "@/pages/admin/dashboard";
-import AdminInventory from "@/pages/admin/inventory";
-import AdminCustomers from "@/pages/admin/customers-clean";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import Home from "./pages/Home";
 
-import AdminDeliveries from "@/pages/admin/deliveries";
-import AdminReports from "@/pages/admin/reports";
-import UserManagement from "@/pages/admin/user-management";
-import CreateUser from "@/pages/admin/create-user";
-import NewRental from "@/pages/admin/new-rental";
-import RentalStatus from "@/pages/admin/rental-status";
-import EmailPreview from "@/pages/admin/email-preview";
-import Reminders from "@/pages/admin/reminders";
-import BoxCodesPage from "@/pages/admin/box-codes";
-import DriverDashboard from "@/pages/driver/dashboard";
-import CustomerDashboard from "@/pages/customer/dashboard";
-import TrackRental from "@/pages/track-rental";
-import { TrackingTest } from "@/pages/tracking-test";
-import { ProductionTest } from "@/pages/production-test";
-import { FinalDiagnosis } from "@/pages/final-diagnosis";
-import NotFound from "@/pages/not-found";
-
-function Router() {
-  return (
-    <Switch>
-      {/* Public home page */}
-      <Route path="/" component={HomePage} />
-      
-      {/* Login selector for old route */}
-      <Route path="/login" component={LoginSelector} />
-      
-      {/* Authentication routes */}
-      <Route path="/auth/customer" component={CustomerLogin} />
-      <Route path="/auth/admin" component={AdminLogin} />
-      <Route path="/auth/driver" component={DriverLogin} />
-      
-      {/* Admin routes */}
-      <Route path="/admin/dashboard" component={AdminDashboard} />
-      <Route path="/admin/inventory" component={AdminInventory} />
-      <Route path="/admin/customers" component={AdminCustomers} />
-      <Route path="/admin/customers-new" component={AdminCustomers} />
-      <Route path="/admin/customers-clean" component={AdminCustomers} />
-      <Route path="/admin/customers-final" component={AdminCustomers} />
-
-      <Route path="/admin/deliveries" component={AdminDeliveries} />
-      <Route path="/admin/reports" component={AdminReports} />
-      <Route path="/admin/users" component={UserManagement} />
-      <Route path="/admin/users/create" component={CreateUser} />
-      <Route path="/admin/new-rental" component={NewRental} />
-      <Route path="/admin/emails" component={EmailPreview} />
-      <Route path="/admin/reminders" component={Reminders} />
-      <Route path="/admin/box-codes" component={BoxCodesPage} />
-      
-      {/* Public tracking routes */}
-      <Route path="/track" component={TrackRental} />
-      <Route path="/track/:rut/:code" component={TrackRental} />
-      <Route path="/tracking-test" component={TrackingTest} />
-      <Route path="/production-test" component={ProductionTest} />
-      <Route path="/final-diagnosis" component={FinalDiagnosis} />
-      
-      {/* Driver routes */}
-      <Route path="/driver/dashboard" component={DriverDashboard} />
-      
-      {/* Customer routes */}
-      <Route path="/customer/dashboard" component={CustomerDashboard} />
-      
-      <Route component={NotFound} />
-    </Switch>
-  );
-}
+// Create a client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+    },
+  },
+});
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
+      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-700 to-blue-500">
+        <Switch>
+          <Route path="/" component={Home} />
+          <Route path="/customers" component={() => <div className="min-h-screen flex items-center justify-center text-white"><h1 className="text-2xl">Portal de Clientes - En desarrollo</h1></div>} />
+          <Route path="/drivers" component={() => <div className="min-h-screen flex items-center justify-center text-white"><h1 className="text-2xl">Portal de Repartidores - En desarrollo</h1></div>} />
+          <Route path="/admin" component={() => <div className="min-h-screen flex items-center justify-center text-white"><h1 className="text-2xl">Panel Administrador - En desarrollo</h1></div>} />
+          <Route>
+            <div className="min-h-screen flex items-center justify-center text-white">
+              <h1 className="text-2xl">Página no encontrada</h1>
+            </div>
+          </Route>
+        </Switch>
         <Toaster />
-        <Router />
-      </TooltipProvider>
+      </div>
     </QueryClientProvider>
   );
 }
