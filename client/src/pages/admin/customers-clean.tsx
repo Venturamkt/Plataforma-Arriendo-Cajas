@@ -18,7 +18,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Checkbox } from '@/components/ui/checkbox'
 
 // Icons
-import { Plus, Search, RefreshCw, Edit, Trash2, Eye, Calendar, Package, ChevronDown, ChevronRight } from 'lucide-react'
+import { Plus, Search, RefreshCw, Edit, Trash2, Eye, Calendar, Package, ChevronDown, ChevronRight, ExternalLink } from 'lucide-react'
 
 // Layout Components
 import Header from '@/components/layout/header'
@@ -588,17 +588,29 @@ export default function CustomersCleanPage() {
                     return (
                       <TableRow key={customer.id}>
                         <TableCell>
-                          <div className="flex items-center space-x-3">
+                          <div 
+                            className="flex items-center space-x-3 cursor-pointer hover:bg-blue-50 p-2 rounded-lg transition-colors"
+                            onClick={() => {
+                              setSelectedCustomer(customer)
+                              setShowEditCustomer(true)
+                            }}
+                          >
                             <div className="flex-shrink-0">
                               <div className="h-10 w-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-medium">
                                 {customer.name.charAt(0).toUpperCase()}
                               </div>
                             </div>
                             <div>
-                              <div className="font-medium text-gray-900">{customer.name}</div>
+                              <div className="font-medium text-gray-900 hover:text-blue-600 transition-colors">{customer.name}</div>
                               <div className="text-sm text-gray-500">
                                 Cliente desde {customer.createdAt ? new Date(customer.createdAt).toLocaleDateString('es-CL') : 'N/A'}
                               </div>
+                              {/* Show tracking URL if customer has active rentals */}
+                              {hasActiveRentals && mostRecentRental?.trackingCode && (
+                                <div className="text-xs text-blue-600 font-mono mt-1">
+                                  tracking: /track/{customer.rut?.replace(/[.-]/g, '').slice(0, -1).slice(-4).padStart(4, '0') || '----'}/{mostRecentRental.trackingCode}
+                                </div>
+                              )}
                             </div>
                           </div>
                         </TableCell>
@@ -709,21 +721,27 @@ export default function CustomersCleanPage() {
                               size="sm"
                               onClick={() => {
                                 setSelectedCustomer(customer)
-                                setShowEditCustomer(true)
-                              }}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedCustomer(customer)
                                 setShowCreateRental(true)
                               }}
+                              title="Crear nuevo arriendo"
                             >
                               <Calendar className="h-4 w-4" />
                             </Button>
+                            {hasActiveRentals && mostRecentRental?.trackingCode && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  const rutDigits = customer.rut?.replace(/[.-]/g, '').slice(0, -1).slice(-4).padStart(4, '0') || '0000'
+                                  const url = `${window.location.origin}/track/${rutDigits}/${mostRecentRental.trackingCode}`
+                                  window.open(url, '_blank')
+                                }}
+                                title="Ver tracking del arriendo"
+                                className="text-blue-600 hover:text-blue-800"
+                              >
+                                <ExternalLink className="h-4 w-4" />
+                              </Button>
+                            )}
                             <Button
                               variant="outline"
                               size="sm"
@@ -733,6 +751,7 @@ export default function CustomersCleanPage() {
                                   toast({ title: 'Cliente eliminado' })
                                 }
                               }}
+                              title="Eliminar cliente"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
