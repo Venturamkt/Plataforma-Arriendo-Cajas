@@ -424,13 +424,16 @@ class PostgresStorage implements IStorage {
   }
 
   async getAvailableInventory(type?: string, quantity?: number): Promise<any[]> {
-    let query = db.select().from(inventory).where(eq(inventory.status, "disponible"));
+    let whereConditions = [eq(inventory.status, "disponible")];
     
     if (type && type !== 'todos') {
-      query = query.where(eq(inventory.type, type as any));
+      whereConditions.push(eq(inventory.type, type as any));
     }
     
-    const result = await query.orderBy(inventory.code).limit(quantity || 1000);
+    const result = await db.select().from(inventory)
+      .where(and(...whereConditions))
+      .orderBy(inventory.code)
+      .limit(quantity || 1000);
     return result;
   }
 
@@ -596,7 +599,7 @@ class PostgresStorage implements IStorage {
     const paymentsData = await db.select()
       .from(payments)
       .where(
-        sql`${payments.paymentDate} >= ${startDate} AND ${payments.paymentDate} <= ${endDate}`
+        sql`${payments.createdAt} >= ${startDate} AND ${payments.createdAt} <= ${endDate}`
       );
 
     const totalRevenue = paymentsData.reduce((sum, payment) => sum + parseFloat(payment.amount), 0);
@@ -605,7 +608,9 @@ class PostgresStorage implements IStorage {
 
     // Agrupar por día
     const dailyRevenue = paymentsData.reduce((acc: any[], payment) => {
-      const date = payment.paymentDate;
+      const date = payment.createdAt ? new Date(payment.createdAt).toISOString().split('T')[0] : null;
+      if (!date) return acc;
+      
       const existing = acc.find(d => d.date === date);
       if (existing) {
         existing.revenue += parseFloat(payment.amount);
@@ -633,17 +638,17 @@ class PostgresStorage implements IStorage {
       .from(rentals)
       .innerJoin(customers, eq(rentals.customerId, customers.id))
       .where(
-        sql`${rentals.startDate} >= ${startDate} AND ${rentals.startDate} <= ${endDate}`
+        sql`${rentals.createdAt} >= ${startDate} AND ${rentals.createdAt} <= ${endDate}`
       );
 
-    const activeCustomers = new Set(rentalsData.map(r => r.rental.customerId)).size;
+    const activeCustomers = new Set(rentalsData.map(r => r.rentals.customerId)).size;
     const totalRentals = rentalsData.length;
 
     // Clientes por ingresos
     const customerRevenue = rentalsData.reduce((acc: any[], rental) => {
-      const customerId = rental.rental.customerId;
+      const customerId = rental.rentals.customerId;
       const existing = acc.find(c => c.customerId === customerId);
-      const paidAmount = parseFloat(rental.rental.paidAmount || "0");
+      const paidAmount = parseFloat(rental.rentals.paidAmount || "0");
       
       if (existing) {
         existing.totalPaid += paidAmount;
@@ -651,8 +656,8 @@ class PostgresStorage implements IStorage {
       } else {
         acc.push({
           customerId,
-          name: rental.customer.name,
-          rut: rental.customer.rut,
+          name: rental.customers.name,
+          rut: rental.customers.rut,
           totalPaid: paidAmount,
           rentals: 1
         });
@@ -685,8 +690,8 @@ class PostgresStorage implements IStorage {
   }
 
   async getCalendarEvents(year?: string, month?: string): Promise<any[]> {
-    let manualEvents = [];
-    let rentalEvents = [];
+    let manualEvents: any[] = [];
+    let rentalEvents: any[] = [];
     
     if (year && month) {
       const monthNum = parseInt(month);

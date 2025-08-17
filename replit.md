@@ -58,11 +58,15 @@ Arriendo Cajas is a comprehensive web platform for managing a box rental busines
   - **API Backend**: `/api/track/:trackingCode/:trackingToken` separado del frontend
   - **Diseño**: Ultra-simplificado sin header de logout, perfecto para emails
   - **Funcionalidad**: Acceso público directo, datos completos del arriendo, diseño responsive
-- ✅ **Deployment Fix Applied**: Resolved duplicate method definitions preventing deployment
-  - **Issue**: Duplicate `getPayments`, `createPayment`, and `logActivity` methods in `PostgresStorage` class
-  - **Solution**: Removed duplicate interface declarations and duplicate implementations
-  - **Kept**: More complete implementations with proper validation and error handling
-  - **Status**: ✅ BUILD SUCCESSFUL - Application now compiles correctly for deployment
+- ✅ **Database Schema Alignment Fix (Aug 17, 2025)**: Resolved database query errors preventing deployment
+  - **Issues Fixed**: 
+    - Property `paymentDate` not found (used `createdAt` instead)
+    - Property `startDate` not found in rentals (used `createdAt` instead)
+    - Incorrect property access on joined queries (`rental`→`rentals`, `customer`→`customers`)
+    - Type errors with dynamic WHERE clause chaining in inventory queries
+    - Missing type annotations for array variables
+  - **Solution**: Aligned all database queries with actual schema structure from `shared/schema.ts`
+  - **Status**: ✅ ALL LSP ERRORS RESOLVED - Application running successfully with zero compilation errors
 
 ### Current Features
 - **Home Page**: Professional landing page with 3 access portals (Customers, Drivers, Admin)
