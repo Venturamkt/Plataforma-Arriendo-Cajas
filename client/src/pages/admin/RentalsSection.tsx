@@ -646,17 +646,14 @@ export default function RentalsSection() {
                               size="sm"
                               className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
                               onClick={() => {
-                                // Usar el dominio correcto de Replit en lugar de window.location.origin que puede ser localhost
-                                const replitDomain = window.location.hostname.includes('replit.dev') 
-                                  ? window.location.origin 
-                                  : 'https://441204b6-ae40-4994-b677-be11a32eb976-00-1rsmov5q0kvpq.janeway.replit.dev';
-                                const trackingUrl = `${replitDomain}/track/${rental.trackingCode}/${rental.trackingToken}`;
+                                // Usar generateTrackingUrl para obtener el dominio correcto automáticamente
+                                const trackingUrl = `/track/${rental.trackingCode}/${rental.trackingToken}`;
                                 const customerName = rental.customerName || 'Cliente';
                                 const shareText = `Hola ${customerName}! 👋
 
 Tu arriendo está confirmado. Puedes hacer seguimiento de tu entrega aquí:
 
-🔗 ${trackingUrl}
+🔗 ${window.location.origin}${trackingUrl}
 
 Código de seguimiento: ${rental.trackingCode}
 Estado actual: ${rental.status}
