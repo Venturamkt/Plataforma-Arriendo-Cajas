@@ -362,21 +362,23 @@ export default function NewRentalForm() {
                   </Label>
                   <Input
                     type="number"
-                    value={parseInt(formData.boxQuantity) * parseInt(formData.rentalDays) * parseFloat(formData.pricePerDay) || 0}
+                    value={formData.totalAmount || ""}
                     onChange={(e) => {
-                      // Calcular precio por día basado en el total ingresado
-                      const totalPrice = parseFloat(e.target.value) || 0;
+                      // Usar directamente el valor total ingresado
+                      const totalPrice = e.target.value;
                       const boxes = parseInt(formData.boxQuantity) || 1;
                       const days = parseInt(formData.rentalDays) || 1;
-                      const pricePerDay = totalPrice / (boxes * days);
+                      const pricePerDay = parseFloat(totalPrice) / (boxes * days);
                       
-                      const updatedData = recalculateFormData({ 
+                      // No usar recalculateFormData para evitar sobrescribir el total manual
+                      setFormData({ 
                         ...formData, 
-                        pricePerDay: pricePerDay.toString() 
+                        totalAmount: totalPrice,
+                        pricePerDay: !isNaN(pricePerDay) ? pricePerDay.toString() : "0"
                       });
                       setFormData(updatedData);
                     }}
-                    placeholder="50000"
+                    placeholder="150000"
                     className="h-12 text-lg border-orange-200 bg-orange-50"
                   />
                   <p className="text-sm text-orange-600">Precio total manual para {formData.boxQuantity} cajas por {formData.rentalDays} días</p>
