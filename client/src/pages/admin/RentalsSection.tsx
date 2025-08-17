@@ -148,11 +148,12 @@ export default function RentalsSection() {
       if (!response.ok) throw new Error("Error al cargar arriendos");
       const data = await response.json();
       
-      // Agregar datos calculados
-      return data.map((rental: Rental) => ({
+      // Agregar datos calculados 
+      return data.map((rental: any) => ({
         ...rental,
-        customerName: "Cliente Ejemplo", // En producción vendría de la relación
-        driverName: rental.driverId ? "Repartidor Asignado" : null,
+        // Los datos customerName y driverName ya vienen del backend
+        customerName: rental.customerName || "Cliente sin nombre",
+        driverName: rental.driverName || null,
         remainingDays: rental.pickupDate ? 
           Math.ceil((new Date(rental.pickupDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null,
         overdueAmount: parseFloat(rental.totalAmount || "0") - parseFloat(rental.paidAmount || "0")
