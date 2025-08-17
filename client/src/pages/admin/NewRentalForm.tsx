@@ -177,10 +177,10 @@ export default function NewRentalForm() {
       ...formData,
       boxQuantity: parseInt(formData.boxQuantity),
       rentalDays: parseInt(formData.rentalDays),
-      pricePerDay: parseFloat(formData.pricePerDay),
-      guaranteeAmount: parseFloat(formData.guaranteeAmount),
-      totalAmount: parseFloat(formData.totalAmount),
-      paidAmount: parseFloat(formData.paidAmount) || 0,
+      pricePerDay: formData.pricePerDay, // Mantener como string
+      guaranteeAmount: formData.guaranteeAmount, // Mantener como string
+      totalAmount: formData.totalAmount, // Mantener como string
+      paidAmount: formData.paidAmount || "0", // Mantener como string
       deliveryDate: formData.deliveryDate || null,
       pickupDate: formData.pickupDate || null
     });

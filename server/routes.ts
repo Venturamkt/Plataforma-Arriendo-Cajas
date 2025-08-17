@@ -256,7 +256,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/rentals", async (req, res) => {
     try {
       const validatedData = insertRentalSchema.parse(req.body);
-      const rental = await storage.createRental(validatedData);
+      
+      // Convertir strings de fecha a objetos Date
+      const processedData = {
+        ...validatedData,
+        deliveryDate: validatedData.deliveryDate ? new Date(validatedData.deliveryDate) : null,
+        pickupDate: validatedData.pickupDate ? new Date(validatedData.pickupDate) : null,
+        actualDeliveryDate: validatedData.actualDeliveryDate ? new Date(validatedData.actualDeliveryDate) : null,
+        actualPickupDate: validatedData.actualPickupDate ? new Date(validatedData.actualPickupDate) : null,
+      };
+      
+      const rental = await storage.createRental(processedData);
       await storage.logActivity({
         type: "rental_created",
         description: `Arriendo creado`,

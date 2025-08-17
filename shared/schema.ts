@@ -249,7 +249,13 @@ export const paymentsRelations = relations(payments, ({ one }) => ({
 // Schemas de validación
 export const insertCustomerSchema = createInsertSchema(customers);
 export const insertDriverSchema = createInsertSchema(drivers);
-export const insertRentalSchema = createInsertSchema(rentals);
+export const insertRentalSchema = createInsertSchema(rentals).extend({
+  // Permitir fechas como strings que se convertirán automáticamente
+  deliveryDate: z.string().nullable().optional(),
+  pickupDate: z.string().nullable().optional(),
+  actualDeliveryDate: z.string().nullable().optional(),
+  actualPickupDate: z.string().nullable().optional(),
+});
 export const insertPaymentSchema = createInsertSchema(payments);
 export const insertBoxSchema = createInsertSchema(boxes);
 export const insertInventorySchema = createInsertSchema(inventory);
