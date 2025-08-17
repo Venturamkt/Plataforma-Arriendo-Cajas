@@ -54,7 +54,7 @@ export default function TrackingPage() {
   const fetchTrackingData = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/track/${trackingCode}/${trackingToken}`);
+      const response = await fetch(`/api/track/${trackingCode}/${trackingToken}`);
       
       if (!response.ok) {
         throw new Error(response.status === 404 ? 'Arriendo no encontrado' : 'Error al buscar el arriendo');

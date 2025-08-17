@@ -787,7 +787,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Public tracking endpoint - NO AUTH REQUIRED
-  app.get('/track/:trackingCode/:trackingToken', async (req, res) => {
+  app.get('/api/track/:trackingCode/:trackingToken', async (req, res) => {
     try {
       const { trackingCode, trackingToken } = req.params;
       
@@ -807,6 +807,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         trackingCode: rental.trackingCode,
         status: rental.status,
         boxQuantity: rental.boxQuantity,
+        totalAmount: rental.totalAmount,
         deliveryDate: rental.deliveryDate,
         pickupDate: rental.pickupDate,
         actualDeliveryDate: rental.actualDeliveryDate,

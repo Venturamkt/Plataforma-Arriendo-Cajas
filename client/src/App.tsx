@@ -5,6 +5,7 @@ import { queryClient } from "@/lib/queryClient-simple";
 import Home from "./pages/Home.tsx";
 import AdminDashboard from "./pages/AdminDashboard.tsx";
 import TrackingPage from "./pages/TrackingPage";
+import CustomerTrackingPage from "./pages/CustomerTrackingPage";
 import CustomerLogin from "./pages/auth/customer-login";
 import CustomerDashboard from "./pages/customer/dashboard";
 
@@ -18,7 +19,8 @@ function App() {
           <Route path="/customer/dashboard" component={CustomerDashboard} />
           <Route path="/drivers" component={() => <div className="min-h-screen flex items-center justify-center text-white"><h1 className="text-2xl">Portal de Repartidores - En desarrollo</h1></div>} />
           <Route path="/admin" component={AdminDashboard} />
-          <Route path="/track/:trackingCode/:trackingToken" component={TrackingPage} />
+          <Route path="/track/:trackingCode/:trackingToken" component={CustomerTrackingPage} />
+          <Route path="/tracking-admin/:trackingCode/:trackingToken" component={TrackingPage} />
           <Route>
             <div className="min-h-screen flex items-center justify-center text-white">
               <h1 className="text-2xl">Página no encontrada</h1>
