@@ -4,7 +4,7 @@ import nodemailer from 'nodemailer';
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: 'arriendo@arriendocajas.cl', // Email principal del workspace
+    user: 'jalarcon@arriendocajas.cl', // Tu email del workspace
     pass: process.env.SMTP_PASS?.replace(/\s/g, ''), // App password sin espacios
   },
 });
@@ -26,7 +26,7 @@ export async function sendEmail(data: EmailData): Promise<boolean> {
     }
 
     const result = await transporter.sendMail({
-      from: `"Arriendo Cajas" <arriendo@arriendocajas.cl>`,
+      from: `"Arriendo Cajas" <jalarcon@arriendocajas.cl>`,
       to: data.to,
       cc: 'contacto@arriendocajas.cl', // Siempre copia a contacto
       subject: data.subject,
@@ -57,7 +57,7 @@ export async function sendDriverAssignmentEmail(data: EmailData, driverEmail?: s
     }
 
     const result = await transporter.sendMail({
-      from: `"Arriendo Cajas" <arriendo@arriendocajas.cl>`,
+      from: `"Arriendo Cajas" <jalarcon@arriendocajas.cl>`,
       to: recipients.join(', '),
       subject: data.subject,
       text: data.text,

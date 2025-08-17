@@ -440,9 +440,9 @@ export default function ConfigurationSection() {
                 <h4 className="font-semibold">Configuración Actual:</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                   <div className="space-y-2">
-                    <p><strong>Email de envío:</strong> arriendo@arriendocajas.cl</p>
+                    <p><strong>Email de envío:</strong> jalarcon@arriendocajas.cl</p>
                     <p><strong>SMTP Host:</strong> smtp.gmail.com</p>
-                    <p><strong>Puerto:</strong> 587 (TLS)</p>
+                    <p><strong>Puerto:</strong> Gmail service</p>
                   </div>
                   <div className="space-y-2">
                     <p><strong>Emails de arriendo:</strong></p>
@@ -500,7 +500,7 @@ export default function ConfigurationSection() {
                   </Button>
                 </div>
                 <p className="text-sm text-gray-500">
-                  Se enviará un email de prueba desde arriendo@arriendocajas.cl con copia a contacto@arriendocajas.cl
+                  Se enviará un email de prueba desde jalarcon@arriendocajas.cl con copia a contacto@arriendocajas.cl
                 </p>
               </div>
 
@@ -508,12 +508,9 @@ export default function ConfigurationSection() {
               <Alert>
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  <strong>Sistema configurado pero con error de autenticación.</strong>
-                  <br/>Para resolver, verifica en Gmail Workspace:
-                  <br/>• Que arriendo@arriendocajas.cl existe y está activo
-                  <br/>• Que tienes autenticación de 2 factores habilitada
-                  <br/>• Genera un nuevo App Password específico para esta aplicación
-                  <br/>• El formato correcto es: 16 caracteres como "abcdefghijklmnop"
+                  <strong>✓ Configurado con jalarcon@arriendocajas.cl</strong>
+                  <br/>Sistema listo para envío de emails automáticos.
+                  <br/>Prueba el botón de arriba para verificar funcionamiento.
                 </AlertDescription>
               </Alert>
 
