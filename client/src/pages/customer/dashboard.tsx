@@ -10,10 +10,20 @@ import { queryClient } from "@/lib/queryClient";
 export default function CustomerDashboard() {
   const { user, isLoading: userLoading } = useCurrentUser();
 
-  // Fetch customer rentals
-  const { data: rentals = [], isLoading: rentalsLoading } = useQuery({
+  // Fetch customer rentals with debug info
+  const { data: rentals = [], isLoading: rentalsLoading, error: rentalsError } = useQuery({
     queryKey: ['/api/customer/rentals'],
     enabled: !!user,
+  });
+
+  // Debug: Log the state
+  console.log('Dashboard Debug:', {
+    user,
+    userLoading,
+    rentals,
+    rentalsLoading,
+    rentalsError,
+    rentalsLength: rentals.length
   });
 
   const logoutMutation = useMutation({
