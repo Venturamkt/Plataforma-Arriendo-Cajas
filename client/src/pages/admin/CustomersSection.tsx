@@ -25,6 +25,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Customer } from "@shared/schema";
+import { useRutInput, validateRut } from "@/lib/rutUtils";
+import { CheckCircle2, AlertTriangle } from "lucide-react";
 
 interface CustomerWithStats extends Customer {
   rentalsText?: string;
@@ -64,8 +66,14 @@ export default function CustomersSection() {
     name: "",
     rut: "",
     email: "",
-    phone: "+56"
+    phone: "+56",
+    mainAddress: "",
+    secondaryAddress: "",
+    notes: ""
   });
+
+  // Hook para manejo de RUT con formateo automático
+  const rutInput = useRutInput(formData.rut);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -189,12 +197,32 @@ export default function CustomersSection() {
       name: "",
       rut: "",
       email: "",
-      phone: "+56"
+      phone: "+56",
+      mainAddress: "",
+      secondaryAddress: "",
+      notes: ""
     });
+    rutInput.setValue(""); // Reset RUT input
   };
 
   const handleCreateCustomer = () => {
-    createCustomerMutation.mutate(formData);
+    // Usar el RUT formateado y validado
+    const submitData = {
+      ...formData,
+      rut: rutInput.value || formData.rut
+    };
+    
+    // Validar RUT antes de enviar
+    if (rutInput.validation && !rutInput.validation.isValid) {
+      toast({
+        title: "RUT inválido",
+        description: "Por favor ingresa un RUT válido",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    createCustomerMutation.mutate(submitData);
   };
 
   const handleUpdateCustomer = () => {
@@ -209,8 +237,12 @@ export default function CustomersSection() {
       name: customer.name,
       rut: customer.rut,
       email: customer.email,
-      phone: customer.phone || "+56"
+      phone: customer.phone || "+56",
+      mainAddress: customer.mainAddress || "",
+      secondaryAddress: customer.secondaryAddress || "",
+      notes: customer.notes || ""
     });
+    rutInput.setValue(customer.rut);
     setShowEditDialog(true);
   };
 
@@ -491,12 +523,38 @@ export default function CustomersSection() {
             
             <div className="space-y-2">
               <Label htmlFor="rut">RUT *</Label>
-              <Input
-                id="rut"
-                value={formData.rut}
-                onChange={(e) => setFormData(prev => ({ ...prev, rut: e.target.value }))}
-                placeholder="12.345.678-9"
-              />
+              <div className="relative">
+                <Input
+                  id="rut"
+                  value={rutInput.value}
+                  onChange={(e) => {
+                    rutInput.setValue(e.target.value);
+                    setFormData(prev => ({ ...prev, rut: e.target.value }));
+                  }}
+                  placeholder="12.345.678-9"
+                  className={`pr-10 ${
+                    rutInput.validation === null 
+                      ? '' 
+                      : rutInput.validation.isValid 
+                        ? 'border-green-500 focus:border-green-500' 
+                        : 'border-red-500 focus:border-red-500'
+                  }`}
+                />
+                {rutInput.validation && (
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                    {rutInput.validation.isValid ? (
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <AlertTriangle className="h-4 w-4 text-red-500" />
+                    )}
+                  </div>
+                )}
+              </div>
+              {rutInput.validation && !rutInput.validation.isValid && rutInput.value.length > 2 && (
+                <p className="text-sm text-red-500">
+                  RUT inválido. Dígito verificador correcto: {rutInput.validation.verifierDigit}
+                </p>
+              )}
             </div>
             
             <div className="space-y-2">
@@ -520,7 +578,36 @@ export default function CustomersSection() {
               />
             </div>
             
-
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="mainAddress">Dirección Principal</Label>
+              <Input
+                id="mainAddress"
+                value={formData.mainAddress}
+                onChange={(e) => setFormData(prev => ({ ...prev, mainAddress: e.target.value }))}
+                placeholder="Av. Providencia 1234, Providencia"
+              />
+            </div>
+            
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="secondaryAddress">Dirección Secundaria</Label>
+              <Input
+                id="secondaryAddress"
+                value={formData.secondaryAddress}
+                onChange={(e) => setFormData(prev => ({ ...prev, secondaryAddress: e.target.value }))}
+                placeholder="Dirección alternativa (opcional)"
+              />
+            </div>
+            
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="notes">Notas</Label>
+              <Textarea
+                id="notes"
+                value={formData.notes}
+                onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                placeholder="Información adicional sobre el cliente..."
+                rows={3}
+              />
+            </div>
           </div>
 
           <DialogFooter>

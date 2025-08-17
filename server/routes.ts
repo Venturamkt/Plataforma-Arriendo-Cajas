@@ -64,6 +64,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: "Datos inválidos", details: error.errors });
       }
+      
+      // Manejo específico de errores de duplicado
+      if (error instanceof Error && error.message.includes("duplicate key")) {
+        if (error.message.includes("customers_phone_unique")) {
+          return res.status(400).json({ error: "Ya existe un cliente con este número de teléfono" });
+        }
+        if (error.message.includes("customers_rut_unique")) {
+          return res.status(400).json({ error: "Ya existe un cliente con este RUT" });
+        }
+        if (error.message.includes("customers_email_unique")) {
+          return res.status(400).json({ error: "Ya existe un cliente con este email" });
+        }
+        return res.status(400).json({ error: "Ya existe un cliente con estos datos" });
+      }
+      
       console.error("Error creating customer:", error);
       res.status(500).json({ error: "Error al crear cliente" });
     }
