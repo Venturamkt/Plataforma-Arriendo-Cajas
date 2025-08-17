@@ -48,7 +48,9 @@ Arriendo Cajas is a comprehensive web platform for managing a box rental busines
 - ✅ **Enhanced Admin Interface**: Improved tracking button with professional WhatsApp-ready message format
 - ✅ **Backend Completo**: REST APIs for all modules with PostgreSQL database
 - ✅ **Data Integrity**: Proper foreign key constraints and validation throughout
-- ✅ **Portal de Clientes Completo**: Customer authentication system with RUT/email login, real-time dashboard with rental data, automatic RUT formatting (16.220.939-6), and tracking integration
+- ✅ **Portal de Clientes Completo**: Customer authentication system with RUT/email login, real-time dashboard with rental data, automatic RUT formatting, and tracking integration
+  - **RUTs de prueba válidos**: 12.345.678-9 (María González), 87.654.321-K (Empresa ABC), 11.222.333-4 (Juan Pérez)
+  - **Emails de prueba válidos**: maria@example.com, contacto@abc.cl, juan@email.com
 
 ### Current Features
 - **Home Page**: Professional landing page with 3 access portals (Customers, Drivers, Admin)
