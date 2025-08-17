@@ -45,10 +45,6 @@ export interface IStorage {
   createRental(rentalData: any): Promise<any>;
   updateRental(id: string, rentalData: any): Promise<any>;
   
-  // Payments
-  getPayments(): Promise<any[]>;
-  createPayment(paymentData: any): Promise<any>;
-  
   // Boxes
   getBoxes(): Promise<any[]>;
   updateBoxStatus(id: string, status: "disponible" | "reservada" | "en_terreno" | "en_revision"): Promise<any>;
@@ -370,15 +366,7 @@ class PostgresStorage implements IStorage {
     return result[0];
   }
 
-  // Payments
-  async getPayments() {
-    return await db.select().from(payments).orderBy(desc(payments.createdAt));
-  }
 
-  async createPayment(paymentData: any) {
-    const result = await db.insert(payments).values(paymentData).returning();
-    return result[0];
-  }
 
   // Boxes
   async getBoxes() {
@@ -602,11 +590,6 @@ class PostgresStorage implements IStorage {
       revenueChange: 0,
       paymentsThisPeriod: totalPayments[0]?.count || 0
     };
-  }
-
-  async logActivity(activityData: any) {
-    const result = await db.insert(activities).values(activityData).returning();
-    return result[0];
   }
 
   async getFinancialReport(startDate: string, endDate: string): Promise<any> {
