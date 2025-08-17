@@ -376,7 +376,6 @@ export default function NewRentalForm() {
                         totalAmount: totalPrice,
                         pricePerDay: !isNaN(pricePerDay) ? pricePerDay.toString() : "0"
                       });
-                      setFormData(updatedData);
                     }}
                     placeholder="150000"
                     className="h-12 text-lg border-orange-200 bg-orange-50"
