@@ -7,6 +7,7 @@ import { ArrowLeft, User, Search } from "lucide-react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
 
 // Función para formatear RUT automáticamente
 const formatRUT = (value: string) => {
@@ -47,14 +48,19 @@ export default function CustomerLogin() {
       const response = await fetch('/api/auth/customer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', // Include cookies for session
         body: JSON.stringify(data),
       });
       if (!response.ok) throw new Error('No se encontraron arriendos');
       return response.json();
     },
     onSuccess: () => {
-      // Redirect to customer dashboard
-      window.location.href = '/customer/dashboard';
+      // Invalidate auth cache and redirect
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/current'] });
+      // Small delay to ensure session is established
+      setTimeout(() => {
+        window.location.href = '/customer/dashboard';
+      }, 200);
     },
     onError: (error: Error) => {
       toast({

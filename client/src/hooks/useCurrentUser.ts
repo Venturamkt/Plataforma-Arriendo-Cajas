@@ -15,7 +15,11 @@ export function useCurrentUser() {
     queryKey: ["/api/auth/current"],
     retry: false,
     staleTime: 1000 * 60 * 5, // 5 minutes
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
+
+  console.log('useCurrentUser Debug:', { data, isLoading, error });
 
   return {
     user: data?.user,
