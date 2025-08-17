@@ -24,9 +24,12 @@ export interface IStorage {
   // Customers
   getCustomers(): Promise<any[]>;
   getCustomerById(id: string): Promise<any>;
+  getCustomerByRut(rut: string): Promise<any>;
+  getCustomerByEmail(email: string): Promise<any>;
   createCustomer(customerData: any): Promise<any>;
   updateCustomer(id: string, customerData: any): Promise<any>;
   deleteCustomer(id: string): Promise<void>;
+  getCustomerRentals(customerId: string): Promise<any[]>;
   
   // Drivers
   getDrivers(): Promise<any[]>;
@@ -102,6 +105,40 @@ class PostgresStorage implements IStorage {
       .where(eq(customers.id, id))
       .returning();
     return result[0];
+  }
+
+  async getCustomerByRut(rut: string) {
+    const result = await db.select().from(customers).where(eq(customers.rut, rut));
+    return result[0] || null;
+  }
+
+  async getCustomerByEmail(email: string) {
+    const result = await db.select().from(customers).where(eq(customers.email, email));
+    return result[0] || null;
+  }
+
+  async getCustomerRentals(customerId: string) {
+    return await db.select({
+      id: rentals.id,
+      status: rentals.status,
+      boxQuantity: rentals.boxQuantity,
+      totalAmount: rentals.totalAmount,
+      paidAmount: rentals.paidAmount,
+      deliveryDate: rentals.deliveryDate,
+      pickupDate: rentals.pickupDate,
+      actualDeliveryDate: rentals.actualDeliveryDate,
+      actualPickupDate: rentals.actualPickupDate,
+      deliveryAddress: rentals.deliveryAddress,
+      pickupAddress: rentals.pickupAddress,
+      trackingCode: rentals.trackingCode,
+      trackingToken: rentals.trackingToken,
+      createdAt: rentals.createdAt,
+      updatedAt: rentals.updatedAt,
+      driverName: drivers.name
+    }).from(rentals)
+      .leftJoin(drivers, eq(rentals.driverId, drivers.id))
+      .where(eq(rentals.customerId, customerId))
+      .orderBy(desc(rentals.createdAt));
   }
 
   async deleteCustomer(id: string) {

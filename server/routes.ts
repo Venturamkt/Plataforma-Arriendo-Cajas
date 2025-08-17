@@ -825,6 +825,111 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Customer Authentication Routes
+  app.post("/api/auth/customer", async (req, res) => {
+    try {
+      const { type, value } = req.body;
+      
+      if (!type || !value) {
+        return res.status(400).json({ error: "Tipo y valor son requeridos" });
+      }
+
+      let customer = null;
+      
+      if (type === 'rut') {
+        customer = await storage.getCustomerByRut(value);
+      } else if (type === 'email') {
+        customer = await storage.getCustomerByEmail(value);
+      } else {
+        return res.status(400).json({ error: "Tipo de búsqueda no válido" });
+      }
+
+      if (!customer) {
+        return res.status(404).json({ error: "No se encontraron arriendos para este cliente" });
+      }
+
+      // Store customer session (simplified)
+      req.session = req.session || {};
+      req.session.customerId = customer.id;
+      req.session.customerType = 'customer';
+
+      res.json({ 
+        success: true, 
+        customer: {
+          id: customer.id,
+          name: customer.name,
+          email: customer.email,
+          rut: customer.rut
+        }
+      });
+    } catch (error) {
+      console.error("Error en autenticación de cliente:", error);
+      res.status(500).json({ error: "Error interno del servidor" });
+    }
+  });
+
+  // Get current customer user
+  app.get("/api/auth/current", async (req, res) => {
+    try {
+      if (!req.session?.customerId) {
+        return res.status(401).json({ error: "No autenticado" });
+      }
+
+      const customer = await storage.getCustomerById(req.session.customerId);
+      if (!customer) {
+        return res.status(404).json({ error: "Cliente no encontrado" });
+      }
+
+      res.json({ 
+        user: {
+          id: customer.id,
+          name: customer.name,
+          email: customer.email,
+          type: 'customer'
+        },
+        type: 'customer'
+      });
+    } catch (error) {
+      console.error("Error obteniendo usuario actual:", error);
+      res.status(500).json({ error: "Error interno del servidor" });
+    }
+  });
+
+  // Customer logout
+  app.post("/api/auth/logout", async (req, res) => {
+    try {
+      if (req.session) {
+        req.session.destroy((err) => {
+          if (err) {
+            console.error("Error destroying session:", err);
+            return res.status(500).json({ error: "Error cerrando sesión" });
+          }
+          res.json({ success: true });
+        });
+      } else {
+        res.json({ success: true });
+      }
+    } catch (error) {
+      console.error("Error en logout:", error);
+      res.status(500).json({ error: "Error interno del servidor" });
+    }
+  });
+
+  // Get customer rentals
+  app.get("/api/customer/rentals", async (req, res) => {
+    try {
+      if (!req.session?.customerId) {
+        return res.status(401).json({ error: "No autenticado" });
+      }
+
+      const rentals = await storage.getCustomerRentals(req.session.customerId);
+      res.json(rentals);
+    } catch (error) {
+      console.error("Error obteniendo arriendos del cliente:", error);
+      res.status(500).json({ error: "Error al obtener arriendos" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
