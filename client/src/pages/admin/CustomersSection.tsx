@@ -227,7 +227,23 @@ export default function CustomersSection() {
 
   const handleUpdateCustomer = () => {
     if (selectedCustomer) {
-      updateCustomerMutation.mutate({ id: selectedCustomer.id, data: formData });
+      // Usar el RUT formateado y validado
+      const submitData = {
+        ...formData,
+        rut: rutInput.value || formData.rut
+      };
+      
+      // Validar RUT antes de enviar
+      if (rutInput.validation && !rutInput.validation.isValid) {
+        toast({
+          title: "RUT inválido",
+          description: "Por favor ingresa un RUT válido",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      updateCustomerMutation.mutate({ id: selectedCustomer.id, data: submitData });
     }
   };
 
@@ -577,37 +593,6 @@ export default function CustomersSection() {
                 placeholder="+56912345678"
               />
             </div>
-            
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="mainAddress">Dirección Principal</Label>
-              <Input
-                id="mainAddress"
-                value={formData.mainAddress}
-                onChange={(e) => setFormData(prev => ({ ...prev, mainAddress: e.target.value }))}
-                placeholder="Av. Providencia 1234, Providencia"
-              />
-            </div>
-            
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="secondaryAddress">Dirección Secundaria</Label>
-              <Input
-                id="secondaryAddress"
-                value={formData.secondaryAddress}
-                onChange={(e) => setFormData(prev => ({ ...prev, secondaryAddress: e.target.value }))}
-                placeholder="Dirección alternativa (opcional)"
-              />
-            </div>
-            
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="notes">Notas</Label>
-              <Textarea
-                id="notes"
-                value={formData.notes}
-                onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-                placeholder="Información adicional sobre el cliente..."
-                rows={3}
-              />
-            </div>
           </div>
 
           <DialogFooter>
@@ -646,11 +631,38 @@ export default function CustomersSection() {
             
             <div className="space-y-2">
               <Label htmlFor="edit-rut">RUT *</Label>
-              <Input
-                id="edit-rut"
-                value={formData.rut}
-                onChange={(e) => setFormData(prev => ({ ...prev, rut: e.target.value }))}
-              />
+              <div className="relative">
+                <Input
+                  id="edit-rut"
+                  value={rutInput.value}
+                  onChange={(e) => {
+                    rutInput.setValue(e.target.value);
+                    setFormData(prev => ({ ...prev, rut: e.target.value }));
+                  }}
+                  placeholder="12.345.678-9"
+                  className={`pr-10 ${
+                    rutInput.validation === null 
+                      ? '' 
+                      : rutInput.validation.isValid 
+                        ? 'border-green-500 focus:border-green-500' 
+                        : 'border-red-500 focus:border-red-500'
+                  }`}
+                />
+                {rutInput.validation && (
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                    {rutInput.validation.isValid ? (
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <AlertTriangle className="h-4 w-4 text-red-500" />
+                    )}
+                  </div>
+                )}
+              </div>
+              {rutInput.validation && !rutInput.validation.isValid && rutInput.value.length > 2 && (
+                <p className="text-sm text-red-500">
+                  RUT inválido. Dígito verificador correcto: {rutInput.validation.verifierDigit}
+                </p>
+              )}
             </div>
             
             <div className="space-y-2">
@@ -672,6 +684,36 @@ export default function CustomersSection() {
               />
             </div>
             
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="edit-mainAddress">Dirección Principal</Label>
+              <Input
+                id="edit-mainAddress"
+                value={formData.mainAddress}
+                onChange={(e) => setFormData(prev => ({ ...prev, mainAddress: e.target.value }))}
+                placeholder="Av. Providencia 1234, Providencia"
+              />
+            </div>
+            
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="edit-secondaryAddress">Dirección Secundaria</Label>
+              <Input
+                id="edit-secondaryAddress"
+                value={formData.secondaryAddress}
+                onChange={(e) => setFormData(prev => ({ ...prev, secondaryAddress: e.target.value }))}
+                placeholder="Dirección alternativa (opcional)"
+              />
+            </div>
+            
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="edit-notes">Notas</Label>
+              <Textarea
+                id="edit-notes"
+                value={formData.notes}
+                onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                placeholder="Información adicional sobre el cliente..."
+                rows={3}
+              />
+            </div>
 
           </div>
 
