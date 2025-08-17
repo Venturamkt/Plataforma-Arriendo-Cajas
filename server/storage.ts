@@ -247,6 +247,14 @@ class PostgresStorage implements IStorage {
     return result[0] || null;
   }
 
+  async getRental(id: string) {
+    return this.getRentalById(id);
+  }
+
+  async getCustomer(id: string) {
+    return this.getCustomerById(id);
+  }
+
   async getRentalByTracking(trackingCode: string, trackingToken: string) {
     const result = await db.select({
       id: rentals.id,
@@ -296,8 +304,12 @@ class PostgresStorage implements IStorage {
     const result = await db.insert(rentals).values(rentalData).returning();
     const rental = result[0];
     
-    // Generar tracking code y token automáticamente
-    const trackingCode = generateTrackingCode(rental.id);
+    // Obtener el RUT del cliente para generar el código de tracking
+    const customer = await db.select().from(customers).where(eq(customers.id, rental.customerId));
+    const customerRut = customer[0]?.rut || '12345678-9'; // fallback si no hay RUT
+    
+    // Generar tracking code basado en RUT y token aleatorio
+    const trackingCode = generateTrackingCode(customerRut);
     const trackingToken = generateTrackingToken();
     
     // Actualizar el arriendo con los códigos de tracking

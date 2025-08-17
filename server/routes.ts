@@ -4,6 +4,8 @@ import { storage } from "./storage";
 import { insertCustomerSchema, insertDriverSchema, insertRentalSchema, insertPaymentSchema } from "@shared/schema";
 import { z } from "zod";
 import { sendEmail, emailTemplates, sendDriverAssignmentEmail } from "./emailService";
+import { sendStatusChangeEmail, type RentalEmailData } from "./emailNotifications";
+import { generateTrackingCode } from "./trackingUtils";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Seed initial data for demo
@@ -271,23 +273,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const rental = await storage.createRental(processedData);
       await storage.logActivity({
         type: "rental_created",
-        description: `Arriendo creado`,
+        description: `Arriendo creado con código ${rental.trackingCode}`,
         entityId: rental.id,
         entityType: "rental"
       });
       
-      // Enviar email de confirmación
+      // Enviar email automático para estado pendiente
       try {
-        const customer = await storage.getCustomer(rental.customerId);
-        if (customer && customer.email) {
-          const emailTemplate = emailTemplates.rentalConfirmation(customer.name, rental);
-          await sendEmail({
-            to: customer.email,
-            subject: emailTemplate.subject,
-            html: emailTemplate.html,
-            text: emailTemplate.text
-          });
-          console.log(`Email de confirmación enviado a: ${customer.email}`);
+        const customer = await storage.getCustomerById(rental.customerId);
+        if (customer && customer.email && rental.trackingCode && rental.trackingToken) {
+          const emailData: RentalEmailData = {
+            customerName: customer.name,
+            customerEmail: customer.email,
+            trackingCode: rental.trackingCode,
+            trackingToken: rental.trackingToken,
+            boxQuantity: rental.boxQuantity,
+            deliveryDate: rental.deliveryDate?.toISOString() || '',
+            pickupDate: rental.pickupDate?.toISOString() || '',
+            deliveryAddress: rental.deliveryAddress,
+            status: rental.status
+          };
+          
+          await sendStatusChangeEmail('pendiente', emailData);
+          console.log(`Email de confirmación enviado a: ${customer.email} con código ${rental.trackingCode}`);
         }
       } catch (emailError) {
         console.error('Error enviando email de confirmación:', emailError);
@@ -318,13 +326,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
         driverId: validatedData.driverId || null, // Convertir string vacío a null
       };
       
+      // Obtener el arriendo anterior para detectar cambios de estado
+      const previousRental = await storage.getRental(req.params.id);
       const rental = await storage.updateRental(req.params.id, processedData);
+      
       await storage.logActivity({
         type: "rental_updated",
         description: `Arriendo actualizado - Estado: ${rental.status}`,
         entityId: rental.id,
         entityType: "rental"
       });
+
+      // Enviar email automático si cambió el estado
+      if (previousRental && previousRental.status !== rental.status && rental.trackingCode && rental.trackingToken) {
+        try {
+          const customer = await storage.getCustomerById(rental.customerId);
+          let driver = null;
+          if (rental.driverId) {
+            driver = await storage.getDriverById(rental.driverId);
+          }
+          
+          if (customer && customer.email) {
+            const emailData: RentalEmailData = {
+              customerName: customer.name,
+              customerEmail: customer.email,
+              trackingCode: rental.trackingCode,
+              trackingToken: rental.trackingToken,
+              boxQuantity: rental.boxQuantity,
+              deliveryDate: rental.deliveryDate?.toISOString() || '',
+              pickupDate: rental.pickupDate?.toISOString() || '',
+              deliveryAddress: rental.deliveryAddress,
+              driverName: driver?.name,
+              driverPhone: driver?.phone,
+              status: rental.status
+            };
+            
+            await sendStatusChangeEmail(rental.status, emailData);
+            console.log(`Email de cambio de estado enviado a: ${customer.email} - Estado: ${rental.status}`);
+          }
+        } catch (emailError) {
+          console.error('Error enviando email de cambio de estado:', emailError);
+        }
+      }
+      
       res.json(rental);
     } catch (error) {
       if (error instanceof z.ZodError) {

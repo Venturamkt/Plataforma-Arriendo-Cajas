@@ -1,14 +1,22 @@
 // Utilidades para generar códigos de tracking
 
-// Generar tracking code: últimos 4 dígitos antes del dígito verificador sin el guión
-export function generateTrackingCode(rentalId: string): string {
-  // Extraer los últimos 4 dígitos antes del último guión
-  const parts = rentalId.split('-');
-  const lastPart = parts[parts.length - 1]; // Último segmento
-  const beforeLast = parts[parts.length - 2]; // Penúltimo segmento
+// Generar tracking code: últimos 4 dígitos antes del dígito verificador del RUT + 5 caracteres aleatorios
+export function generateTrackingCode(rut: string): string {
+  // Limpiar RUT (remover puntos y guión)
+  const cleanRut = rut.replace(/[.-]/g, '');
   
-  // Tomar los últimos 4 caracteres del penúltimo segmento
-  return beforeLast.slice(-4).toUpperCase();
+  // Obtener últimos 4 dígitos ANTES del dígito verificador (excluir último dígito)
+  const rutWithoutVerification = cleanRut.slice(0, -1);
+  const lastFourDigits = rutWithoutVerification.slice(-4);
+  
+  // Generar 5 caracteres aleatorios
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let randomChars = '';
+  for (let i = 0; i < 5; i++) {
+    randomChars += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  
+  return `${lastFourDigits}${randomChars}`;
 }
 
 // Generar token aleatorio de 5 caracteres (letras + números)

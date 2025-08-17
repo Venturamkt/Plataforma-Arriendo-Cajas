@@ -647,10 +647,22 @@ export default function RentalsSection() {
                               className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
                               onClick={() => {
                                 const trackingUrl = `${window.location.origin}/track/${rental.trackingCode}/${rental.trackingToken}`;
-                                navigator.clipboard.writeText(trackingUrl);
+                                const customerName = rental.customerName || 'Cliente';
+                                const shareText = `Hola ${customerName}! 👋
+
+Tu arriendo está confirmado. Puedes hacer seguimiento de tu entrega aquí:
+
+🔗 ${trackingUrl}
+
+Código de seguimiento: ${rental.trackingCode}
+Estado actual: ${rental.status}
+
+¡Gracias por confiar en Arriendo Cajas! 📦`;
+                                
+                                navigator.clipboard.writeText(shareText);
                                 toast({
-                                  title: "URL copiada",
-                                  description: `Enlace de seguimiento copiado: ${rental.trackingCode}`,
+                                  title: "Mensaje copiado",
+                                  description: `Mensaje completo listo para enviar al cliente ${customerName}`,
                                 });
                               }}
                             >
