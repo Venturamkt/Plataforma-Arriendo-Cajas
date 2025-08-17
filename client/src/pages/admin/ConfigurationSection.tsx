@@ -504,6 +504,19 @@ export default function ConfigurationSection() {
                 </p>
               </div>
 
+              {/* Instrucciones para cambiar password */}
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>Para cambiar la contraseña SMTP:</strong>
+                  <br/>1. Ve a la pestaña "Secrets" en el panel lateral de Replit
+                  <br/>2. Busca la variable "SMTP_PASS" 
+                  <br/>3. Haz clic en "Edit" y actualiza con el App Password correcto
+                  <br/>4. El sistema se reiniciará automáticamente
+                  <br/><small className="text-muted-foreground">Tip: Si el password tiene espacios, no olvides incluirlos</small>
+                </AlertDescription>
+              </Alert>
+
               {/* Información técnica */}
               <Alert>
                 <CheckCircle className="h-4 w-4" />
@@ -511,7 +524,6 @@ export default function ConfigurationSection() {
                   <strong>Sistema Implementado:</strong> Gmail Workspace con templates HTML responsivos, 
                   validación de direcciones, manejo de errores y logging completo. 
                   Todos los emails incluyen información completa de arriendos según especificaciones chilenas.
-                  <br/><small className="text-muted-foreground">Nota: Requiere App Password válido de Gmail Workspace</small>
                 </AlertDescription>
               </Alert>
             </CardContent>
