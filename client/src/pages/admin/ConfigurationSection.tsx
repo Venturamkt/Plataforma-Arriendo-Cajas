@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, Settings, Building2, Palette, Save } from "lucide-react";
+import { Upload, Settings, Building2, Palette, Save, Mail, Send, CheckCircle, AlertCircle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface CompanySettings {
   id?: string;
@@ -25,6 +26,7 @@ interface CompanySettings {
 export default function ConfigurationSection() {
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string>("");
+  const [testEmail, setTestEmail] = useState<string>("");
   const [settings, setSettings] = useState<CompanySettings>({
     companyName: "Arriendo Cajas",
     primaryColor: "#C8201D",
@@ -158,7 +160,7 @@ export default function ConfigurationSection() {
       </div>
 
       <Tabs defaultValue="brand" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="brand" className="flex items-center gap-2">
             <Palette className="h-4 w-4" />
             Marca e Identidad
@@ -166,6 +168,10 @@ export default function ConfigurationSection() {
           <TabsTrigger value="company" className="flex items-center gap-2">
             <Building2 className="h-4 w-4" />
             Datos de Empresa
+          </TabsTrigger>
+          <TabsTrigger value="emails" className="flex items-center gap-2">
+            <Mail className="h-4 w-4" />
+            Sistema de Emails
           </TabsTrigger>
           <TabsTrigger value="advanced" className="flex items-center gap-2">
             <Settings className="h-4 w-4" />
@@ -374,6 +380,113 @@ export default function ConfigurationSection() {
                 </p>
               </div>
             </div>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="emails" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Mail className="h-5 w-5" />
+                Sistema de Emails Gmail Workspace
+              </CardTitle>
+              <CardDescription>
+                Configuración y pruebas del sistema de notificaciones por email
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Estado del sistema */}
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>Estado:</strong> Sistema configurado con Gmail Workspace. 
+                  {process.env.SMTP_PASS ? (
+                    <span className="text-green-600 font-medium"> ✓ Credenciales SMTP configuradas</span>
+                  ) : (
+                    <span className="text-orange-600 font-medium"> ⚠ Esperando credenciales SMTP</span>
+                  )}
+                </AlertDescription>
+              </Alert>
+
+              {/* Configuración de emails */}
+              <div className="space-y-4">
+                <h4 className="font-semibold">Configuración Actual:</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <div className="space-y-2">
+                    <p><strong>Email de envío:</strong> arriendo@arriendocajas.cl</p>
+                    <p><strong>SMTP Host:</strong> smtp.gmail.com</p>
+                    <p><strong>Puerto:</strong> 587 (TLS)</p>
+                  </div>
+                  <div className="space-y-2">
+                    <p><strong>Emails de arriendo:</strong></p>
+                    <p className="ml-4">• Para: cliente@email.com</p>
+                    <p className="ml-4">• Copia: contacto@arriendocajas.cl</p>
+                    <p><strong>Asignación conductores:</strong></p>
+                    <p className="ml-4">• Para: asignaciones@arriendocajas.cl + conductor</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Tipos de emails */}
+              <div className="space-y-4">
+                <h4 className="font-semibold">Tipos de Emails Implementados:</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Card className="p-4">
+                    <h5 className="font-medium mb-2">📧 Confirmación de Arriendo</h5>
+                    <p className="text-sm text-gray-600">Se envía automáticamente al crear un nuevo arriendo con todos los detalles.</p>
+                  </Card>
+                  <Card className="p-4">
+                    <h5 className="font-medium mb-2">🚚 Asignación de Conductor</h5>
+                    <p className="text-sm text-gray-600">Notifica al conductor y administradores sobre nuevas asignaciones.</p>
+                  </Card>
+                  <Card className="p-4">
+                    <h5 className="font-medium mb-2">📅 Recordatorio de Entrega</h5>
+                    <p className="text-sm text-gray-600">Recuerda al cliente la fecha y hora de entrega programada.</p>
+                  </Card>
+                  <Card className="p-4">
+                    <h5 className="font-medium mb-2">🔄 Recordatorio de Retiro</h5>
+                    <p className="text-sm text-gray-600">Avisa al cliente cuando se acerca la fecha de retiro.</p>
+                  </Card>
+                </div>
+              </div>
+
+              {/* Test de email */}
+              <div className="space-y-4">
+                <h4 className="font-semibold">Probar Sistema de Emails:</h4>
+                <div className="flex gap-4 items-end">
+                  <div className="flex-1">
+                    <Label htmlFor="test-email">Email de prueba</Label>
+                    <Input
+                      id="test-email"
+                      type="email"
+                      placeholder="tu@email.com"
+                      value={testEmail}
+                      onChange={(e) => setTestEmail(e.target.value)}
+                    />
+                  </div>
+                  <Button 
+                    onClick={handleTestEmail}
+                    disabled={!testEmail || testEmailMutation.isPending}
+                  >
+                    <Send className="h-4 w-4 mr-2" />
+                    {testEmailMutation.isPending ? 'Enviando...' : 'Enviar Prueba'}
+                  </Button>
+                </div>
+                <p className="text-sm text-gray-500">
+                  Se enviará un email de prueba desde arriendo@arriendocajas.cl con copia a contacto@arriendocajas.cl
+                </p>
+              </div>
+
+              {/* Información técnica */}
+              <Alert>
+                <CheckCircle className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>Sistema Implementado:</strong> Gmail Workspace con templates HTML responsivos, 
+                  validación de direcciones, manejo de errores y logging completo. 
+                  Todos los emails incluyen información completa de arriendos según especificaciones chilenas.
+                </AlertDescription>
+              </Alert>
+            </CardContent>
           </Card>
         </TabsContent>
       </Tabs>

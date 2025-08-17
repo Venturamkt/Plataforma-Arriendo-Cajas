@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertCustomerSchema, insertDriverSchema, insertRentalSchema, insertPaymentSchema } from "@shared/schema";
 import { z } from "zod";
+import { sendEmail, emailTemplates, sendDriverAssignmentEmail } from "./emailService";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Seed initial data for demo
@@ -274,6 +275,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entityId: rental.id,
         entityType: "rental"
       });
+      
+      // Enviar email de confirmación
+      try {
+        const customer = await storage.getCustomer(rental.customerId);
+        if (customer && customer.email) {
+          const emailTemplate = emailTemplates.rentalConfirmation(customer.name, rental);
+          await sendEmail({
+            to: customer.email,
+            subject: emailTemplate.subject,
+            html: emailTemplate.html,
+            text: emailTemplate.text
+          });
+          console.log(`Email de confirmación enviado a: ${customer.email}`);
+        }
+      } catch (emailError) {
+        console.error('Error enviando email de confirmación:', emailError);
+        // No fallar la operación por problemas de email
+      }
+      
       res.status(201).json(rental);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -287,7 +307,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/rentals/:id", async (req, res) => {
     try {
       const validatedData = insertRentalSchema.partial().parse(req.body);
-      const rental = await storage.updateRental(req.params.id, validatedData);
+      
+      // Convertir strings de fecha a objetos Date y manejar driverId (igual que en POST)
+      const processedData = {
+        ...validatedData,
+        deliveryDate: validatedData.deliveryDate ? new Date(validatedData.deliveryDate) : undefined,
+        pickupDate: validatedData.pickupDate ? new Date(validatedData.pickupDate) : undefined,
+        actualDeliveryDate: validatedData.actualDeliveryDate ? new Date(validatedData.actualDeliveryDate) : undefined,
+        actualPickupDate: validatedData.actualPickupDate ? new Date(validatedData.actualPickupDate) : undefined,
+        driverId: validatedData.driverId || null, // Convertir string vacío a null
+      };
+      
+      const rental = await storage.updateRental(req.params.id, processedData);
       await storage.logActivity({
         type: "rental_updated",
         description: `Arriendo actualizado - Estado: ${rental.status}`,
@@ -325,6 +356,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entityId: payment.id,
         entityType: "payment"
       });
+      
+      // Enviar email de confirmación de pago
+      try {
+        if (payment.rentalId) {
+          const rental = await storage.getRental(payment.rentalId);
+          if (rental) {
+            const customer = await storage.getCustomer(rental.customerId);
+            if (customer && customer.email) {
+              const emailTemplate = emailTemplates.paymentConfirmation(customer.name, payment);
+              await sendEmail({
+                to: customer.email,
+                subject: emailTemplate.subject,
+                html: emailTemplate.html,
+                text: emailTemplate.text
+              });
+              console.log(`Email de confirmación de pago enviado a: ${customer.email}`);
+            }
+          }
+        }
+      } catch (emailError) {
+        console.error('Error enviando email de confirmación de pago:', emailError);
+        // No fallar la operación por problemas de email
+      }
+      
       res.status(201).json(payment);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -623,6 +678,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error uploading logo:", error);
       res.status(500).json({ error: "Error uploading logo" });
+    }
+  });
+
+  // Email endpoints
+  app.post("/api/emails/test", async (req, res) => {
+    try {
+      const { email } = req.body;
+      if (!email) {
+        return res.status(400).json({ error: "Email requerido" });
+      }
+
+      const success = await sendEmail({
+        to: email,
+        subject: "Prueba de Email - Arriendo Cajas",
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #C8201D;">¡Email de Prueba!</h2>
+            <p>Este es un email de prueba del sistema de Arriendo Cajas.</p>
+            <p>Si recibiste este mensaje, el sistema de emails está funcionando correctamente.</p>
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+              <p style="color: #666; font-size: 14px;">
+                Arriendo Cajas<br>
+                Sistema de notificaciones automáticas
+              </p>
+            </div>
+          </div>
+        `,
+        text: "Email de prueba del sistema de Arriendo Cajas. Si recibiste este mensaje, el sistema está funcionando correctamente."
+      });
+
+      if (success) {
+        res.json({ message: "Email de prueba enviado exitosamente" });
+      } else {
+        res.status(500).json({ error: "No se pudo enviar el email de prueba. Configura las credenciales SMTP primero." });
+      }
+    } catch (error) {
+      console.error("Error enviando email de prueba:", error);
+      res.status(500).json({ error: "Error enviando email de prueba" });
     }
   });
 
