@@ -4,6 +4,7 @@
 Arriendo Cajas is a comprehensive web platform for managing a box rental business, featuring complete customer management, rental tracking, inventory control, driver management, and financial reporting. Built specifically for Chilean business operations.
 
 ## User Preferences
+- **Preferred language**: Spanish (always respond in Spanish)
 - Preferred communication style: Simple, everyday language (non-technical)
 - Chilean business terminology: "arrendada" not "alquilada", "carros de transporte", "cintas de amarre"
 - Currency format: Chilean peso ($2.000 format)
@@ -67,6 +68,11 @@ Arriendo Cajas is a comprehensive web platform for managing a box rental busines
     - Missing type annotations for array variables
   - **Solution**: Aligned all database queries with actual schema structure from `shared/schema.ts`
   - **Status**: ✅ ALL LSP ERRORS RESOLVED - Application running successfully with zero compilation errors
+- 🔄 **Deployment Issues (Aug 17, 2025)**: Encountering platform-level infrastructure problems
+  - **Error**: "Database migrations could not be applied due to underlying platform issue"
+  - **Root Cause**: Replit deployment infrastructure problem, not application code
+  - **Code Status**: ✅ All code is correct, builds successfully, no duplicate methods
+  - **Action Required**: Contact Replit support for platform infrastructure resolution
 
 ### Current Features
 - **Home Page**: Professional landing page with 3 access portals (Customers, Drivers, Admin)
