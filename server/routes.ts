@@ -257,13 +257,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = insertRentalSchema.parse(req.body);
       
-      // Convertir strings de fecha a objetos Date
+      // Convertir strings de fecha a objetos Date y manejar driverId
       const processedData = {
         ...validatedData,
         deliveryDate: validatedData.deliveryDate ? new Date(validatedData.deliveryDate) : null,
         pickupDate: validatedData.pickupDate ? new Date(validatedData.pickupDate) : null,
         actualDeliveryDate: validatedData.actualDeliveryDate ? new Date(validatedData.actualDeliveryDate) : null,
         actualPickupDate: validatedData.actualPickupDate ? new Date(validatedData.actualPickupDate) : null,
+        driverId: validatedData.driverId || null, // Convertir string vacío a null
       };
       
       const rental = await storage.createRental(processedData);

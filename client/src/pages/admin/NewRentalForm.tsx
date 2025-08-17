@@ -182,7 +182,8 @@ export default function NewRentalForm() {
       totalAmount: formData.totalAmount, // Mantener como string
       paidAmount: formData.paidAmount || "0", // Mantener como string
       deliveryDate: formData.deliveryDate || null,
-      pickupDate: formData.pickupDate || null
+      pickupDate: formData.pickupDate || null,
+      driverId: formData.driverId || null // Convertir string vacío a null
     });
   };
 
