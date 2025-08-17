@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import { generateRentalConfirmationTemplate, generateDriverAssignmentTemplate } from './emailTemplates';
 
 // Configuración del transporter de email para Gmail Workspace
 const transporter = nodemailer.createTransport({

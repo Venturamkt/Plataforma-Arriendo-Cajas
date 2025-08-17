@@ -19,7 +19,8 @@ import {
   Truck,
   User,
   DollarSign,
-  ShoppingCart
+  ShoppingCart,
+  ExternalLink
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -639,6 +640,23 @@ export default function RentalsSection() {
                           >
                             <Edit2 className="h-4 w-4" />
                           </Button>
+                          {rental.trackingCode && rental.trackingToken && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                              onClick={() => {
+                                const trackingUrl = `${window.location.origin}/track/${rental.trackingCode}/${rental.trackingToken}`;
+                                navigator.clipboard.writeText(trackingUrl);
+                                toast({
+                                  title: "URL copiada",
+                                  description: `Enlace de seguimiento copiado: ${rental.trackingCode}`,
+                                });
+                              }}
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                            </Button>
+                          )}
                         </div>
                       </td>
                     </tr>

@@ -129,6 +129,8 @@ export const rentals = pgTable("rentals", {
   notes: text("notes"),
   additionalProducts: jsonb("additional_products").default([]),
   assignedItems: jsonb("assigned_items").default([]).$type<string[]>(), // IDs de items del inventario asignados
+  trackingCode: varchar("tracking_code"), // Últimos 4 dígitos del ID sin el guión
+  trackingToken: varchar("tracking_token"), // Token aleatorio de 5 caracteres para URL pública
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

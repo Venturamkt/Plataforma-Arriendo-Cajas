@@ -736,6 +736,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Public tracking endpoint - NO AUTH REQUIRED
+  app.get('/track/:trackingCode/:trackingToken', async (req, res) => {
+    try {
+      const { trackingCode, trackingToken } = req.params;
+      
+      if (!trackingCode || !trackingToken) {
+        return res.status(400).json({ error: 'Código de seguimiento inválido' });
+      }
+      
+      const rental = await storage.getRentalByTracking(trackingCode, trackingToken);
+      
+      if (!rental) {
+        return res.status(404).json({ error: 'Arriendo no encontrado. Verifica tu código de seguimiento.' });
+      }
+      
+      // Datos públicos del arriendo (sin información sensible)
+      const publicRentalData = {
+        id: rental.id,
+        trackingCode: rental.trackingCode,
+        status: rental.status,
+        boxQuantity: rental.boxQuantity,
+        deliveryDate: rental.deliveryDate,
+        pickupDate: rental.pickupDate,
+        actualDeliveryDate: rental.actualDeliveryDate,
+        actualPickupDate: rental.actualPickupDate,
+        deliveryAddress: rental.deliveryAddress,
+        pickupAddress: rental.pickupAddress,
+        customerName: rental.customerName,
+        driverName: rental.driverName,
+        createdAt: rental.createdAt
+      };
+      
+      res.json(publicRentalData);
+    } catch (error) {
+      console.error('Error fetching rental tracking:', error);
+      res.status(500).json({ error: 'Error interno del servidor' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

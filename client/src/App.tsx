@@ -3,6 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Home from "./pages/Home.tsx";
 import AdminDashboard from "./pages/AdminDashboard.tsx";
+import TrackingPage from "./pages/TrackingPage";
 
 // Create a client
 const queryClient = new QueryClient({
@@ -22,6 +23,7 @@ function App() {
           <Route path="/customers" component={() => <div className="min-h-screen flex items-center justify-center text-white"><h1 className="text-2xl">Portal de Clientes - En desarrollo</h1></div>} />
           <Route path="/drivers" component={() => <div className="min-h-screen flex items-center justify-center text-white"><h1 className="text-2xl">Portal de Repartidores - En desarrollo</h1></div>} />
           <Route path="/admin" component={AdminDashboard} />
+          <Route path="/track/:trackingCode/:trackingToken" component={TrackingPage} />
           <Route>
             <div className="min-h-screen flex items-center justify-center text-white">
               <h1 className="text-2xl">Página no encontrada</h1>

@@ -14,6 +14,7 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, lte, like, sql } from "drizzle-orm";
+import { generateTrackingCode, generateTrackingToken } from "./trackingUtils";
 
 export interface IStorage {
   // Users
@@ -223,6 +224,8 @@ class PostgresStorage implements IStorage {
       notes: rentals.notes,
       additionalProducts: rentals.additionalProducts,
       assignedItems: rentals.assignedItems,
+      trackingCode: rentals.trackingCode,
+      trackingToken: rentals.trackingToken,
       createdAt: rentals.createdAt,
       updatedAt: rentals.updatedAt,
       // Campos del cliente
@@ -244,9 +247,70 @@ class PostgresStorage implements IStorage {
     return result[0] || null;
   }
 
+  async getRentalByTracking(trackingCode: string, trackingToken: string) {
+    const result = await db.select({
+      id: rentals.id,
+      customerId: rentals.customerId,
+      driverId: rentals.driverId,
+      status: rentals.status,
+      boxQuantity: rentals.boxQuantity,
+      rentalDays: rentals.rentalDays,
+      pricePerDay: rentals.pricePerDay,
+      guaranteeAmount: rentals.guaranteeAmount,
+      totalAmount: rentals.totalAmount,
+      paidAmount: rentals.paidAmount,
+      deliveryDate: rentals.deliveryDate,
+      pickupDate: rentals.pickupDate,
+      actualDeliveryDate: rentals.actualDeliveryDate,
+      actualPickupDate: rentals.actualPickupDate,
+      deliveryAddress: rentals.deliveryAddress,
+      pickupAddress: rentals.pickupAddress,
+      notes: rentals.notes,
+      additionalProducts: rentals.additionalProducts,
+      assignedItems: rentals.assignedItems,
+      trackingCode: rentals.trackingCode,
+      trackingToken: rentals.trackingToken,
+      createdAt: rentals.createdAt,
+      updatedAt: rentals.updatedAt,
+      // Campos del cliente
+      customerName: customers.name,
+      customerRut: customers.rut,
+      customerEmail: customers.email,
+      customerPhone: customers.phone,
+      // Campos del repartidor
+      driverName: drivers.name
+    })
+    .from(rentals)
+    .leftJoin(customers, eq(rentals.customerId, customers.id))
+    .leftJoin(drivers, eq(rentals.driverId, drivers.id))
+    .where(and(
+      eq(rentals.trackingCode, trackingCode),
+      eq(rentals.trackingToken, trackingToken)
+    ));
+    
+    return result[0] || null;
+  }
+
   async createRental(rentalData: any) {
+    // Crear el arriendo primero
     const result = await db.insert(rentals).values(rentalData).returning();
-    return result[0];
+    const rental = result[0];
+    
+    // Generar tracking code y token automáticamente
+    const trackingCode = generateTrackingCode(rental.id);
+    const trackingToken = generateTrackingToken();
+    
+    // Actualizar el arriendo con los códigos de tracking
+    const updatedRental = await db.update(rentals)
+      .set({ 
+        trackingCode,
+        trackingToken,
+        updatedAt: new Date() 
+      })
+      .where(eq(rentals.id, rental.id))
+      .returning();
+    
+    return updatedRental[0];
   }
 
   async updateRental(id: string, rentalData: any) {
