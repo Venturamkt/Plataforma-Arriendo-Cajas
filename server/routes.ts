@@ -543,6 +543,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entityId: req.params.id,
         entityType: "rental"
       });
+
+      // Enviar email automático para todos los cambios de estado
+      if (currentRental.status !== rental.status && rental.trackingCode && rental.trackingToken) {
+        try {
+          const customer = await storage.getCustomerById(rental.customerId);
+          let driver = null;
+          if (rental.driverId) {
+            driver = await storage.getDriverById(rental.driverId);
+          }
+          
+          if (customer && customer.email) {
+            const emailData: RentalEmailData = {
+              customerName: customer.name,
+              customerEmail: customer.email,
+              trackingCode: rental.trackingCode,
+              trackingToken: rental.trackingToken,
+              boxQuantity: rental.boxQuantity,
+              deliveryDate: rental.deliveryDate?.toISOString() || '',
+              pickupDate: rental.pickupDate?.toISOString() || '',
+              deliveryAddress: rental.deliveryAddress,
+              driverName: driver?.name,
+              driverPhone: driver?.phone,
+              status: rental.status
+            };
+            
+            await sendStatusChangeEmail(rental.status, emailData);
+            console.log(`Email de cambio de estado enviado a: ${customer.email} - Estado: ${rental.status}`);
+          }
+        } catch (emailError) {
+          console.error('Error enviando email de cambio de estado:', emailError);
+        }
+      }
       
       res.json(rental);
     } catch (error) {
