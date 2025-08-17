@@ -76,9 +76,9 @@ export default function CustomerLogin() {
       return;
     }
 
-    // Limpiar el RUT antes de enviarlo (solo si es RUT)
+    // Para RUT enviar el valor formateado tal como está, para email limpiarlo
     const cleanValue = searchType === 'rut' 
-      ? searchValue.replace(/[^0-9kK]/g, '').replace(/k/g, 'K')
+      ? searchValue.trim() // Mantener el formato con puntos y guión
       : searchValue.trim();
     
     customerAccessMutation.mutate({
