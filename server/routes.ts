@@ -489,6 +489,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { status } = req.body;
       let updateData: any = { status };
       
+      // Obtener el arriendo actual primero
+      const currentRental = await storage.getRental(req.params.id);
+      if (!currentRental) {
+        return res.status(404).json({ error: "Arriendo no encontrado" });
+      }
+
       // Auto-asignar repartidor cuando se marca como "programada"
       if (status === "programada") {
         const availableDrivers = await storage.getDrivers();
@@ -512,9 +518,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           // Enviar email de asignación al conductor
           try {
-            const customer = await storage.getCustomer(rental.customerId);
+            const customer = await storage.getCustomer(currentRental.customerId);
             if (customer) {
-              const emailTemplate = emailTemplates.driverAssignment(driverWithLeastRentals.name, rental, customer);
+              const emailTemplate = emailTemplates.driverAssignment(driverWithLeastRentals.name, currentRental, customer);
               await sendDriverAssignmentEmail({
                 to: driverWithLeastRentals.email || '',
                 subject: emailTemplate.subject,

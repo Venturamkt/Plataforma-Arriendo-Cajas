@@ -63,12 +63,15 @@ Arriendo Cajas is a comprehensive web platform for managing a box rental busines
 - **Sample Data**: Realistic Chilean business data for testing and demonstration
 
 ### Email System Specifications
-- **Provider**: Gmail Workspace (arriendo@arriendocajas.cl)
+- **Provider**: Gmail Workspace (jalarcon@arriendocajas.cl)
 - **Rental Notifications**: Cliente + contacto@arriendocajas.cl
 - **Driver Assignments**: asignaciones@arriendocajas.cl + conductor
 - **Templates**: HTML responsivos con información completa de arriendos
-- **Triggers**: Automático en creación de arriendos y asignación de conductores
+- **Triggers**: Automático en cada cambio de estado de arriendo
+- **Status Emails**: pendiente → programada → entregada → retirada → finalizada
+- **Google Review**: Email especial en estado "finalizada" con link de reseñas
 - **Configuration**: SSL/TLS con App Password authentication
+- **Status**: ✅ FUNCIONANDO - Emails enviándose correctamente
 
 ## External Dependencies
 - **UI Components**: Radix UI
