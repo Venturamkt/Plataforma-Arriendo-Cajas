@@ -53,6 +53,11 @@ Arriendo Cajas is a comprehensive web platform for managing a box rental busines
   - **RUT de prueba**: 16.220.939-6 (José - 12 arriendos activos)
   - **Navegación**: Ultra simplificada mostrando solo el arriendo más reciente
   - **Technical Fix**: Eliminado queryClient problemático, implementado fetch directo con useState/useEffect
+- ✅ **Sistema de Tracking Público por Email**: Páginas públicas de seguimiento accesibles vía email sin autenticación
+  - **URL Pattern**: `/track/:trackingCode/:trackingToken` (ej: `/track/09394IW36/YSR3E`)
+  - **API Backend**: `/api/track/:trackingCode/:trackingToken` separado del frontend
+  - **Diseño**: Ultra-simplificado sin header de logout, perfecto para emails
+  - **Funcionalidad**: Acceso público directo, datos completos del arriendo, diseño responsive
 
 ### Current Features
 - **Home Page**: Professional landing page with 3 access portals (Customers, Drivers, Admin)
