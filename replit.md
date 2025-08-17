@@ -33,7 +33,7 @@ Arriendo Cajas is a comprehensive web platform for managing a box rental busines
 - **Schema**: Minimal - only sessions and basic users table
 - **Current State**: Completely clean, no business data
 
-### Recent Updates (Aug 16, 2025)
+### Recent Updates (Aug 17, 2025)
 - ✅ **Complete Business Platform**: Full rental management system built from scratch
 - ✅ **Portal Administrador**: Admin dashboard with sidebar navigation and real-time KPIs
 - ✅ **Gestión de Clientes**: Complete customer management with Chilean RUT validation
@@ -41,6 +41,7 @@ Arriendo Cajas is a comprehensive web platform for managing a box rental busines
 - ✅ **Gestión de Inventario**: Comprehensive inventory management with horizontal tabs and pagination
 - ✅ **Gestión de Repartidores**: Complete driver management with rental assignment system
 - ✅ **Módulo de Pagos/Finanzas**: Financial module with flexible date ranges (7d-1y, custom) and comprehensive payment tracking
+- ✅ **Sistema de Emails Gmail Workspace**: Complete email notification system with HTML templates
 - ✅ **Backend Completo**: REST APIs for all modules with PostgreSQL database
 - ✅ **Data Integrity**: Proper foreign key constraints and validation throughout
 
@@ -52,9 +53,18 @@ Arriendo Cajas is a comprehensive web platform for managing a box rental busines
 - **Inventory Management**: Comprehensive system with horizontal tabs, pagination (20 items/page), and category-specific views
 - **Driver Management**: Complete repartidor system with assignment to scheduled rentals and constraint validation
 - **Payments/Finance Module**: Complete financial tracking with flexible date ranges, payment methods, and comprehensive statistics
+- **Email Notification System**: Gmail Workspace integration with HTML templates for rental confirmations and driver assignments
 - **Backend API**: Complete REST endpoints for all modules with proper validation and logging
 - **Database**: PostgreSQL with comprehensive schema and foreign key constraints
 - **Sample Data**: Realistic Chilean business data for testing and demonstration
+
+### Email System Specifications
+- **Provider**: Gmail Workspace (arriendo@arriendocajas.cl)
+- **Rental Notifications**: Cliente + contacto@arriendocajas.cl
+- **Driver Assignments**: asignaciones@arriendocajas.cl + conductor
+- **Templates**: HTML responsivos con información completa de arriendos
+- **Triggers**: Automático en creación de arriendos y asignación de conductores
+- **Configuration**: SSL/TLS con App Password authentication
 
 ## External Dependencies
 - **UI Components**: Radix UI

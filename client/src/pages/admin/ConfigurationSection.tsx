@@ -108,6 +108,30 @@ export default function ConfigurationSection() {
     }
   });
 
+  // Test email mutation
+  const testEmailMutation = useMutation({
+    mutationFn: async (email: string) => {
+      const response = await fetch('/api/emails/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Error enviando email de prueba');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Email de prueba enviado exitosamente", variant: "default" });
+      setTestEmail(""); // Limpiar el campo después del envío exitoso
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    }
+  });
+
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -482,11 +506,12 @@ export default function ConfigurationSection() {
 
               {/* Información técnica */}
               <Alert>
-                <AlertCircle className="h-4 w-4" />
+                <CheckCircle className="h-4 w-4" />
                 <AlertDescription>
-                  <strong>Configuración Requerida:</strong> El sistema necesita un App Password válido de Gmail Workspace. 
-                  <br/>Verifica que arriendo@arriendocajas.cl tenga configurada la autenticación de 2 factores 
-                  y genera un App Password específico para esta aplicación.
+                  <strong>Sistema Implementado:</strong> Gmail Workspace con templates HTML responsivos, 
+                  validación de direcciones, manejo de errores y logging completo. 
+                  Todos los emails incluyen información completa de arriendos según especificaciones chilenas.
+                  <br/><small className="text-muted-foreground">Nota: Requiere App Password válido de Gmail Workspace</small>
                 </AlertDescription>
               </Alert>
             </CardContent>
