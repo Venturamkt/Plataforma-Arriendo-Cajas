@@ -205,24 +205,33 @@ class PostgresStorage implements IStorage {
   async getRentals() {
     return await db.select({
       id: rentals.id,
+      customerId: rentals.customerId,
+      driverId: rentals.driverId,
       status: rentals.status,
       boxQuantity: rentals.boxQuantity,
+      rentalDays: rentals.rentalDays,
+      pricePerDay: rentals.pricePerDay,
+      guaranteeAmount: rentals.guaranteeAmount,
       totalAmount: rentals.totalAmount,
       paidAmount: rentals.paidAmount,
       deliveryDate: rentals.deliveryDate,
       pickupDate: rentals.pickupDate,
+      actualDeliveryDate: rentals.actualDeliveryDate,
+      actualPickupDate: rentals.actualPickupDate,
+      deliveryAddress: rentals.deliveryAddress,
+      pickupAddress: rentals.pickupAddress,
+      notes: rentals.notes,
+      additionalProducts: rentals.additionalProducts,
+      assignedItems: rentals.assignedItems,
       createdAt: rentals.createdAt,
-      customer: {
-        id: customers.id,
-        name: customers.name,
-        rut: customers.rut,
-        email: customers.email,
-        phone: customers.phone
-      },
-      driver: {
-        id: drivers.id,
-        name: drivers.name
-      }
+      updatedAt: rentals.updatedAt,
+      // Campos del cliente
+      customerName: customers.name,
+      customerRut: customers.rut,
+      customerEmail: customers.email,
+      customerPhone: customers.phone,
+      // Campos del repartidor
+      driverName: drivers.name
     })
     .from(rentals)
     .leftJoin(customers, eq(rentals.customerId, customers.id))

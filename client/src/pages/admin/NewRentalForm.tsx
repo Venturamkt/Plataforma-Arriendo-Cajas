@@ -138,10 +138,13 @@ export default function NewRentalForm() {
       // Invalidar múltiples queries relacionadas
       queryClient.invalidateQueries({ queryKey: ["/api/rentals"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
-      // Redirigir inmediatamente
-      setTimeout(() => {
-        setLocation("/admin?tab=arriendos");
-      }, 1000);
+      // Cambiar a la sección de arriendos usando función global
+      if ((window as any).changeSection) {
+        (window as any).changeSection('rentals');
+      } else {
+        // Fallback: redirigir con parámetro
+        setLocation("/admin?tab=rentals");
+      }
     },
     onError: (error: any) => {
       console.error("Error creating rental:", error);

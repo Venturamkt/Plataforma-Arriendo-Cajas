@@ -46,6 +46,17 @@ const sidebarItems = [
 export default function AdminDashboard() {
   const [activeSection, setActiveSection] = useState("dashboard");
   
+  // Detectar parámetros de URL para navegación directa
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tab = urlParams.get('tab');
+    if (tab) {
+      setActiveSection(tab);
+      // Limpiar URL después de navegación
+      window.history.replaceState({}, '', '/admin');
+    }
+  }, []);
+  
   // Función para cambiar sección con parámetros
   const changeSection = (section: string, params?: any) => {
     setActiveSection(section);
