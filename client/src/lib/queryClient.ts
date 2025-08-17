@@ -44,7 +44,7 @@ export const getQueryFn: <T>(options: {
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      queryFn: getQueryFn({ on401: "returnNull" }), // Return null instead of throwing on 401
+      queryFn: getQueryFn({ on401: "throw" }), // Back to throw for now
       refetchInterval: false, // Disable auto-refresh
       refetchOnWindowFocus: false, // Disable refetch on window focus
       refetchOnReconnect: true,

@@ -13,10 +13,11 @@ export interface CurrentUser {
 export function useCurrentUser() {
   const { data, isLoading, error } = useQuery<{ user: CurrentUser; type: string } | null>({
     queryKey: ["/api/auth/current"],
-    retry: false,
+    retry: 1,
     staleTime: 1000 * 60 * 5, // 5 minutes
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
+    throwOnError: false, // Don't throw on error, return error state instead
   });
 
   console.log('useCurrentUser Debug:', { data, isLoading, error, status: error?.message });

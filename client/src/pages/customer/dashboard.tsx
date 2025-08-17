@@ -15,6 +15,7 @@ export default function CustomerDashboard() {
     queryKey: ['/api/customer/rentals'],
     enabled: !!user,
     retry: 1,
+    throwOnError: false, // Don't throw on error
   });
 
   // Debug: Log the state
