@@ -55,12 +55,12 @@ export default function CustomerLogin() {
       return response.json();
     },
     onSuccess: () => {
-      // Invalidate auth cache and redirect
-      queryClient.invalidateQueries({ queryKey: ['/api/auth/current'] });
+      // Clear all cache and redirect - fresh start
+      queryClient.clear();
       // Small delay to ensure session is established
       setTimeout(() => {
         window.location.href = '/customer/dashboard';
-      }, 200);
+      }, 300);
     },
     onError: (error: Error) => {
       toast({

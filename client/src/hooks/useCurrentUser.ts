@@ -11,7 +11,7 @@ export interface CurrentUser {
 }
 
 export function useCurrentUser() {
-  const { data, isLoading, error } = useQuery<{ user: CurrentUser; type: string }>({
+  const { data, isLoading, error } = useQuery<{ user: CurrentUser; type: string } | null>({
     queryKey: ["/api/auth/current"],
     retry: false,
     staleTime: 1000 * 60 * 5, // 5 minutes
@@ -19,7 +19,7 @@ export function useCurrentUser() {
     refetchOnReconnect: false,
   });
 
-  console.log('useCurrentUser Debug:', { data, isLoading, error });
+  console.log('useCurrentUser Debug:', { data, isLoading, error, status: error?.message });
 
   return {
     user: data?.user,

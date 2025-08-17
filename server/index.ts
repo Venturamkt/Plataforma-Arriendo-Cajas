@@ -20,7 +20,8 @@ app.use(session({
     secure: false, // Keep false for development
     httpOnly: false, // CHANGED: Allow client access for debugging
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: 'lax' // ADDED: Better mobile compatibility
+    sameSite: 'lax', // ADDED: Better mobile compatibility
+    path: '/' // Ensure cookie works for all paths
   }
 }));
 

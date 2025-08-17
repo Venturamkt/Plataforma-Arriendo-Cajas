@@ -14,6 +14,7 @@ export default function CustomerDashboard() {
   const { data: rentals = [], isLoading: rentalsLoading, error: rentalsError } = useQuery({
     queryKey: ['/api/customer/rentals'],
     enabled: !!user,
+    retry: 1,
   });
 
   // Debug: Log the state
@@ -22,7 +23,7 @@ export default function CustomerDashboard() {
     userLoading,
     rentals,
     rentalsLoading,
-    rentalsError,
+    rentalsError: rentalsError?.message,
     rentalsLength: rentals.length
   });
 
