@@ -127,15 +127,24 @@ export default function NewRentalForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(rentalData)
       });
-      if (!response.ok) throw new Error("Error al crear arriendo");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Error al crear arriendo");
+      }
       return response.json();
     },
     onSuccess: () => {
       toast({ title: "Éxito", description: "Arriendo creado correctamente" });
+      // Invalidar múltiples queries relacionadas
       queryClient.invalidateQueries({ queryKey: ["/api/rentals"] });
-      setLocation("/admin");
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+      // Redirigir inmediatamente
+      setTimeout(() => {
+        setLocation("/admin?tab=arriendos");
+      }, 1000);
     },
     onError: (error: any) => {
+      console.error("Error creating rental:", error);
       toast({ title: "Error", description: error.message, variant: "destructive" });
     }
   });
