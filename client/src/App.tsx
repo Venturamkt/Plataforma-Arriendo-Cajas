@@ -1,20 +1,12 @@
 import { Route, Switch } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient-simple";
 import Home from "./pages/Home.tsx";
 import AdminDashboard from "./pages/AdminDashboard.tsx";
 import TrackingPage from "./pages/TrackingPage";
 import CustomerLogin from "./pages/auth/customer-login";
 import CustomerDashboard from "./pages/customer/dashboard";
-
-// Create a client
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-    },
-  },
-});
 
 function App() {
   return (

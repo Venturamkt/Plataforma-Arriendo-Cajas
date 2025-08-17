@@ -2,41 +2,74 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Package, Calendar, Clock, Phone, LogOut, Loader2 } from "lucide-react";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { queryClient } from "@/lib/queryClient";
+import { useState, useEffect } from "react";
 
+interface CurrentUser {
+  id: string;
+  name: string;
+  email: string;
+  type: string;
+}
+
+interface Rental {
+  id: string;
+  status: string;
+  boxQuantity: number;
+  totalAmount: string;
+  deliveryDate: string;
+  pickupDate: string;
+  deliveryAddress: string;
+  trackingCode: string;
+}
 
 export default function CustomerDashboard() {
-  const { user, isLoading: userLoading } = useCurrentUser();
+  const [user, setUser] = useState<CurrentUser | null>(null);
+  const [rentals, setRentals] = useState<Rental[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Fetch customer rentals with debug info
-  const { data: rentals = [], isLoading: rentalsLoading, error: rentalsError } = useQuery({
-    queryKey: ['/api/customer/rentals'],
-    enabled: !!user,
-    retry: 1,
-    throwOnError: false, // Don't throw on error
-  });
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch current user
+        const userResponse = await fetch('/api/auth/current', {
+          credentials: 'include',
+        });
+        
+        if (userResponse.ok) {
+          const userData = await userResponse.json();
+          setUser(userData.user);
+          
+          // If user exists, fetch rentals
+          if (userData.user) {
+            const rentalsResponse = await fetch('/api/customer/rentals', {
+              credentials: 'include',
+            });
+            
+            if (rentalsResponse.ok) {
+              const rentalsData = await rentalsResponse.json();
+              setRentals(rentalsData);
+              console.log('Fetched rentals:', rentalsData.length);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // Debug: Log the state
-  console.log('Dashboard Debug:', {
-    user,
-    userLoading,
-    rentals,
-    rentalsLoading,
-    rentalsError: rentalsError?.message,
-    rentalsLength: rentals.length
-  });
+    fetchData();
+  }, []);
 
-  const logoutMutation = useMutation({
-    mutationFn: async () => {
-      const response = await fetch('/api/auth/logout', { method: 'POST' });
-      return response.json();
-    },
-    onSuccess: () => {
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
       window.location.href = '/';
-    },
-  });
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
+  };
 
   // Get only the latest rental for ultra-simple navigation
   const latestRental = rentals.length > 0 ? rentals[0] : null;
@@ -69,7 +102,7 @@ export default function CustomerDashboard() {
     }
   };
 
-  if (userLoading || rentalsLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
@@ -96,8 +129,7 @@ export default function CustomerDashboard() {
             </div>
             <Button
               variant="outline"
-              onClick={() => logoutMutation.mutate()}
-              disabled={logoutMutation.isPending}
+              onClick={handleLogout}
             >
               <LogOut className="w-4 h-4 mr-2" />
               Salir

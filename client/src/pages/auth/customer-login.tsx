@@ -7,7 +7,7 @@ import { ArrowLeft, User, Search } from "lucide-react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
-import { queryClient } from "@/lib/queryClient";
+import { queryClient } from "@/lib/queryClient-simple";
 
 // Función para formatear RUT automáticamente
 const formatRUT = (value: string) => {
