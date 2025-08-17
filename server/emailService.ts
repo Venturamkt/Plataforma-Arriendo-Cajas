@@ -2,9 +2,7 @@ import nodemailer from 'nodemailer';
 
 // Configuración del transporter de email para Gmail Workspace
 const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false, // false para puerto 587
+  service: 'gmail',
   auth: {
     user: 'arriendo@arriendocajas.cl', // Email principal del workspace
     pass: process.env.SMTP_PASS, // App password de Gmail Workspace

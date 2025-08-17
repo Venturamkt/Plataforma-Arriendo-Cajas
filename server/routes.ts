@@ -465,6 +465,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
             entityId: req.params.id,
             entityType: "rental"
           });
+
+          // Enviar email de asignación al conductor
+          try {
+            const customer = await storage.getCustomer(rental.customerId);
+            if (customer) {
+              const emailTemplate = emailTemplates.driverAssignment(driverWithLeastRentals.name, rental, customer);
+              await sendDriverAssignmentEmail({
+                to: driverWithLeastRentals.email || '',
+                subject: emailTemplate.subject,
+                html: emailTemplate.html,
+                text: emailTemplate.text
+              }, driverWithLeastRentals.email);
+              console.log(`Email de asignación enviado a: ${driverWithLeastRentals.email} y asignaciones@arriendocajas.cl`);
+            }
+          } catch (emailError) {
+            console.error('Error enviando email de asignación automática:', emailError);
+          }
         }
       }
       

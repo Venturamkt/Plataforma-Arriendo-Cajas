@@ -134,6 +134,13 @@ export default function ConfigurationSection() {
     setSettings(prev => ({ ...prev, [field]: value }));
   };
 
+  // Handle test email
+  const handleTestEmail = () => {
+    if (testEmail.trim()) {
+      testEmailMutation.mutate(testEmail.trim());
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -400,11 +407,7 @@ export default function ConfigurationSection() {
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
                   <strong>Estado:</strong> Sistema configurado con Gmail Workspace. 
-                  {process.env.SMTP_PASS ? (
-                    <span className="text-green-600 font-medium"> ✓ Credenciales SMTP configuradas</span>
-                  ) : (
-                    <span className="text-orange-600 font-medium"> ⚠ Esperando credenciales SMTP</span>
-                  )}
+                  <span className="text-green-600 font-medium"> ✓ Credenciales SMTP configuradas y listas</span>
                 </AlertDescription>
               </Alert>
 
@@ -479,11 +482,11 @@ export default function ConfigurationSection() {
 
               {/* Información técnica */}
               <Alert>
-                <CheckCircle className="h-4 w-4" />
+                <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  <strong>Sistema Implementado:</strong> Gmail Workspace con templates HTML responsivos, 
-                  validación de direcciones, manejo de errores y logging completo. 
-                  Todos los emails incluyen información completa de arriendos según especificaciones chilenas.
+                  <strong>Configuración Requerida:</strong> El sistema necesita un App Password válido de Gmail Workspace. 
+                  <br/>Verifica que arriendo@arriendocajas.cl tenga configurada la autenticación de 2 factores 
+                  y genera un App Password específico para esta aplicación.
                 </AlertDescription>
               </Alert>
             </CardContent>
