@@ -504,16 +504,16 @@ export default function ConfigurationSection() {
                 </p>
               </div>
 
-              {/* Instrucciones para cambiar password */}
+              {/* Estado del sistema */}
               <Alert>
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  <strong>Para cambiar la contraseña SMTP:</strong>
-                  <br/>1. Ve a la pestaña "Secrets" en el panel lateral de Replit
-                  <br/>2. Busca la variable "SMTP_PASS" 
-                  <br/>3. Haz clic en "Edit" y actualiza con el App Password correcto
-                  <br/>4. El sistema se reiniciará automáticamente
-                  <br/><small className="text-muted-foreground">Tip: Si el password tiene espacios, no olvides incluirlos</small>
+                  <strong>Sistema configurado pero con error de autenticación.</strong>
+                  <br/>Para resolver, verifica en Gmail Workspace:
+                  <br/>• Que arriendo@arriendocajas.cl existe y está activo
+                  <br/>• Que tienes autenticación de 2 factores habilitada
+                  <br/>• Genera un nuevo App Password específico para esta aplicación
+                  <br/>• El formato correcto es: 16 caracteres como "abcdefghijklmnop"
                 </AlertDescription>
               </Alert>
 
