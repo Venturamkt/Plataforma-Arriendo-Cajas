@@ -10,30 +10,31 @@ import { useMutation } from "@tanstack/react-query";
 
 // Función para formatear RUT automáticamente
 const formatRUT = (value: string) => {
-  // Remover caracteres no numéricos excepto K
+  // Remover todo excepto números y K
   const cleanValue = value.replace(/[^0-9kK]/g, '');
   
   if (cleanValue.length === 0) return '';
+  if (cleanValue.length === 1) return cleanValue;
   
-  // Separar número y dígito verificador
+  // Separar cuerpo y dígito verificador
   const body = cleanValue.slice(0, -1);
   const dv = cleanValue.slice(-1).toUpperCase();
   
-  // Formatear cuerpo con puntos
-  let formattedBody = body;
-  if (body.length > 3) {
+  // Formatear el cuerpo con puntos
+  let formattedBody = '';
+  
+  if (body.length <= 3) {
+    formattedBody = body;
+  } else if (body.length <= 6) {
     formattedBody = body.slice(0, -3) + '.' + body.slice(-3);
-  }
-  if (body.length > 6) {
-    formattedBody = body.slice(0, -6) + '.' + body.slice(-6, -3) + '.' + body.slice(-3);
-  }
-  
-  // Agregar guión y dígito verificador si existe
-  if (cleanValue.length > 1) {
-    return formattedBody + '-' + dv;
+  } else {
+    const millions = body.slice(0, -6);
+    const thousands = body.slice(-6, -3);
+    const hundreds = body.slice(-3);
+    formattedBody = millions + '.' + thousands + '.' + hundreds;
   }
   
-  return formattedBody;
+  return formattedBody + '-' + dv;
 };
 
 export default function CustomerLogin() {
@@ -77,7 +78,7 @@ export default function CustomerLogin() {
 
     // Limpiar el RUT antes de enviarlo (solo si es RUT)
     const cleanValue = searchType === 'rut' 
-      ? searchValue.replace(/[^0-9kK]/g, '') 
+      ? searchValue.replace(/[^0-9kK]/g, '').replace(/k/g, 'K')
       : searchValue.trim();
     
     customerAccessMutation.mutate({
@@ -118,7 +119,10 @@ export default function CustomerLogin() {
                 <Button
                   type="button"
                   variant={searchType === 'rut' ? 'default' : 'outline'}
-                  onClick={() => setSearchType('rut')}
+                  onClick={() => {
+                    setSearchType('rut');
+                    setSearchValue('');
+                  }}
                   className="w-full"
                 >
                   Por RUT
@@ -126,7 +130,10 @@ export default function CustomerLogin() {
                 <Button
                   type="button"
                   variant={searchType === 'email' ? 'default' : 'outline'}
-                  onClick={() => setSearchType('email')}
+                  onClick={() => {
+                    setSearchType('email');
+                    setSearchValue('');
+                  }}
                   className="w-full"
                 >
                   Por Email
@@ -148,11 +155,15 @@ export default function CustomerLogin() {
                   }
                   value={searchValue}
                   onChange={(e) => {
-                    const value = e.target.value;
+                    const inputValue = e.target.value;
                     if (searchType === 'rut') {
-                      setSearchValue(formatRUT(value));
+                      // Limitar la longitud máxima del RUT (12 caracteres: 12.345.678-9)
+                      const cleanInput = inputValue.replace(/[^0-9kK]/g, '');
+                      if (cleanInput.length <= 9) {
+                        setSearchValue(formatRUT(inputValue));
+                      }
                     } else {
-                      setSearchValue(value);
+                      setSearchValue(inputValue);
                     }
                   }}
                   className="text-center text-lg"
