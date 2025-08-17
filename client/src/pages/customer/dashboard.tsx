@@ -26,12 +26,14 @@ export default function CustomerDashboard() {
     },
   });
 
-  // Calculate stats from real data
+  // Get only the latest rental for ultra-simple navigation
+  const latestRental = rentals.length > 0 ? rentals[0] : null;
   const activeRentals = rentals.filter((r: any) => ['entregada', 'programada'].includes(r.status));
   const totalBoxes = activeRentals.reduce((sum: number, r: any) => sum + r.boxQuantity, 0);
-  const nearestPickup = activeRentals.find((r: any) => r.pickupDate);
-  const daysUntilPickup = nearestPickup ? 
-    Math.ceil((new Date(nearestPickup.pickupDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : 0;
+  
+  // Calculate days remaining for latest rental
+  const daysRemaining = latestRental && latestRental.pickupDate ? 
+    Math.ceil((new Date(latestRental.pickupDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : 0;
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -95,116 +97,122 @@ export default function CustomerDashboard() {
       {/* Main Content */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
-        {/* Summary Cards */}
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
-          <Card>
-            <CardContent className="p-6 text-center">
-              <Package className="w-8 h-8 text-green-600 mx-auto mb-2" />
-              <div className="text-2xl font-bold text-gray-900">{totalBoxes}</div>
-              <div className="text-sm text-gray-600">Cajas Activas</div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6 text-center">
-              <Calendar className="w-8 h-8 text-blue-600 mx-auto mb-2" />
-              <div className="text-2xl font-bold text-gray-900">{daysUntilPickup > 0 ? daysUntilPickup : '-'}</div>
-              <div className="text-sm text-gray-600">Días para Retiro</div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6 text-center">
-              <Clock className="w-8 h-8 text-orange-600 mx-auto mb-2" />
-              <div className="text-2xl font-bold text-gray-900">{rentals.length}</div>
-              <div className="text-sm text-gray-600">Arriendos Totales</div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Rentals List */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Package className="w-5 h-5 mr-2" />
-              Historial de Arriendos
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {rentals.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <Package className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                  <p>No tienes arriendos registrados</p>
-                </div>
-              ) : (
-                rentals.map((rental: any) => (
-                  <div key={rental.id} className="border rounded-lg p-4 bg-gray-50">
-                    <div className="flex justify-between items-start mb-3">
-                      <div className="flex items-center space-x-3">
-                        <Badge className={getStatusColor(rental.status)}>
-                          {getStatusText(rental.status)}
-                        </Badge>
-                        <span className="font-medium">
-                          {rental.trackingCode ? `Código: ${rental.trackingCode}` : `Arriendo #${rental.id.slice(0, 8)}`}
-                        </span>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-bold text-lg">${parseInt(rental.totalAmount).toLocaleString()}</div>
-                        <div className="text-sm text-gray-600">Total</div>
-                      </div>
+        {/* Latest Rental - Ultra Simple */}
+        {latestRental ? (
+          <Card className="mb-8 border-2 border-green-200">
+            <CardHeader className="bg-green-50 pb-4">
+              <CardTitle className="text-xl text-green-800 flex items-center">
+                <Package className="w-6 h-6 mr-2" />
+                Tu Último Arriendo
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* Status and Code */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Badge className={`${getStatusColor(latestRental.status)} text-lg px-4 py-2`}>
+                      {getStatusText(latestRental.status)}
+                    </Badge>
+                    {latestRental.trackingCode && (
+                      <span className="text-sm text-gray-600">
+                        Código: <strong>{latestRental.trackingCode}</strong>
+                      </span>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex items-center">
+                      <Package className="w-4 h-4 text-gray-500 mr-2" />
+                      <span className="text-lg"><strong>{latestRental.boxQuantity}</strong> cajas</span>
                     </div>
                     
-                    <div className="space-y-3 text-sm">
-                      <div className="grid md:grid-cols-3 gap-4">
-                        <div>
-                          <span className="text-gray-600">Cajas:</span>
-                          <span className="ml-2 font-medium">{rental.boxQuantity} unidades</span>
-                        </div>
-                        <div>
-                          <span className="text-gray-600">Entrega:</span>
-                          <span className="ml-2 font-medium">
-                            {rental.deliveryDate ? new Date(rental.deliveryDate).toLocaleDateString('es-CL') : 'No programada'}
-                          </span>
-                        </div>
-                        <div>
-                          <span className="text-gray-600">Retiro:</span>
-                          <span className="ml-2 font-medium">
-                            {rental.pickupDate ? new Date(rental.pickupDate).toLocaleDateString('es-CL') : 'No programado'}
-                          </span>
-                        </div>
+                    <div className="flex items-center">
+                      <Calendar className="w-4 h-4 text-gray-500 mr-2" />
+                      <span>
+                        {latestRental.deliveryDate ? 
+                          new Date(latestRental.deliveryDate).toLocaleDateString('es-CL') : 'No programada'}
+                      </span>
+                    </div>
+                    
+                    {daysRemaining > 0 && (
+                      <div className="flex items-center text-green-600">
+                        <Clock className="w-4 h-4 mr-2" />
+                        <span className="font-medium">{daysRemaining} días para retiro</span>
                       </div>
-                      
-                      <div className="space-y-2 pt-2 border-t border-gray-200">
-                        <div>
-                          <span className="text-gray-600 text-xs">Dirección de entrega:</span>
-                          <div className="text-sm font-medium">{rental.deliveryAddress || 'Por definir'}</div>
-                        </div>
-                        {rental.driverName && (
-                          <div>
-                            <span className="text-gray-600 text-xs">Repartidor:</span>
-                            <div className="text-sm">{rental.driverName}</div>
-                          </div>
-                        )}
-                        {rental.trackingCode && rental.trackingToken && (
-                          <div className="pt-2">
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => window.open(`/track/${rental.trackingCode}/${rental.trackingToken}`, '_blank')}
-                            >
-                              🔍 Ver Seguimiento
-                            </Button>
-                          </div>
-                        )}
-                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Address and Actions */}
+                <div className="space-y-4">
+                  <div>
+                    <span className="text-sm text-gray-600">Dirección:</span>
+                    <div className="font-medium">{latestRental.deliveryAddress || 'Por definir'}</div>
+                  </div>
+                  
+                  <div>
+                    <span className="text-sm text-gray-600">Total:</span>
+                    <div className="text-2xl font-bold text-green-600">
+                      ${parseInt(latestRental.totalAmount).toLocaleString()}
                     </div>
                   </div>
-                ))
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                  
+                  {latestRental.trackingCode && latestRental.trackingToken && (
+                    <Button 
+                      onClick={() => window.open(`/track/${latestRental.trackingCode}/${latestRental.trackingToken}`, '_blank')}
+                      className="w-full bg-blue-600 hover:bg-blue-700"
+                    >
+                      🔍 Ver Seguimiento Detallado
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="mb-8">
+            <CardContent className="p-8 text-center text-gray-500">
+              <Package className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+              <p className="text-lg">No tienes arriendos registrados</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Quick Stats - Simple */}
+        {rentals.length > 0 && (
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <Card className="p-4 text-center">
+              <div className="text-lg font-bold text-gray-900">{totalBoxes}</div>
+              <div className="text-xs text-gray-600">Cajas Activas</div>
+            </Card>
+            <Card className="p-4 text-center">
+              <div className="text-lg font-bold text-gray-900">{rentals.length}</div>
+              <div className="text-xs text-gray-600">Total Arriendos</div>
+            </Card>
+            <Card className="p-4 text-center">
+              <div className="text-lg font-bold text-green-600">
+                {daysRemaining > 0 ? daysRemaining : '-'}
+              </div>
+              <div className="text-xs text-gray-600">Días Restantes</div>
+            </Card>
+          </div>
+        )}
+
+        {/* Show All Rentals Button - Only if more than 1 */}
+        {rentals.length > 1 && (
+          <Card className="p-4 text-center mb-6">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                alert(`Tienes ${rentals.length} arriendos en total. Funcionalidad de historial completo próximamente.`);
+              }}
+              className="w-full"
+            >
+              Ver Todos los Arriendos ({rentals.length})
+            </Button>
+          </Card>
+        )}
 
         {/* Contact Info */}
         <Card className="mt-6">
