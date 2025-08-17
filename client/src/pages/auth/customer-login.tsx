@@ -8,6 +8,34 @@ import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 
+// Función para formatear RUT automáticamente
+const formatRUT = (value: string) => {
+  // Remover caracteres no numéricos excepto K
+  const cleanValue = value.replace(/[^0-9kK]/g, '');
+  
+  if (cleanValue.length === 0) return '';
+  
+  // Separar número y dígito verificador
+  const body = cleanValue.slice(0, -1);
+  const dv = cleanValue.slice(-1).toUpperCase();
+  
+  // Formatear cuerpo con puntos
+  let formattedBody = body;
+  if (body.length > 3) {
+    formattedBody = body.slice(0, -3) + '.' + body.slice(-3);
+  }
+  if (body.length > 6) {
+    formattedBody = body.slice(0, -6) + '.' + body.slice(-6, -3) + '.' + body.slice(-3);
+  }
+  
+  // Agregar guión y dígito verificador si existe
+  if (cleanValue.length > 1) {
+    return formattedBody + '-' + dv;
+  }
+  
+  return formattedBody;
+};
+
 export default function CustomerLogin() {
   const [searchType, setSearchType] = useState<'rut' | 'email'>('rut');
   const [searchValue, setSearchValue] = useState('');
@@ -47,9 +75,14 @@ export default function CustomerLogin() {
       return;
     }
 
+    // Limpiar el RUT antes de enviarlo (solo si es RUT)
+    const cleanValue = searchType === 'rut' 
+      ? searchValue.replace(/[^0-9kK]/g, '') 
+      : searchValue.trim();
+    
     customerAccessMutation.mutate({
       type: searchType,
-      value: searchValue.trim(),
+      value: cleanValue,
     });
   };
 
@@ -114,7 +147,14 @@ export default function CustomerLogin() {
                       : 'Ej: cliente@empresa.cl'
                   }
                   value={searchValue}
-                  onChange={(e) => setSearchValue(e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (searchType === 'rut') {
+                      setSearchValue(formatRUT(value));
+                    } else {
+                      setSearchValue(value);
+                    }
+                  }}
                   className="text-center text-lg"
                 />
               </div>

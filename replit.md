@@ -48,6 +48,7 @@ Arriendo Cajas is a comprehensive web platform for managing a box rental busines
 - ✅ **Enhanced Admin Interface**: Improved tracking button with professional WhatsApp-ready message format
 - ✅ **Backend Completo**: REST APIs for all modules with PostgreSQL database
 - ✅ **Data Integrity**: Proper foreign key constraints and validation throughout
+- ✅ **Portal de Clientes Completo**: Customer authentication system with RUT/email login, real-time dashboard with rental data, automatic RUT formatting (16.220.939-6), and tracking integration
 
 ### Current Features
 - **Home Page**: Professional landing page with 3 access portals (Customers, Drivers, Admin)
@@ -58,6 +59,7 @@ Arriendo Cajas is a comprehensive web platform for managing a box rental busines
 - **Driver Management**: Complete repartidor system with assignment to scheduled rentals and constraint validation
 - **Payments/Finance Module**: Complete financial tracking with flexible date ranges, payment methods, and comprehensive statistics
 - **Email Notification System**: Gmail Workspace integration with HTML templates for rental confirmations and driver assignments
+- **Customer Portal**: Complete login system with RUT/email authentication, real-time dashboard, rental history, and automatic RUT formatting
 - **Backend API**: Complete REST endpoints for all modules with proper validation and logging
 - **Database**: PostgreSQL with comprehensive schema and foreign key constraints
 - **Sample Data**: Realistic Chilean business data for testing and demonstration
