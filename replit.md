@@ -71,7 +71,7 @@ Arriendo Cajas is a comprehensive web platform for managing a box rental busines
 - **Status Emails**: pendiente → programada → entregada → retirada → finalizada
 - **Google Review**: Email especial en estado "finalizada" con link de reseñas
 - **Configuration**: SSL/TLS con App Password authentication
-- **Status**: ✅ FUNCIONANDO - Emails enviándose correctamente
+- **Status**: ✅ FUNCIONANDO - Emails enviándose correctamente con tracking URLs públicos
 
 ## External Dependencies
 - **UI Components**: Radix UI
