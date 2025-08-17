@@ -646,14 +646,14 @@ export default function RentalsSection() {
                               size="sm"
                               className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
                               onClick={() => {
-                                // Usar generateTrackingUrl para obtener el dominio correcto automáticamente
-                                const trackingUrl = `/track/${rental.trackingCode}/${rental.trackingToken}`;
+                                // Usar la misma URL que se genera en los emails
+                                const trackingUrl = `https://441204b6-ae40-4994-b677-be11a32eb976-00-1rsmov5q0kvpq.janeway.replit.dev/track/${rental.trackingCode}/${rental.trackingToken}`;
                                 const customerName = rental.customerName || 'Cliente';
                                 const shareText = `Hola ${customerName}! 👋
 
 Tu arriendo está confirmado. Puedes hacer seguimiento de tu entrega aquí:
 
-🔗 ${window.location.origin}${trackingUrl}
+🔗 ${trackingUrl}
 
 Código de seguimiento: ${rental.trackingCode}
 Estado actual: ${rental.status}

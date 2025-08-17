@@ -5,7 +5,7 @@ import { insertCustomerSchema, insertDriverSchema, insertRentalSchema, insertPay
 import { z } from "zod";
 import { sendEmail, emailTemplates, sendDriverAssignmentEmail } from "./emailService";
 import { sendStatusChangeEmail, type RentalEmailData } from "./emailNotifications";
-import { generateTrackingCode } from "./trackingUtils";
+import { generateTrackingCode, generateTrackingUrl } from "./trackingUtils";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Seed initial data for demo
@@ -815,6 +815,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error enviando email de prueba:", error);
       res.status(500).json({ error: "Error enviando email de prueba" });
+    }
+  });
+
+  // Get tracking URL endpoint - returns the same URL used in emails
+  app.get('/api/tracking-url/:trackingCode/:trackingToken', async (req, res) => {
+    try {
+      const { trackingCode, trackingToken } = req.params;
+      const url = generateTrackingUrl(trackingCode, trackingToken);
+      res.json({ url });
+    } catch (error) {
+      console.error('Error generating tracking URL:', error);
+      res.status(500).json({ error: 'Error generating tracking URL' });
     }
   });
 
