@@ -262,7 +262,7 @@ export default function CustomerTrackingPage() {
             <h3 className="font-medium text-blue-900 mb-2">¿Necesitas ayuda?</h3>
             <div className="flex items-center justify-center gap-2 text-blue-700 mb-2">
               <Phone className="w-4 h-4" />
-              <span>Llama al +56 9 1234 5678 o escribe a contacto@arriendocajas.cl</span>
+              <span>Llama al +56 9 8729 0995 o escribe a contacto@arriendocajas.cl</span>
             </div>
           </CardContent>
         </Card>

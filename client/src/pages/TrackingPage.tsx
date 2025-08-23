@@ -256,9 +256,9 @@ export default function TrackingPage() {
                 Si tienes preguntas sobre tu arriendo, contáctanos:
               </p>
               <div className="text-sm text-blue-600 space-y-1">
-                <p>📞 Teléfono: +56 9 XXXX XXXX</p>
+                <p>📞 Teléfono: +56 9 8729 0995</p>
                 <p>✉️ Email: contacto@arriendocajas.cl</p>
-                <p>💬 WhatsApp: +56 9 XXXX XXXX</p>
+                <p>💬 WhatsApp: +56 9 8729 0995</p>
               </div>
             </div>
           </CardContent>
