@@ -65,7 +65,7 @@ export default function CustomerTrackingPage() {
     switch (status) {
       case 'entregada': return 'bg-green-100 text-green-800';
       case 'pendiente': return 'bg-yellow-100 text-yellow-800';
-      case 'programada': return 'bg-blue-100 text-blue-800';
+      case 'pagado': return 'bg-blue-100 text-blue-800';
       case 'retirada': return 'bg-orange-100 text-orange-800';
       case 'finalizada': return 'bg-gray-100 text-gray-800';
       case 'cancelada': return 'bg-red-100 text-red-800';
@@ -77,7 +77,7 @@ export default function CustomerTrackingPage() {
     switch (status) {
       case 'entregada': return 'Entregada';
       case 'pendiente': return 'Pendiente';
-      case 'programada': return 'Programada';
+      case 'pagado': return 'Pagado';
       case 'retirada': return 'Retirada';
       case 'finalizada': return 'Finalizada';
       case 'cancelada': return 'Cancelada';

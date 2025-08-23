@@ -44,7 +44,7 @@ Arriendo Cajas is a comprehensive web platform for managing a box rental busines
 - ✅ **Módulo de Pagos/Finanzas**: Financial module with flexible date ranges (7d-1y, custom) and comprehensive payment tracking
 - ✅ **Sistema de Emails Gmail Workspace**: Complete email notification system with HTML templates
 - ✅ **Sistema de Tracking Completo**: Public tracking with RUT-based codes and automated email notifications
-- ✅ **Emails Automáticos por Estado**: Automated emails for pendiente→programada→entregada→retirada→finalizada
+- ✅ **Emails Automáticos por Estado**: Automated emails for pendiente→pagado→entregada→retirada→finalizada
 - ✅ **Google Maps Review Integration**: Review request system in finalizada status with guarantee return process
 - ✅ **Enhanced Admin Interface**: Improved tracking button with professional WhatsApp-ready message format
 - ✅ **Backend Completo**: REST APIs for all modules with PostgreSQL database
@@ -95,7 +95,7 @@ Arriendo Cajas is a comprehensive web platform for managing a box rental busines
 - **Driver Assignments**: asignaciones@arriendocajas.cl + conductor
 - **Templates**: HTML responsivos con información completa de arriendos
 - **Triggers**: Automático en cada cambio de estado de arriendo
-- **Status Emails**: pendiente → programada → entregada → retirada → finalizada
+- **Status Emails**: pendiente → pagado → entregada → retirada → finalizada
 - **Google Review**: Email especial en estado "finalizada" con link de reseñas
 - **Configuration**: SSL/TLS con App Password authentication
 - **Status**: ✅ FUNCIONANDO - Emails enviándose correctamente con tracking URLs públicos

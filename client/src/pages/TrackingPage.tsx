@@ -22,7 +22,7 @@ interface TrackingData {
 
 const statusBadgeConfig = {
   pendiente: { label: "Pendiente", color: "bg-yellow-100 text-yellow-800" },
-  programada: { label: "Programada", color: "bg-blue-100 text-blue-800" },
+  pagado: { label: "Pagado", color: "bg-blue-100 text-blue-800" },
   en_ruta: { label: "En Ruta", color: "bg-purple-100 text-purple-800" },
   entregada: { label: "Entregada", color: "bg-green-100 text-green-800" },
   retiro_programado: { label: "Retiro Programado", color: "bg-orange-100 text-orange-800" },

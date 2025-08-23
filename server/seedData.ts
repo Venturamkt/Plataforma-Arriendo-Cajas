@@ -134,7 +134,7 @@ export async function seedInitialData() {
       {
         customerId: sampleCustomers[1].id,
         driverId: sampleDrivers[1].id,
-        status: "programada",
+        status: "pagado",
         boxQuantity: 25,
         totalAmount: "125000",
         paidAmount: "0",

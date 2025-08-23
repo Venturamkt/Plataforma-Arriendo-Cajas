@@ -683,8 +683,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Arriendo no encontrado" });
       }
 
-      // Auto-asignar repartidor cuando se marca como "programada"
-      if (status === "programada") {
+      // Auto-asignar repartidor cuando se marca como "pagado"
+      if (status === "pagado") {
         const availableDrivers = await storage.getDrivers();
         const activeDrivers = availableDrivers.filter(d => d.isActive);
         

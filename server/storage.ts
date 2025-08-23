@@ -239,7 +239,7 @@ class PostgresStorage implements IStorage {
       .from(rentals)
       .where(and(
         eq(rentals.driverId, id),
-        sql`status IN ('programada', 'en_ruta', 'entregada', 'retiro_programado')`
+        sql`status IN ('pagado', 'en_ruta', 'entregada', 'retiro_programado')`
       ));
 
     const completedRentals = await db
@@ -484,7 +484,7 @@ class PostgresStorage implements IStorage {
     const todayDeliveries = await db
       .select({ count: sql<number>`count(*)` })
       .from(rentals)
-      .where(sql`DATE(${rentals.deliveryDate}) = ${today} AND ${rentals.status} = 'programada'`);
+      .where(sql`DATE(${rentals.deliveryDate}) = ${today} AND ${rentals.status} = 'pagado'`);
 
     const todayPickups = await db
       .select({ count: sql<number>`count(*)` })
@@ -495,13 +495,13 @@ class PostgresStorage implements IStorage {
     const rentalsWithoutDriver = await db
       .select({ count: sql<number>`count(*)` })
       .from(rentals)
-      .where(sql`${rentals.driverId} IS NULL AND ${rentals.status} = 'programada'`);
+      .where(sql`${rentals.driverId} IS NULL AND ${rentals.status} = 'pagado'`);
 
     // Procesar estadísticas de arriendos
     const rentalsData = {
       active: rentalStats.find(r => r.status === 'entregada')?.count || 0,
       new: rentalStats.find(r => r.status === 'pendiente')?.count || 0,
-      programmed: rentalStats.find(r => r.status === 'programada')?.count || 0,
+      paid: rentalStats.find(r => r.status === 'pagado')?.count || 0,
       completed: rentalStats.find(r => r.status === 'finalizada')?.count || 0,
       total: rentalStats.reduce((sum, r) => sum + r.count, 0)
     };

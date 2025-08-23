@@ -53,7 +53,7 @@ interface RentalWithDetails extends Rental {
 
 const statusBadgeConfig = {
   pendiente: { color: "bg-yellow-500", label: "Pendiente" },
-  programada: { color: "bg-blue-500", label: "Programada" },
+  pagado: { color: "bg-blue-500", label: "Pagado" },
   en_ruta: { color: "bg-purple-500", label: "En Ruta" },
   entregada: { color: "bg-green-500", label: "Entregada" },
   retiro_programado: { color: "bg-orange-500", label: "Retiro Programado" },
@@ -908,7 +908,7 @@ export default function RentalsSection() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="pendiente">Pendiente</SelectItem>
-                  <SelectItem value="programada">Programada</SelectItem>
+                  <SelectItem value="pagado">Pagado</SelectItem>
                   <SelectItem value="en_ruta">En Ruta</SelectItem>
                   <SelectItem value="entregada">Entregada</SelectItem>
                   <SelectItem value="retiro_programado">Retiro Programado</SelectItem>
@@ -1261,7 +1261,7 @@ export default function RentalsSection() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="pendiente">Pendiente</SelectItem>
-                  <SelectItem value="programada">Programada</SelectItem>
+                  <SelectItem value="pagado">Pagado</SelectItem>
                   <SelectItem value="en_ruta">En Ruta</SelectItem>
                   <SelectItem value="entregada">Entregada</SelectItem>
                   <SelectItem value="retiro_programado">Retiro Programado</SelectItem>
@@ -1562,7 +1562,7 @@ export default function RentalsSection() {
                   <p className="font-medium">Este cambio generará las siguientes acciones automáticas:</p>
                   <ul className="mt-2 space-y-1">
                     <li>• Cliente será notificado por email y SMS</li>
-                    <li>• {statusChangeData?.newStatus === "programada" ? "Se asignará automáticamente un repartidor disponible" : "Repartidor recibirá actualización si está asignado"}</li>
+                    <li>• {statusChangeData?.newStatus === "pagado" ? "Se asignará automáticamente un repartidor disponible" : "Repartidor recibirá actualización si está asignado"}</li>
                     <li>• Se actualizará el estado del inventario de cajas</li>
                     <li>• Se registrará en el historial de actividades</li>
                   </ul>
@@ -1570,7 +1570,7 @@ export default function RentalsSection() {
               </div>
             </div>
             
-            {statusChangeData?.newStatus === "programada" && (
+            {statusChangeData?.newStatus === "pagado" && (
               <div className="p-4 bg-green-50 rounded-lg">
                 <div className="flex items-start space-x-2">
                   <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />

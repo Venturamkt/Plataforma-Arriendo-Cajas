@@ -172,17 +172,17 @@ export default function AdminDashboard() {
         <Card>
           <CardHeader>
             <CardTitle>Entregas de Hoy</CardTitle>
-            <CardDescription>{stats.todayTasks.deliveries} programadas</CardDescription>
+            <CardDescription>{stats.todayTasks.deliveries} confirmadas</CardDescription>
           </CardHeader>
           <CardContent>
             {stats.todayTasks.deliveries > 0 ? (
               <div className="space-y-2">
                 <p className="text-sm text-gray-600">No hay datos de entregas específicas disponibles</p>
-                <p className="text-xs text-gray-500">Ve a la sección Arriendos para ver todos los arriendos programados</p>
+                <p className="text-xs text-gray-500">Ve a la sección Arriendos para ver todos los arriendos confirmados</p>
               </div>
             ) : (
               <div className="text-center py-4">
-                <p className="text-sm text-gray-600">No hay entregas programadas para hoy</p>
+                <p className="text-sm text-gray-600">No hay entregas confirmadas para hoy</p>
               </div>
             )}
           </CardContent>

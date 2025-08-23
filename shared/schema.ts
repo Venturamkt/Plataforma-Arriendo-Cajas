@@ -114,7 +114,7 @@ export const rentals = pgTable("rentals", {
   customerId: varchar("customer_id").references(() => customers.id).notNull(),
   driverId: varchar("driver_id").references(() => drivers.id),
   status: varchar("status", { 
-    enum: ["pendiente", "programada", "en_ruta", "entregada", "retiro_programado", "retirada", "finalizada", "cancelada"] 
+    enum: ["pendiente", "pagado", "en_ruta", "entregada", "retiro_programado", "retirada", "finalizada", "cancelada"] 
   }).default("pendiente"),
   boxQuantity: integer("box_quantity").notNull(),
   rentalDays: integer("rental_days"),

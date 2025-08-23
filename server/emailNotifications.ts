@@ -38,7 +38,7 @@ export async function sendRentalCreatedEmail(data: RentalEmailData): Promise<boo
       <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
         <h2 style="color: #2E5CA6; margin-top: 0;">Hola ${data.customerName},</h2>
         
-        <p>Hemos recibido tu solicitud de arriendo. Se encuentra en estado <strong>PENDIENTE</strong> mientras revisamos la disponibilidad y programamos la entrega.</p>
+        <p>Hemos recibido tu solicitud de arriendo. Se encuentra en estado <strong>PENDIENTE</strong>. <span style="background: #fff3cd; padding: 2px 6px; border-radius: 3px; color: #856404;">Solo al pagar se confirma el arriendo</span> y puedes tener tus cajas aseguradas.</p>
         
         <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2E5CA6;">
           <h3 style="margin-top: 0; color: #2E5CA6;">📦 Detalles del Arriendo</h3>
@@ -49,6 +49,29 @@ export async function sendRentalCreatedEmail(data: RentalEmailData): Promise<boo
             <li style="margin: 8px 0;"><strong>Fecha de retiro:</strong> ${new Date(data.pickupDate).toLocaleDateString('es-CL')}</li>
             <li style="margin: 8px 0;"><strong>Dirección:</strong> ${data.deliveryAddress}</li>
           </ul>
+        </div>
+        
+        <div style="background: #f0f8ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #0066cc;">
+          <h3 style="margin-top: 0; color: #0066cc;">💳 Formas de Pago</h3>
+          
+          <h4 style="color: #2E5CA6; margin-top: 15px;">🏦 Transferencia Bancaria</h4>
+          <div style="background: white; padding: 15px; border-radius: 6px; margin: 10px 0;">
+            <ul style="list-style: none; padding: 0; margin: 0;">
+              <li style="margin: 5px 0;"><strong>Banco:</strong> Banco Estado</li>
+              <li style="margin: 5px 0;"><strong>Cuenta Vista:</strong> 033670433426</li>
+              <li style="margin: 5px 0;"><strong>RUT:</strong> 77.102.629-K</li>
+              <li style="margin: 5px 0;"><strong>Titular:</strong> Arriendo Cajas SpA</li>
+              <li style="margin: 5px 0;"><strong>Email:</strong> ventas@arriendocajas.cl</li>
+            </ul>
+          </div>
+          
+          <h4 style="color: #2E5CA6; margin-top: 15px;">💳 Pago con Tarjeta</h4>
+          <p style="margin: 5px 0; font-size: 14px;">
+            Envía un email a <strong>contacto@arriendocajas.cl</strong> solicitando el pago con tarjeta.<br>
+            <span style="background: #fff3cd; padding: 2px 6px; border-radius: 3px; color: #856404; font-size: 13px;">
+              * Tiene un 3% de recargo adicional
+            </span>
+          </p>
         </div>
         
         <div style="text-align: center; margin: 30px 0;">
@@ -65,9 +88,8 @@ export async function sendRentalCreatedEmail(data: RentalEmailData): Promise<boo
         
         <p style="margin-top: 30px;">
           Si tienes alguna consulta, no dudes en contactarnos:<br>
-          📞 <strong>Teléfono:</strong> +56 9 XXXX XXXX<br>
           ✉️ <strong>Email:</strong> contacto@arriendocajas.cl<br>
-          💬 <strong>WhatsApp:</strong> +56 9 XXXX XXXX
+          💬 <strong>WhatsApp:</strong> <a href="https://wa.me/56987290995" style="color: #25D366; text-decoration: none;">+56 9 8729 0995</a>
         </p>
         
         <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
@@ -87,11 +109,11 @@ export async function sendRentalCreatedEmail(data: RentalEmailData): Promise<boo
   });
 }
 
-// Email para arriendo programado
-export async function sendRentalScheduledEmail(data: RentalEmailData): Promise<boolean> {
+// Email para arriendo pagado
+export async function sendRentalPaidEmail(data: RentalEmailData): Promise<boolean> {
   const trackingUrl = generateTrackingUrl(data.trackingCode, data.trackingToken);
   
-  const subject = `📅 Arriendo Programado - Código ${data.trackingCode}`;
+  const subject = `✅ Pago Confirmado - Arriendo ${data.trackingCode}`;
   
   const htmlContent = `
     <!DOCTYPE html>
@@ -99,26 +121,27 @@ export async function sendRentalScheduledEmail(data: RentalEmailData): Promise<b
     <head>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1">
-      <title>Arriendo Programado</title>
+      <title>Pago Confirmado</title>
     </head>
     <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <div style="background: linear-gradient(135deg, #2E5CA6 0%, #C8201D 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-        <h1 style="color: white; margin: 0; font-size: 28px;">📅 ¡Entrega Programada!</h1>
+      <div style="background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+        <h1 style="color: white; margin: 0; font-size: 28px;">✅ ¡Pago Confirmado!</h1>
         <p style="color: white; margin: 10px 0 0 0; font-size: 16px;">Código: <strong>${data.trackingCode}</strong></p>
       </div>
       
       <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
         <h2 style="color: #2E5CA6; margin-top: 0;">Hola ${data.customerName},</h2>
         
-        <p>¡Excelentes noticias! Tu arriendo ya está <strong>PROGRAMADO</strong> para entrega.</p>
+        <p>¡Excelentes noticias! Tu pago ha sido confirmado y tu arriendo está <strong>ASEGURADO</strong>. Tus cajas están reservadas y listas para la entrega programada.</p>
         
         <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #4CAF50;">
-          <h3 style="margin-top: 0; color: #4CAF50;">🚚 Información de Entrega</h3>
+          <h3 style="margin-top: 0; color: #4CAF50;">📦 Arriendo Confirmado</h3>
           <ul style="list-style: none; padding: 0;">
-            <li style="margin: 8px 0;"><strong>Fecha:</strong> ${new Date(data.deliveryDate).toLocaleDateString('es-CL')}</li>
+            <li style="margin: 8px 0;"><strong>Código:</strong> ${data.trackingCode}</li>
+            <li style="margin: 8px 0;"><strong>Cantidad:</strong> ${data.boxQuantity} cajas</li>
+            <li style="margin: 8px 0;"><strong>Fecha de entrega:</strong> ${new Date(data.deliveryDate).toLocaleDateString('es-CL')}</li>
+            <li style="margin: 8px 0;"><strong>Fecha de retiro:</strong> ${new Date(data.pickupDate).toLocaleDateString('es-CL')}</li>
             <li style="margin: 8px 0;"><strong>Dirección:</strong> ${data.deliveryAddress}</li>
-            ${data.driverName ? `<li style="margin: 8px 0;"><strong>Repartidor:</strong> ${data.driverName}</li>` : ''}
-            ${data.driverPhone ? `<li style="margin: 8px 0;"><strong>Teléfono conductor:</strong> ${data.driverPhone}</li>` : ''}
           </ul>
         </div>
         
@@ -128,11 +151,17 @@ export async function sendRentalScheduledEmail(data: RentalEmailData): Promise<b
           </a>
         </div>
         
-        <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin: 20px 0;">
-          <p style="margin: 0; font-size: 14px; color: #856404;">
-            ⏰ <strong>Importante:</strong> Asegúrate de estar disponible en la dirección de entrega el día programado.
+        <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; margin: 20px 0;">
+          <p style="margin: 0; font-size: 14px; color: #2e7d32;">
+            ✅ <strong>¡Tu arriendo está confirmado!</strong> Pronto nos contactaremos para coordinar los detalles de la entrega.
           </p>
         </div>
+        
+        <p style="margin-top: 30px;">
+          Si tienes alguna consulta, no dudes en contactarnos:<br>
+          ✉️ <strong>Email:</strong> contacto@arriendocajas.cl<br>
+          💬 <strong>WhatsApp:</strong> <a href="https://wa.me/56987290995" style="color: #25D366; text-decoration: none;">+56 9 8729 0995</a>
+        </p>
       </div>
     </body>
     </html>
@@ -351,8 +380,8 @@ export async function sendStatusChangeEmail(
   switch (status) {
     case 'pendiente':
       return await sendRentalCreatedEmail(data);
-    case 'programada':
-      return await sendRentalScheduledEmail(data);
+    case 'pagado':
+      return await sendRentalPaidEmail(data);
     case 'entregada':
       return await sendRentalDeliveredEmail(data);
     case 'retirada':
