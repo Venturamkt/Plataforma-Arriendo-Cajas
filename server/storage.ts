@@ -20,6 +20,7 @@ export interface IStorage {
   // Users
   getUserById(id: string): Promise<any>;
   getUserByEmail(email: string): Promise<any>;
+  getUsers(): Promise<any[]>;
   createUser(userData: any): Promise<any>;
   updateUserLastLogin(id: string): Promise<void>;
   
@@ -95,6 +96,10 @@ class PostgresStorage implements IStorage {
         updatedAt: new Date()
       })
       .where(eq(users.id, id));
+  }
+
+  async getUsers() {
+    return await db.select().from(users).orderBy(desc(users.createdAt));
   }
 
   // Customers

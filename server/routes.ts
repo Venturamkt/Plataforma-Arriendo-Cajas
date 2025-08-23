@@ -114,6 +114,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User management routes
+  app.get("/api/users", requireAuth, async (req, res) => {
+    try {
+      const users = await storage.getUsers();
+      // No devolver contraseñas
+      const usersWithoutPasswords = users.map(user => {
+        const { password, ...userWithoutPassword } = user;
+        return userWithoutPassword;
+      });
+      res.json(usersWithoutPasswords);
+    } catch (error) {
+      console.error("Error getting users:", error);
+      res.status(500).json({ error: "Error al obtener usuarios" });
+    }
+  });
+
+  app.post("/api/users", requireAuth, async (req, res) => {
+    try {
+      const validatedData = insertUserSchema.parse(req.body);
+      
+      // Hash de la contraseña
+      const saltRounds = 12;
+      const hashedPassword = await bcrypt.hash(validatedData.password, saltRounds);
+      
+      const user = await storage.createUser({
+        ...validatedData,
+        password: hashedPassword
+      });
+      
+      // No devolver la contraseña
+      const { password, ...userWithoutPassword } = user;
+      res.status(201).json(userWithoutPassword);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Datos inválidos", details: error.errors });
+      }
+      
+      if (error instanceof Error && error.message.includes("duplicate key")) {
+        return res.status(400).json({ error: "Ya existe un usuario con este email" });
+      }
+      
+      console.error("Error creando usuario:", error);
+      res.status(500).json({ error: "Error al crear usuario" });
+    }
+  });
+
   // Dashboard stats
   app.get("/api/dashboard/stats", requireAuth, async (req, res) => {
     try {

@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, Settings, Building2, Palette, Save, Mail, Send, CheckCircle, AlertCircle } from "lucide-react";
+import { Upload, Settings, Building2, Palette, Save, Mail, Send, CheckCircle, AlertCircle, Users, Plus, Eye, EyeOff, Trash2, Edit2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -27,6 +27,13 @@ export default function ConfigurationSection() {
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string>("");
   const [testEmail, setTestEmail] = useState<string>("");
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [newUser, setNewUser] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: ""
+  });
   const [settings, setSettings] = useState<CompanySettings>({
     companyName: "Arriendo Cajas",
     primaryColor: "#C8201D",
@@ -59,6 +66,16 @@ export default function ConfigurationSection() {
         setLogoPreview(data.logoUrl);
       }
       return data;
+    }
+  });
+
+  // Query para obtener usuarios admin
+  const { data: adminUsers = [], isLoading: usersLoading } = useQuery({
+    queryKey: ["/api/users"],
+    queryFn: async () => {
+      const response = await fetch('/api/users');
+      if (!response.ok) throw new Error('Error loading users');
+      return response.json();
     }
   });
 
@@ -132,6 +149,31 @@ export default function ConfigurationSection() {
     }
   });
 
+  // Mutation para crear usuario admin
+  const createUserMutation = useMutation({
+    mutationFn: async (userData: any) => {
+      const response = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userData)
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Error creating user');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      toast({ title: "Usuario administrativo creado exitosamente", variant: "default" });
+      setNewUser({ firstName: "", lastName: "", email: "", password: "" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    }
+  });
+
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -165,6 +207,20 @@ export default function ConfigurationSection() {
     }
   };
 
+  // Handle create user
+  const handleCreateUser = () => {
+    if (newUser.firstName && newUser.lastName && newUser.email && newUser.password) {
+      createUserMutation.mutate({
+        ...newUser,
+        role: "admin"
+      });
+    }
+  };
+
+  const handleUserInputChange = (field: string, value: string) => {
+    setNewUser(prev => ({ ...prev, [field]: value }));
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -190,8 +246,12 @@ export default function ConfigurationSection() {
         </Button>
       </div>
 
-      <Tabs defaultValue="brand" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+      <Tabs defaultValue="users" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="users" className="flex items-center gap-2">
+            <CheckCircle className="h-4 w-4" />
+            Usuarios Admin
+          </TabsTrigger>
           <TabsTrigger value="brand" className="flex items-center gap-2">
             <Palette className="h-4 w-4" />
             Marca e Identidad
@@ -209,6 +269,147 @@ export default function ConfigurationSection() {
             Configuración Avanzada
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="users" className="space-y-6">
+          {/* Create New User */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Plus className="h-5 w-5" />
+                Crear Nuevo Usuario Administrador
+              </CardTitle>
+              <CardDescription>
+                Agrega un nuevo usuario con permisos de administrador
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="firstName">Nombre</Label>
+                  <Input
+                    id="firstName"
+                    value={newUser.firstName}
+                    onChange={(e) => handleUserInputChange('firstName', e.target.value)}
+                    placeholder="Juan"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="lastName">Apellido</Label>
+                  <Input
+                    id="lastName"
+                    value={newUser.lastName}
+                    onChange={(e) => handleUserInputChange('lastName', e.target.value)}
+                    placeholder="Pérez"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={newUser.email}
+                    onChange={(e) => handleUserInputChange('email', e.target.value)}
+                    placeholder="usuario@arriendocajas.cl"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="password">Contraseña</Label>
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      value={newUser.password}
+                      onChange={(e) => handleUserInputChange('password', e.target.value)}
+                      placeholder="Contraseña segura"
+                      className="pr-10"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+              <Button
+                onClick={handleCreateUser}
+                disabled={createUserMutation.isPending || !newUser.firstName || !newUser.lastName || !newUser.email || !newUser.password}
+                className="w-full"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                {createUserMutation.isPending ? "Creando..." : "Crear Usuario"}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Existing Users List */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Usuarios Administrativos
+              </CardTitle>
+              <CardDescription>
+                Lista de todos los usuarios con acceso administrativo
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {usersLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Settings className="h-6 w-6 animate-spin mr-2" />
+                  <span>Cargando usuarios...</span>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {adminUsers.map((user: any) => (
+                    <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+                          <span className="text-white text-sm font-medium">
+                            {user.firstName?.[0]}{user.lastName?.[0]}
+                          </span>
+                        </div>
+                        <div>
+                          <h4 className="font-medium">{user.firstName} {user.lastName}</h4>
+                          <p className="text-sm text-gray-600">{user.email}</p>
+                          <div className="flex items-center space-x-2 mt-1">
+                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                              user.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                            }`}>
+                              {user.isActive ? 'Activo' : 'Inactivo'}
+                            </span>
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                              {user.role}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-xs text-gray-500">
+                          Último acceso: {user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : 'Nunca'}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                  {adminUsers.length === 0 && (
+                    <div className="text-center py-8">
+                      <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-600">No hay usuarios administrativos registrados</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="brand" className="space-y-6">
           {/* Logo Upload */}
