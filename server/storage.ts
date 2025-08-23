@@ -401,14 +401,32 @@ class PostgresStorage implements IStorage {
       throw new Error('Arriendo no encontrado');
     }
     
-    await db.delete(rentals).where(eq(rentals.id, id));
-    
-    await this.logActivity({
-      type: "rental_deleted",
-      description: `Arriendo eliminado - ID: ${id}`,
-      entityId: id,
-      entityType: "rental"
-    });
+    try {
+      // Registrar la actividad ANTES de eliminar
+      await this.logActivity({
+        type: "rental_deleted",
+        description: `Arriendo eliminado - ID: ${id}`,
+        entityId: id,
+        entityType: "rental"
+      });
+      
+      // Primero eliminar dependencias relacionadas (pagos, activities excepto el que acabamos de crear)
+      await db.delete(payments).where(eq(payments.rentalId, id));
+      await db.delete(activities).where(and(
+        eq(activities.entityId, id),
+        sql`type != 'rental_deleted'`
+      ));
+      
+      // Luego eliminar el arriendo
+      await db.delete(rentals).where(eq(rentals.id, id));
+      
+    } catch (error: any) {
+      console.error('Error detailed in deleteRental:', error);
+      if (error.message?.includes('violates foreign key constraint')) {
+        throw new Error('No se puede eliminar: el arriendo tiene datos relacionados que deben eliminarse primero');
+      }
+      throw new Error(`Error al eliminar arriendo: ${error.message || 'Error desconocido'}`);
+    }
   }
 
   // Boxes
