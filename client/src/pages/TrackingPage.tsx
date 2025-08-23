@@ -83,8 +83,8 @@ export default function TrackingPage() {
     switch (status) {
       case 'pendiente':
         return <Clock className="h-5 w-5 text-yellow-600" />;
-      case 'programada':
-        return <Calendar className="h-5 w-5 text-blue-600" />;
+      case 'pagado':
+        return <CheckCircle className="h-5 w-5 text-blue-600" />;
       case 'en_ruta':
         return <Truck className="h-5 w-5 text-purple-600" />;
       case 'entregada':
@@ -99,6 +99,20 @@ export default function TrackingPage() {
         return <AlertTriangle className="h-5 w-5 text-red-600" />;
       default:
         return <Clock className="h-5 w-5 text-gray-600" />;
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'pendiente': return 'Pendiente';
+      case 'pagado': return 'Pagado';
+      case 'en_ruta': return 'En Ruta';
+      case 'entregada': return 'Entregada';
+      case 'retiro_programado': return 'Retiro Programado';
+      case 'retirada': return 'Retirada';
+      case 'finalizada': return 'Finalizada';
+      case 'cancelada': return 'Cancelada';
+      default: return status;
     }
   };
 
@@ -148,25 +162,26 @@ export default function TrackingPage() {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Status Card */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              {getStatusIcon(trackingData.status)}
-              <span>Estado Actual</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <Badge className={statusBadgeConfig[trackingData.status as keyof typeof statusBadgeConfig]?.color || "bg-gray-100 text-gray-800"}>
-                {statusBadgeConfig[trackingData.status as keyof typeof statusBadgeConfig]?.label || trackingData.status}
-              </Badge>
-              <span className="text-sm text-gray-500">
-                Arriendo creado el {formatDate(trackingData.createdAt)}
-              </span>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Status Card - Más visible */}
+        <div className="mb-8 text-center">
+          <div className={`inline-flex items-center px-8 py-4 rounded-2xl text-xl font-bold shadow-lg border-2 ${
+            trackingData.status === 'entregada' ? 'bg-green-100 text-green-800 border-green-300' :
+            trackingData.status === 'pendiente' ? 'bg-yellow-100 text-yellow-800 border-yellow-300' :
+            trackingData.status === 'pagado' ? 'bg-blue-100 text-blue-800 border-blue-300' :
+            trackingData.status === 'en_ruta' ? 'bg-purple-100 text-purple-800 border-purple-300' :
+            trackingData.status === 'retiro_programado' ? 'bg-orange-100 text-orange-800 border-orange-300' :
+            trackingData.status === 'retirada' ? 'bg-indigo-100 text-indigo-800 border-indigo-300' :
+            trackingData.status === 'finalizada' ? 'bg-gray-100 text-gray-800 border-gray-300' :
+            trackingData.status === 'cancelada' ? 'bg-red-100 text-red-800 border-red-300' :
+            'bg-gray-100 text-gray-800 border-gray-300'
+          }`}>
+            <div className="text-2xl mr-3">{getStatusIcon(trackingData.status)}</div>
+            <span>{getStatusText(trackingData.status)}</span>
+          </div>
+          <p className="text-sm text-gray-500 mt-3">
+            Arriendo creado el {formatDate(trackingData.createdAt)}
+          </p>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Customer Info */}

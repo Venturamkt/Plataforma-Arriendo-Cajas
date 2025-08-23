@@ -149,7 +149,7 @@ export default function CustomerTrackingPage() {
           <CardContent className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <Badge className={getStatusColor(trackingData.status)}>
+                <Badge className={`${getStatusColor(trackingData.status)} px-4 py-2 text-base font-semibold`}>
                   {getStatusText(trackingData.status)}
                 </Badge>
                 <span className="text-sm text-gray-600">

@@ -1,6 +1,9 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { db } from "./db";
+import { inventory, rentalItems } from "@shared/schema";
+import { eq, and } from "drizzle-orm";
 import { insertCustomerSchema, insertDriverSchema, insertRentalSchema, insertPaymentSchema, insertUserSchema, loginSchema } from "@shared/schema";
 import { z } from "zod";
 import bcrypt from "bcrypt";
@@ -683,8 +686,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Arriendo no encontrado" });
       }
 
-      // Auto-asignar repartidor cuando se marca como "pagado"
+      // Auto-asignar repartidor y reservar inventario cuando se marca como "pagado"
       if (status === "pagado") {
+        // 1. Reservar cajas del inventario
+        try {
+          const availableBoxes = await db.select()
+            .from(inventory)
+            .where(and(
+              eq(inventory.type, 'caja'),
+              eq(inventory.status, 'disponible')
+            ))
+            .limit(currentRental.boxQuantity);
+
+          if (availableBoxes.length >= currentRental.boxQuantity) {
+            const boxIds = availableBoxes.slice(0, currentRental.boxQuantity).map(box => box.id);
+            await storage.assignItemsToRental(currentRental.id, boxIds);
+            
+            console.log(`${currentRental.boxQuantity} cajas reservadas para arriendo ${currentRental.id}`);
+          } else {
+            console.warn(`Solo ${availableBoxes.length} cajas disponibles de ${currentRental.boxQuantity} requeridas`);
+          }
+        } catch (inventoryError) {
+          console.error('Error reservando cajas:', inventoryError);
+        }
+
+        // 2. Asignar repartidor automáticamente
         const availableDrivers = await storage.getDrivers();
         const activeDrivers = availableDrivers.filter(d => d.isActive);
         
@@ -706,7 +732,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           // Enviar email de asignación al conductor
           try {
-            const customer = await storage.getCustomer(currentRental.customerId);
+            const customer = await storage.getCustomerById(currentRental.customerId);
             if (customer) {
               const emailTemplate = emailTemplates.driverAssignment(driverWithLeastRentals.name, currentRental, customer);
               await sendDriverAssignmentEmail({
@@ -720,6 +746,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
           } catch (emailError) {
             console.error('Error enviando email de asignación automática:', emailError);
           }
+        }
+      }
+
+      // Liberar cajas cuando el arriendo se finaliza o cancela
+      if (status === "finalizada" || status === "cancelada") {
+        try {
+          const assignedItems = currentRental.assignedItems || [];
+          if (assignedItems.length > 0) {
+            // Actualizar items a disponible
+            await Promise.all(assignedItems.map(itemId => 
+              db.update(inventory)
+                .set({ status: 'disponible', updatedAt: new Date() })
+                .where(eq(inventory.id, itemId))
+            ));
+            
+            // Eliminar asignaciones de rental_items
+            await db.delete(rentalItems)
+              .where(eq(rentalItems.rentalId, currentRental.id));
+              
+            console.log(`${assignedItems.length} cajas liberadas del arriendo ${currentRental.id}`);
+          }
+        } catch (inventoryError) {
+          console.error('Error liberando cajas:', inventoryError);
         }
       }
       

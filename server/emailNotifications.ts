@@ -214,10 +214,20 @@ export async function sendRentalDeliveredEmail(data: RentalEmailData): Promise<b
           </a>
         </div>
         
-        <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; margin: 20px 0;">
-          <p style="margin: 0; font-size: 14px; color: #2e7d32;">
-            📋 <strong>Próximo paso:</strong> Recuerda tener las cajas listas para el retiro en la fecha programada.
-          </p>
+        <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <h4 style="margin: 0 0 15px 0; color: #2e7d32; font-size: 16px;">💡 Consejos para aprovechar al máximo tus cajas:</h4>
+          <ul style="margin: 0; padding-left: 20px; color: #2e7d32; font-size: 14px;">
+            <li style="margin: 8px 0;"><strong>Protege tu espalda:</strong> Dobla las rodillas al levantar, no la espalda. Mantén la carga cerca del cuerpo.</li>
+            <li style="margin: 8px 0;"><strong>Empaca inteligente:</strong> Los objetos pesados van abajo, los frágiles arriba y bien protegidos.</li>
+            <li style="margin: 8px 0;"><strong>Etiqueta todo:</strong> Marca cada caja con su contenido y habitación de destino.</li>
+            <li style="margin: 8px 0;"><strong>No sobrecargues:</strong> Máximo 20kg por caja para facilitar el transporte.</li>
+            <li style="margin: 8px 0;"><strong>Usa papel o toallas:</strong> Para rellenar espacios vacíos y evitar que se muevan los objetos.</li>
+          </ul>
+          <div style="margin-top: 15px; padding: 10px; background: #f1f8e9; border-radius: 5px;">
+            <p style="margin: 0; font-size: 13px; color: #2e7d32;">
+              📋 <strong>Próximo paso:</strong> Recuerda tener las cajas listas para el retiro en la fecha programada.
+            </p>
+          </div>
         </div>
       </div>
     </body>
