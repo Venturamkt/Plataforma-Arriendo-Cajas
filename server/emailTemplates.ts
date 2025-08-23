@@ -402,6 +402,116 @@ Si tienes alguna consulta, no dudes en contactarnos:
   return { html, text, subject: `✅ Cajas retiradas - Devolución garantía $${guaranteeAmount.toLocaleString("es-CL")}` };
 }
 
+// Template para estado "En Ruta" - notificar que vamos en camino
+export function generateOnRouteTemplate(rental: any, customer: any, driver: any): { html: string; text: string; subject: string } {
+  const estimatedTime = "30-45 minutos"; // Tiempo estimado por defecto
+  
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>¡Vamos en Camino! - Arriendo Cajas</title>
+    </head>
+    <body style="margin: 0; padding: 20px; font-family: 'Segoe UI', Arial, sans-serif; background-color: #f8f9fa;">
+      <div style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+        
+        <!-- Header -->
+        <div style="background: linear-gradient(135deg, #2E5CA6 0%, #4CAF50 100%); padding: 30px; text-align: center;">
+          <h1 style="color: white; margin: 0; font-size: 28px; font-weight: bold;">🚚 ¡Vamos en Camino!</h1>
+          <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;">Tu repartidor está en ruta</p>
+        </div>
+        
+        <!-- Content -->
+        <div style="padding: 40px 30px;">
+          <p style="color: #333; font-size: 16px; line-height: 1.6; margin-bottom: 25px;">
+            ¡Hola <strong>${customer.name}</strong>! 👋
+          </p>
+          
+          <p style="color: #333; font-size: 16px; line-height: 1.6; margin-bottom: 30px;">
+            ¡Buenas noticias! Nuestro repartidor ya está en camino hacia tu dirección con las <strong>${rental.boxQuantity} cajas</strong> que solicitaste. 🎉
+          </p>
+          
+          <!-- Información del repartidor -->
+          <div style="background-color: #e8f4fd; border-left: 4px solid #2E5CA6; padding: 20px; margin-bottom: 30px;">
+            <h3 style="color: #2E5CA6; margin: 0 0 15px 0; font-size: 18px;">👤 Tu repartidor:</h3>
+            <p style="color: #333; margin: 5px 0; font-size: 16px;"><strong>Nombre:</strong> ${driver.name}</p>
+            <p style="color: #333; margin: 5px 0; font-size: 16px;"><strong>Teléfono:</strong> ${driver.phone}</p>
+            <p style="color: #333; margin: 5px 0; font-size: 16px;"><strong>Tiempo estimado:</strong> ${estimatedTime}</p>
+          </div>
+          
+          <!-- Detalles de la entrega -->
+          <div style="background-color: #f8f9fa; border-radius: 8px; padding: 20px; margin-bottom: 30px;">
+            <h3 style="color: #333; margin: 0 0 15px 0;">📦 Detalles de tu entrega:</h3>
+            <p style="margin: 5px 0; color: #333;"><strong>Cantidad:</strong> ${rental.boxQuantity} cajas</p>
+            <p style="margin: 5px 0; color: #333;"><strong>Dirección:</strong> ${rental.deliveryAddress}</p>
+            <p style="margin: 5px 0; color: #333;"><strong>Total a pagar:</strong> $${parseInt(rental.totalAmount).toLocaleString('es-CL')}</p>
+          </div>
+          
+          <!-- Consejos para la recepción -->
+          <div style="background-color: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 20px; margin-bottom: 25px;">
+            <h3 style="color: #856404; margin: 0 0 15px 0;">💡 Prepárate para la entrega:</h3>
+            <ul style="color: #333; margin: 0; padding-left: 20px; line-height: 1.6;">
+              <li style="margin-bottom: 8px;">Ten tu <strong>teléfono disponible</strong> por si necesita contactarte</li>
+              <li style="margin-bottom: 8px;">Prepara el <strong>pago exacto</strong> según lo acordado</li>
+              <li style="margin-bottom: 8px;">Despeja el <strong>espacio de entrega</strong> para las cajas</li>
+              <li style="margin-bottom: 8px;">Si no estás, asegúrate de que alguien pueda recibir</li>
+            </ul>
+          </div>
+          
+          <div style="background-color: #e8f5e8; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 25px;">
+            <p style="color: #2E7D32; margin: 0; font-size: 16px; font-weight: bold;">
+              El repartidor te contactará al llegar a tu dirección
+            </p>
+          </div>
+          
+          <p style="color: #666; font-size: 14px; text-align: center; margin-top: 30px;">
+            Si tienes alguna consulta, no dudes en contactarnos:<br>
+            ✉️ Email: contacto@arriendocajas.cl<br>
+            💬 WhatsApp: <a href="https://wa.me/56987290995" style="color: #C8201D; text-decoration: none;">+56 9 8729 0995</a>
+          </p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const text = `
+    ¡Vamos en Camino! - Arriendo Cajas
+    
+    Hola ${customer.name},
+    
+    ¡Buenas noticias! Nuestro repartidor está en camino con tus ${rental.boxQuantity} cajas.
+    
+    Tu repartidor:
+    - Nombre: ${driver.name}
+    - Teléfono: ${driver.phone}
+    - Tiempo estimado: ${estimatedTime}
+    
+    Detalles de entrega:
+    - Cantidad: ${rental.boxQuantity} cajas
+    - Dirección: ${rental.deliveryAddress}
+    - Total: $${parseInt(rental.totalAmount).toLocaleString('es-CL')}
+    
+    Prepárate para la entrega:
+    - Ten tu teléfono disponible
+    - Prepara el pago exacto
+    - Despeja el espacio de entrega
+    - El repartidor te contactará al llegar
+    
+    Si tienes alguna consulta, no dudes en contactarnos:
+    ✉️ Email: contacto@arriendocajas.cl
+    💬 WhatsApp: +56 9 8729 0995 (https://wa.me/56987290995)
+  `;
+
+  return {
+    html,
+    text,
+    subject: `🚚 ¡Vamos en camino! Tu repartidor ${driver.name} está llegando - Arriendo Cajas`
+  };
+}
+
 // Template para finalización con Google Maps review
 export function generateCompletionWithReviewTemplate(rental: any, customer: any): { html: string; text: string; subject: string } {
   const googleMapsReviewUrl = "https://g.page/r/CdxFJ1234567890/review";
@@ -460,6 +570,7 @@ export default {
   driverAssignment: generateDriverAssignmentTemplate,
   pickupReminder: generatePickupReminderTemplate,
   pickupReminder2Days: generatePickupReminder2DaysTemplate,
+  onRoute: generateOnRouteTemplate,
   returnConfirmation: generateReturnConfirmationTemplate,
   completionWithReview: generateCompletionWithReviewTemplate
 };

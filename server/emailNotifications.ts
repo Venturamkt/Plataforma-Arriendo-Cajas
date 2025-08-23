@@ -297,6 +297,94 @@ export async function sendRentalPickedUpEmail(data: RentalEmailData): Promise<bo
   });
 }
 
+// Email para arriendo en ruta 
+export async function sendRentalOnRouteEmail(data: RentalEmailData): Promise<boolean> {
+  const trackingUrl = generateTrackingUrl(data.trackingCode, data.trackingToken);
+  const estimatedTime = "30-45 minutos";
+  
+  const subject = `🚚 ¡Vamos en camino! - Código ${data.trackingCode}`;
+  
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <title>¡Vamos en Camino!</title>
+    </head>
+    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background: linear-gradient(135deg, #2E5CA6 0%, #4CAF50 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+        <h1 style="color: white; margin: 0; font-size: 28px;">🚚 ¡Vamos en Camino!</h1>
+        <p style="color: white; margin: 10px 0 0 0; font-size: 16px;">Tu repartidor está en ruta - Código: <strong>${data.trackingCode}</strong></p>
+      </div>
+      
+      <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
+        <h2 style="color: #2E5CA6; margin-top: 0;">¡Hola ${data.customerName}!</h2>
+        
+        <p>¡Buenas noticias! Nuestro repartidor ya está <strong>EN CAMINO</strong> hacia tu dirección con las <strong>${data.boxQuantity} cajas</strong> que solicitaste. 🎉</p>
+        
+        <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2E5CA6;">
+          <h3 style="margin-top: 0; color: #2E5CA6;">👤 Tu repartidor:</h3>
+          <ul style="list-style: none; padding: 0;">
+            <li style="margin: 8px 0;"><strong>Nombre:</strong> ${data.driverName || 'Por confirmar'}</li>
+            <li style="margin: 8px 0;"><strong>Teléfono:</strong> ${data.driverPhone || 'Por confirmar'}</li>
+            <li style="margin: 8px 0;"><strong>Tiempo estimado:</strong> ${estimatedTime}</li>
+          </ul>
+        </div>
+        
+        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <h3 style="margin-top: 0; color: #333;">📦 Detalles de tu entrega:</h3>
+          <ul style="list-style: none; padding: 0;">
+            <li style="margin: 8px 0;"><strong>Cantidad:</strong> ${data.boxQuantity} cajas</li>
+            <li style="margin: 8px 0;"><strong>Dirección:</strong> ${data.deliveryAddress}</li>
+          </ul>
+        </div>
+        
+        <div style="background: #fff3cd; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <h3 style="margin-top: 0; color: #856404;">💡 Prepárate para la entrega:</h3>
+          <ul style="list-style: none; padding: 0;">
+            <li style="margin: 8px 0;">✓ Ten tu <strong>teléfono disponible</strong> por si necesita contactarte</li>
+            <li style="margin: 8px 0;">✓ Prepara el <strong>pago exacto</strong> según lo acordado</li>
+            <li style="margin: 8px 0;">✓ Despeja el <strong>espacio de entrega</strong> para las cajas</li>
+            <li style="margin: 8px 0;">✓ Si no estás, asegúrate de que alguien pueda recibir</li>
+          </ul>
+        </div>
+        
+        <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center;">
+          <p style="margin: 0; font-size: 16px; color: #2e7d32; font-weight: bold;">
+            📞 El repartidor te contactará al llegar a tu dirección
+          </p>
+        </div>
+        
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${trackingUrl}" style="background: #C8201D; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
+            🔍 Seguir mi Arriendo
+          </a>
+        </div>
+        
+        <p style="margin-top: 30px;">
+          Si tienes alguna consulta, no dudes en contactarnos:<br>
+          ✉️ <strong>Email:</strong> contacto@arriendocajas.cl<br>
+          💬 <strong>WhatsApp:</strong> <a href="https://wa.me/56987290995" style="color: #25D366; text-decoration: none;">+56 9 8729 0995</a>
+        </p>
+        
+        <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
+        <p style="text-align: center; color: #666; font-size: 12px;">
+          © 2025 Arriendo Cajas. Todos los derechos reservados.<br>
+          Tu repartidor llega pronto con tus cajas.
+        </p>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return await sendEmail({
+    to: data.customerEmail,
+    subject,
+    html: htmlContent
+  });
+}
+
 // Email para arriendo finalizado (con solicitud de review)
 export async function sendRentalCompletedEmail(data: RentalEmailData): Promise<boolean> {
   const trackingUrl = generateTrackingUrl(data.trackingCode, data.trackingToken);
@@ -360,9 +448,9 @@ export async function sendRentalCompletedEmail(data: RentalEmailData): Promise<b
         <p style="margin-top: 30px;">
           ¡Esperamos verte pronto para tu próximo arriendo!<br><br>
           
-          📞 <strong>Teléfono:</strong> +56 9 XXXX XXXX<br>
+          Si tienes alguna consulta, no dudes en contactarnos:<br>
           ✉️ <strong>Email:</strong> contacto@arriendocajas.cl<br>
-          💬 <strong>WhatsApp:</strong> +56 9 XXXX XXXX
+          💬 <strong>WhatsApp:</strong> <a href="https://wa.me/56987290995" style="color: #25D366; text-decoration: none;">+56 9 8729 0995</a>
         </p>
         
         <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">

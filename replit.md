@@ -88,11 +88,12 @@ Arriendo Cajas is a comprehensive web platform for managing a box rental busines
   - **Email 2 días antes del retiro**: Consejos de limpieza y preparación de cajas (pickupReminder2Days)
   - **Email estado "Retirada"**: Solicitud de datos bancarios para devolución de garantía (returnConfirmation)
   - **Email estado "Finalizada"**: Agradecimiento y link de Google Maps para reseñas (completionWithReview)
+  - **Email estado "En Ruta"**: Notificación que el repartidor va en camino con datos del conductor y tiempo estimado
   - **Formato de contacto estandarizado**: Todos los emails usan el formato correcto:
     - "Si tienes alguna consulta, no dudes en contactarnos:"
     - "✉️ Email: contacto@arriendocajas.cl"
     - "💬 WhatsApp: +56 9 8729 0995 (con link https://wa.me/56987290995)"
-  - **Status**: ✅ SISTEMA DE EMAILS AMPLIADO Y ESTANDARIZADO
+  - **Status**: ✅ SISTEMA DE EMAILS COMPLETO CON FLUJO DE COMUNICACIÓN TOTAL
 
 ### Current Features
 - **Home Page**: Professional landing page with 3 access portals (Customers, Drivers, Admin)

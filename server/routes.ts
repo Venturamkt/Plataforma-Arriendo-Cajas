@@ -8,7 +8,7 @@ import { insertCustomerSchema, insertDriverSchema, insertRentalSchema, insertPay
 import { z } from "zod";
 import bcrypt from "bcrypt";
 import { sendEmail, emailTemplates, sendDriverAssignmentEmail } from "./emailService";
-import { sendStatusChangeEmail, type RentalEmailData } from "./emailNotifications";
+import { sendStatusChangeEmail, sendRentalOnRouteEmail, type RentalEmailData } from "./emailNotifications";
 import { generateTrackingCode, generateTrackingUrl } from "./trackingUtils";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -805,8 +805,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
               status: rental.status
             };
             
-            await sendStatusChangeEmail(rental.status, emailData);
-            console.log(`Email de cambio de estado enviado a: ${customer.email} - Estado: ${rental.status}`);
+            // Enviar email específico para "En Ruta" o email genérico de cambio de estado
+            if (rental.status === 'en_ruta') {
+              await sendRentalOnRouteEmail(emailData);
+              console.log(`Email "En Ruta" enviado a: ${customer.email} - Repartidor: ${driver?.name}`);
+            } else {
+              await sendStatusChangeEmail(rental.status, emailData);
+              console.log(`Email de cambio de estado enviado a: ${customer.email} - Estado: ${rental.status}`);
+            }
           }
         } catch (emailError) {
           console.error('Error enviando email de cambio de estado:', emailError);
