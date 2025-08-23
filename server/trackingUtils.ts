@@ -31,14 +31,16 @@ export function generateTrackingToken(): string {
 
 // Generar URL completa de tracking
 export function generateTrackingUrl(trackingCode: string, trackingToken: string): string {
-  // En Replit, usar el dominio de Replit para evitar localhost
+  // Usar dominio personalizado para producción
   const replitDomain = process.env.REPLIT_DEV_DOMAIN;
-  let baseUrl = 'http://localhost:5000'; // fallback
+  let baseUrl = 'http://localhost:5000'; // fallback para desarrollo
   
-  if (replitDomain) {
+  if (process.env.NODE_ENV === 'production' || process.env.REPLIT_DEPLOYMENT === '1') {
+    // Producción - usar dominio personalizado
+    baseUrl = 'https://plataforma.arriendocajas.cl';
+  } else if (replitDomain) {
+    // Desarrollo en Replit
     baseUrl = `https://${replitDomain}`;
-  } else if (process.env.NODE_ENV === 'production') {
-    baseUrl = 'https://arriendocajas.cl';
   }
   
   return `${baseUrl}/track/${trackingCode}/${trackingToken}`;

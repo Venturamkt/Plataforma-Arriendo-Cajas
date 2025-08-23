@@ -19,7 +19,7 @@ interface RentalEmailData {
 export async function sendRentalCreatedEmail(data: RentalEmailData): Promise<boolean> {
   const trackingUrl = generateTrackingUrl(data.trackingCode, data.trackingToken);
   
-  const subject = `✅ Arriendo Confirmado - Código ${data.trackingCode}`;
+  const subject = `📋 Cotización Recibida - Código ${data.trackingCode}`;
   
   const htmlContent = `
     <!DOCTYPE html>
@@ -27,18 +27,18 @@ export async function sendRentalCreatedEmail(data: RentalEmailData): Promise<boo
     <head>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1">
-      <title>Arriendo Confirmado</title>
+      <title>Cotización Recibida</title>
     </head>
     <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
       <div style="background: linear-gradient(135deg, #2E5CA6 0%, #C8201D 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-        <h1 style="color: white; margin: 0; font-size: 28px;">¡Arriendo Confirmado!</h1>
+        <h1 style="color: white; margin: 0; font-size: 28px;">📋 Cotización Recibida</h1>
         <p style="color: white; margin: 10px 0 0 0; font-size: 16px;">Tu código de seguimiento: <strong>${data.trackingCode}</strong></p>
       </div>
       
       <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
         <h2 style="color: #2E5CA6; margin-top: 0;">Hola ${data.customerName},</h2>
         
-        <p>Tu arriendo ha sido confirmado y se encuentra en estado <strong>PENDIENTE</strong>. Pronto programaremos la entrega.</p>
+        <p>Hemos recibido tu solicitud de arriendo. Se encuentra en estado <strong>PENDIENTE</strong> mientras revisamos la disponibilidad y programamos la entrega.</p>
         
         <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2E5CA6;">
           <h3 style="margin-top: 0; color: #2E5CA6;">📦 Detalles del Arriendo</h3>

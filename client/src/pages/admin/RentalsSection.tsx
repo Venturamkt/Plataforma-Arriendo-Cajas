@@ -686,7 +686,7 @@ export default function RentalsSection() {
                               className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
                               onClick={() => {
                                 // Copiar solo la URL de tracking
-                                const trackingUrl = `https://441204b6-ae40-4994-b677-be11a32eb976-00-1rsmov5q0kvpq.janeway.replit.dev/track/${rental.trackingCode}/${rental.trackingToken}`;
+                                const trackingUrl = `https://plataforma.arriendocajas.cl/track/${rental.trackingCode}/${rental.trackingToken}`;
                                 
                                 navigator.clipboard.writeText(trackingUrl);
                                 toast({
