@@ -126,7 +126,9 @@ export function generateRentalConfirmationTemplate(rental: any, customer: any, d
           <!-- Contacto -->
           <div style="text-align: center; padding: 20px 0; border-top: 1px solid #e9ecef;">
             <p style="color: #666; margin: 0 0 10px 0;">¿Dudas? ¡Estamos aquí para ayudarte! 😊</p>
-            <p style="color: #C8201D; font-weight: bold; margin: 0;">📞 +56 9 XXXX XXXX | ✉️ contacto@arriendocajas.cl</p>
+            <p style="color: #333; margin: 0; font-size: 14px;">Si tienes alguna consulta, no dudes en contactarnos:</p>
+            <p style="color: #C8201D; font-weight: bold; margin: 5px 0 0 0;">✉️ Email: contacto@arriendocajas.cl</p>
+            <p style="color: #C8201D; font-weight: bold; margin: 5px 0 0 0;">💬 WhatsApp: <a href="https://wa.me/56987290995" style="color: #C8201D; text-decoration: none;">+56 9 8729 0995</a></p>
           </div>
         </div>
         
@@ -173,9 +175,9 @@ ${driver ? `🚚 REPARTIDOR ASIGNADO: ${driver.name}` : ''}
 - Ten tu teléfono disponible
 - Prepara el pago según lo acordado
 
-¿Dudas? Contáctanos:
-📞 +56 9 XXXX XXXX
-✉️ contacto@arriendocajas.cl
+Si tienes alguna consulta, no dudes en contactarnos:
+✉️ Email: contacto@arriendocajas.cl
+💬 WhatsApp: +56 9 8729 0995 (https://wa.me/56987290995)
 
 Arriendo Cajas - Soluciones inteligentes para tus mudanzas
   `;
@@ -245,7 +247,9 @@ export function generateDriverAssignmentTemplate(rental: any, customer: any, dri
           <!-- Contacto -->
           <div style="text-align: center; padding: 20px 0; border-top: 1px solid #e9ecef;">
             <p style="color: #666; margin: 0 0 10px 0;">¿Problemas con la asignación?</p>
-            <p style="color: #C8201D; font-weight: bold; margin: 0;">📞 Coordinación: +56 9 XXXX XXXX</p>
+            <p style="color: #333; margin: 0; font-size: 14px;">Si tienes alguna consulta, no dudes en contactarnos:</p>
+            <p style="color: #C8201D; font-weight: bold; margin: 5px 0 0 0;">✉️ Email: contacto@arriendocajas.cl</p>
+            <p style="color: #C8201D; font-weight: bold; margin: 5px 0 0 0;">💬 WhatsApp: <a href="https://wa.me/56987290995" style="color: #C8201D; text-decoration: none;">+56 9 8729 0995</a></p>
           </div>
         </div>
         
@@ -284,7 +288,9 @@ Se te ha asignado un nuevo arriendo para entrega:
 - Lleva cajas en buen estado
 - Actualiza estado después de entregar
 
-¿Problemas? Contacta coordinación: +56 9 XXXX XXXX
+Si tienes alguna consulta, no dudes en contactarnos:
+✉️ Email: contacto@arriendocajas.cl  
+💬 WhatsApp: +56 9 8729 0995 (https://wa.me/56987290995)
 
 Arriendo Cajas - Sistema de Asignaciones
   `;
@@ -323,7 +329,9 @@ export function generatePickupReminder2DaysTemplate(rental: any, customer: any):
           <p style="margin: 5px 0; color: #333;"><strong>Dirección:</strong> ${rental.pickupAddress || rental.deliveryAddress}</p>
         </div>
         
-        <p style="color: #666; text-align: center; margin-top: 30px;">¿Dudas? +56 9 8729 0995 | contacto@arriendocajas.cl</p>
+        <p style="color: #666; text-align: center; margin-top: 30px;">Si tienes alguna consulta, no dudes en contactarnos:
+          ✉️ Email: contacto@arriendocajas.cl
+          💬 WhatsApp: +56 9 8729 0995 (https://wa.me/56987290995)</p>
       </div>
     </div>
   </body></html>`;
@@ -331,7 +339,9 @@ export function generatePickupReminder2DaysTemplate(rental: any, customer: any):
   const text = `Recordatorio Retiro - Arriendo Cajas
 Hola ${customer.name}, te recordamos que el ${pickupDate} retiraremos las cajas.
 Consejos: Vacía, limpia, seca, revisa y agrupa las cajas.
-Contacto: +56 9 8729 0995 | contacto@arriendocajas.cl`;
+Si tienes alguna consulta, no dudes en contactarnos:
+✉️ Email: contacto@arriendocajas.cl
+💬 WhatsApp: +56 9 8729 0995 (https://wa.me/56987290995)`;
 
   return { html, text, subject: `📦 Retiro de cajas programado para ${pickupDate}` };
 }
@@ -372,7 +382,9 @@ export function generateReturnConfirmationTemplate(rental: any, customer: any): 
         <p style="color: #666; text-align: center; font-size: 14px; margin: 20px 0;">
           <strong>Procesamos devoluciones en 24-48 horas hábiles</strong>
         </p>
-        <p style="color: #666; text-align: center; margin-top: 30px;">¿Dudas? +56 9 8729 0995 | contacto@arriendocajas.cl</p>
+        <p style="color: #666; text-align: center; margin-top: 30px;">Si tienes alguna consulta, no dudes en contactarnos:
+          ✉️ Email: contacto@arriendocajas.cl
+          💬 WhatsApp: +56 9 8729 0995 (https://wa.me/56987290995)</p>
       </div>
     </div>
   </body></html>`;
@@ -381,7 +393,11 @@ export function generateReturnConfirmationTemplate(rental: any, customer: any): 
 Hola ${customer.name}, retiramos ${rental.boxQuantity} cajas el ${returnDate}.
 GARANTÍA: $${guaranteeAmount.toLocaleString("es-CL")}
 Envía datos bancarios a contacto@arriendocajas.cl: nombre, RUT, banco, tipo cuenta, número.
-Procesamos en 24-48h hábiles. +56 9 8729 0995`;
+Procesamos en 24-48h hábiles.
+
+Si tienes alguna consulta, no dudes en contactarnos:
+✉️ Email: contacto@arriendocajas.cl
+💬 WhatsApp: +56 9 8729 0995 (https://wa.me/56987290995)`;
 
   return { html, text, subject: `✅ Cajas retiradas - Devolución garantía $${guaranteeAmount.toLocaleString("es-CL")}` };
 }
@@ -418,7 +434,9 @@ export function generateCompletionWithReviewTemplate(rental: any, customer: any)
           <p style="color: #666; font-size: 14px;">Para tu próxima mudanza, estamos aquí para ayudarte.</p>
         </div>
         
-        <p style="color: #666; text-align: center; margin-top: 30px;">+56 9 8729 0995 | contacto@arriendocajas.cl</p>
+        <p style="color: #666; text-align: center; margin-top: 30px;">Si tienes alguna consulta, no dudes en contactarnos:<br>
+        ✉️ Email: contacto@arriendocajas.cl<br>
+        💬 WhatsApp: <a href="https://wa.me/56987290995" style="color: #C8201D; text-decoration: none;">+56 9 8729 0995</a></p>
       </div>
     </div>
   </body></html>`;
@@ -427,7 +445,11 @@ export function generateCompletionWithReviewTemplate(rental: any, customer: any)
 Hola ${customer.name}, completamos tu arriendo exitosamente.
 Resumen: ${rental.boxQuantity} cajas, ${rental.rentalDays || "N/A"} días.
 ¡Comparte tu experiencia en Google Maps! ${googleMapsReviewUrl}
-¡Gracias por elegirnos! +56 9 8729 0995 | contacto@arriendocajas.cl`;
+¡Gracias por elegirnos!
+
+Si tienes alguna consulta, no dudes en contactarnos:
+✉️ Email: contacto@arriendocajas.cl
+💬 WhatsApp: +56 9 8729 0995 (https://wa.me/56987290995)`;
 
   return { html, text, subject: "🎉 ¡Arriendo finalizado! Gracias por confiar en Arriendo Cajas" };
 }

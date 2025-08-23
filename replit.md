@@ -78,6 +78,21 @@ Arriendo Cajas is a comprehensive web platform for managing a box rental busines
   - **CustomerTrackingPage**: Número actualizado de +56 9 1234 5678 a +56 9 8729 0995
   - **TrackingPage**: Números de teléfono y WhatsApp actualizados con el número correcto
   - **Status**: ✅ INFORMACIÓN DE CONTACTO COMPLETAMENTE ACTUALIZADA
+- ✅ **Sistema de Estados Simplificado (Aug 23, 2025)**: Eliminación completa de "Retiro Programado"
+  - **Estado eliminado**: "retiro_programado" removido del flujo de arriendos
+  - **Flujo simplificado**: Pendiente → Pagado → En Ruta → Entregada → Retirada → Finalizada
+  - **Frontend actualizado**: Todos los dropdowns de estado corregidos en RentalsSection.tsx
+  - **Backend actualizado**: Consultas SQL y storage.ts actualizados sin referencias al estado eliminado
+  - **Status**: ✅ FLUJO SIMPLIFICADO Y FUNCIONAL
+- ✅ **Nuevos Emails Automáticos Mejorados (Aug 23, 2025)**: Sistema de notificaciones expandido
+  - **Email 2 días antes del retiro**: Consejos de limpieza y preparación de cajas (pickupReminder2Days)
+  - **Email estado "Retirada"**: Solicitud de datos bancarios para devolución de garantía (returnConfirmation)
+  - **Email estado "Finalizada"**: Agradecimiento y link de Google Maps para reseñas (completionWithReview)
+  - **Formato de contacto estandarizado**: Todos los emails usan el formato correcto:
+    - "Si tienes alguna consulta, no dudes en contactarnos:"
+    - "✉️ Email: contacto@arriendocajas.cl"
+    - "💬 WhatsApp: +56 9 8729 0995 (con link https://wa.me/56987290995)"
+  - **Status**: ✅ SISTEMA DE EMAILS AMPLIADO Y ESTANDARIZADO
 
 ### Current Features
 - **Home Page**: Professional landing page with 3 access portals (Customers, Drivers, Admin)
