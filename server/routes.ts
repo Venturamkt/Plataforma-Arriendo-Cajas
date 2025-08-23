@@ -1,8 +1,9 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertCustomerSchema, insertDriverSchema, insertRentalSchema, insertPaymentSchema } from "@shared/schema";
+import { insertCustomerSchema, insertDriverSchema, insertRentalSchema, insertPaymentSchema, insertUserSchema, loginSchema } from "@shared/schema";
 import { z } from "zod";
+import bcrypt from "bcrypt";
 import { sendEmail, emailTemplates, sendDriverAssignmentEmail } from "./emailService";
 import { sendStatusChangeEmail, type RentalEmailData } from "./emailNotifications";
 import { generateTrackingCode, generateTrackingUrl } from "./trackingUtils";
@@ -17,8 +18,104 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ status: "ok", message: "Server is running" });
   });
 
+  // Middleware de autenticación
+  const requireAuth = (req: any, res: any, next: any) => {
+    if (!req.session?.user) {
+      return res.status(401).json({ error: "No autorizado" });
+    }
+    if (req.session.user.role !== "admin") {
+      return res.status(403).json({ error: "Acceso denegado" });
+    }
+    next();
+  };
+
+  // Rutas de autenticación
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const validatedData = loginSchema.parse(req.body);
+      const user = await storage.getUserByEmail(validatedData.email);
+      
+      if (!user) {
+        return res.status(401).json({ error: "Credenciales inválidas" });
+      }
+      
+      if (!user.isActive) {
+        return res.status(401).json({ error: "Usuario inactivo" });
+      }
+      
+      const isValidPassword = await bcrypt.compare(validatedData.password, user.password);
+      if (!isValidPassword) {
+        return res.status(401).json({ error: "Credenciales inválidas" });
+      }
+      
+      // Actualizar último login
+      await storage.updateUserLastLogin(user.id);
+      
+      // Guardar en sesión (sin contraseña)
+      const { password, ...userWithoutPassword } = user;
+      req.session.user = userWithoutPassword;
+      
+      res.json({ 
+        user: userWithoutPassword,
+        message: "Login exitoso" 
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Datos inválidos", details: error.errors });
+      }
+      console.error("Error en login:", error);
+      res.status(500).json({ error: "Error interno del servidor" });
+    }
+  });
+
+  app.post("/api/auth/logout", (req, res) => {
+    req.session.destroy((err: any) => {
+      if (err) {
+        return res.status(500).json({ error: "Error al cerrar sesión" });
+      }
+      res.json({ message: "Sesión cerrada exitosamente" });
+    });
+  });
+
+  app.get("/api/auth/me", (req, res) => {
+    if (!req.session?.user) {
+      return res.status(401).json({ error: "No autorizado" });
+    }
+    res.json({ user: req.session.user });
+  });
+
+  app.post("/api/auth/register", requireAuth, async (req, res) => {
+    try {
+      const validatedData = insertUserSchema.parse(req.body);
+      
+      // Hash de la contraseña
+      const saltRounds = 12;
+      const hashedPassword = await bcrypt.hash(validatedData.password, saltRounds);
+      
+      const user = await storage.createUser({
+        ...validatedData,
+        password: hashedPassword
+      });
+      
+      // No devolver la contraseña
+      const { password, ...userWithoutPassword } = user;
+      res.status(201).json(userWithoutPassword);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Datos inválidos", details: error.errors });
+      }
+      
+      if (error instanceof Error && error.message.includes("duplicate key")) {
+        return res.status(400).json({ error: "Ya existe un usuario con este email" });
+      }
+      
+      console.error("Error registrando usuario:", error);
+      res.status(500).json({ error: "Error al crear usuario" });
+    }
+  });
+
   // Dashboard stats
-  app.get("/api/dashboard/stats", async (req, res) => {
+  app.get("/api/dashboard/stats", requireAuth, async (req, res) => {
     try {
       const stats = await storage.getDashboardStats();
       res.json(stats);
@@ -29,7 +126,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Customer routes
-  app.get("/api/customers", async (req, res) => {
+  app.get("/api/customers", requireAuth, async (req, res) => {
     try {
       const customers = await storage.getCustomers();
       res.json(customers);
@@ -52,7 +149,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/customers", async (req, res) => {
+  app.post("/api/customers", requireAuth, async (req, res) => {
     try {
       const validatedData = insertCustomerSchema.parse(req.body);
       const customer = await storage.createCustomer(validatedData);

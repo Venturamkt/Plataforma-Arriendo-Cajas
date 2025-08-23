@@ -4,6 +4,8 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient-simple";
 import Home from "./pages/Home.tsx";
 import AdminDashboard from "./pages/AdminDashboard.tsx";
+import AdminLogin from "./pages/AdminLogin";
+import ProtectedAdminRoute from "./components/ProtectedAdminRoute";
 import TrackingPage from "./pages/TrackingPage";
 import CustomerTrackingPage from "./pages/CustomerTrackingPage";
 import CustomerLogin from "./pages/auth/customer-login";
@@ -18,7 +20,12 @@ function App() {
           <Route path="/customers" component={CustomerLogin} />
           <Route path="/customer/dashboard" component={CustomerDashboard} />
           <Route path="/drivers" component={() => <div className="min-h-screen flex items-center justify-center text-white"><h1 className="text-2xl">Portal de Repartidores - En desarrollo</h1></div>} />
-          <Route path="/admin" component={AdminDashboard} />
+          <Route path="/admin/login" component={AdminLogin} />
+          <Route path="/admin" component={() => (
+            <ProtectedAdminRoute>
+              <AdminDashboard />
+            </ProtectedAdminRoute>
+          )} />
           <Route path="/track/:trackingCode/:trackingToken" component={CustomerTrackingPage} />
           <Route path="/tracking-admin/:trackingCode/:trackingToken" component={TrackingPage} />
           <Route>

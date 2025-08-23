@@ -26,14 +26,16 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
-// Usuarios
+// Usuarios Admin
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  email: varchar("email").unique(),
+  email: varchar("email").unique().notNull(),
+  password: varchar("password").notNull(), // Hash bcrypt
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
-  role: varchar("role", { enum: ["admin", "driver", "customer"] }).default("customer"),
+  role: varchar("role", { enum: ["admin", "driver", "customer"] }).default("admin"),
   isActive: boolean("is_active").default(true),
+  lastLogin: timestamp("last_login"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -249,6 +251,18 @@ export const paymentsRelations = relations(payments, ({ one }) => ({
 }));
 
 // Schemas de validación
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  lastLogin: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const loginSchema = z.object({
+  email: z.string().email("Email inválido"),
+  password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
+});
+
 export const insertCustomerSchema = createInsertSchema(customers);
 export const insertDriverSchema = createInsertSchema(drivers);
 export const insertRentalSchema = createInsertSchema(rentals).extend({
@@ -264,6 +278,9 @@ export const insertInventorySchema = createInsertSchema(inventory);
 export const insertRentalItemSchema = createInsertSchema(rentalItems);
 
 // Tipos
+export type User = typeof users.$inferSelect;
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type LoginUser = z.infer<typeof loginSchema>;
 export type Customer = typeof customers.$inferSelect;
 export type Driver = typeof drivers.$inferSelect;
 export type Rental = typeof rentals.$inferSelect;

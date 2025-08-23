@@ -19,7 +19,9 @@ import { generateTrackingCode, generateTrackingToken } from "./trackingUtils";
 export interface IStorage {
   // Users
   getUserById(id: string): Promise<any>;
+  getUserByEmail(email: string): Promise<any>;
   createUser(userData: any): Promise<any>;
+  updateUserLastLogin(id: string): Promise<void>;
   
   // Customers
   getCustomers(): Promise<any[]>;
@@ -75,9 +77,23 @@ class PostgresStorage implements IStorage {
     return result[0] || null;
   }
 
+  async getUserByEmail(email: string) {
+    const result = await db.select().from(users).where(eq(users.email, email));
+    return result[0] || null;
+  }
+
   async createUser(userData: any) {
     const result = await db.insert(users).values(userData).returning();
     return result[0];
+  }
+
+  async updateUserLastLogin(id: string): Promise<void> {
+    await db.update(users)
+      .set({ 
+        lastLogin: new Date(),
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, id));
   }
 
   // Customers

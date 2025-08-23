@@ -69,7 +69,7 @@ export default function Home() {
             <p className="text-gray-600 mb-6">
               Control total del sistema y reportes
             </p>
-            <Link href="/admin">
+            <Link href="/admin/login">
               <button className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors">
                 Ingresar como Admin
               </button>
