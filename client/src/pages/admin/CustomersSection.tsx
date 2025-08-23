@@ -34,16 +34,7 @@ interface CustomerWithStats extends Customer {
   debtAmount?: number;
 }
 
-const statusBadgeConfig = {
-  pendiente: { color: "bg-yellow-500", label: "Pendiente" },
-  programada: { color: "bg-blue-500", label: "Programada" },
-  en_ruta: { color: "bg-purple-500", label: "En Ruta" },
-  entregada: { color: "bg-green-500", label: "Entregada" },
-  retiro_programado: { color: "bg-orange-500", label: "Retiro Programado" },
-  retirada: { color: "bg-indigo-500", label: "Retirada" },
-  finalizada: { color: "bg-gray-500", label: "Finalizada" },
-  cancelada: { color: "bg-red-500", label: "Cancelada" }
-};
+
 
 const quickFilters = [
   { id: "active_rentals", label: "Con arriendos activos" },
@@ -60,8 +51,7 @@ export default function CustomersSection() {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showCustomerDetail, setShowCustomerDetail] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerWithStats | null>(null);
-  const [showStatusDialog, setShowStatusDialog] = useState(false);
-  const [statusChangeData, setStatusChangeData] = useState<{customerId: string, newStatus: string} | null>(null);
+
   const [formData, setFormData] = useState({
     name: "",
     rut: "",
@@ -164,33 +154,7 @@ export default function CustomersSection() {
     }
   });
 
-  // Update customer status mutation (simulated - this would update the rental status in real app)
-  const updateStatusMutation = useMutation({
-    mutationFn: async ({customerId, status}: {customerId: string, status: string}) => {
-      // En una app real, esto actualizaría el estado del arriendo activo del cliente
-      // Por ahora simulamos la actualización
-      const response = await fetch(`/api/customers/${customerId}/status`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status })
-      });
-      
-      if (!response.ok) {
-        // Si la ruta no existe, simulamos éxito para la demo
-        return { success: true };
-      }
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
-      toast({ title: "Estado actualizado con éxito", variant: "default" });
-      setShowStatusDialog(false);
-      setStatusChangeData(null);
-    },
-    onError: (error: Error) => {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    }
-  });
+
 
   const resetForm = () => {
     setFormData({
@@ -285,29 +249,7 @@ export default function CustomersSection() {
     );
   };
 
-  const handleStatusChange = (customerId: string, newStatus: string) => {
-    setStatusChangeData({ customerId, newStatus });
-    setShowStatusDialog(true);
-  };
 
-  const confirmStatusChange = () => {
-    if (statusChangeData) {
-      // Actualizar localmente para feedback inmediato
-      queryClient.setQueryData(["/api/customers"], (old: CustomerWithStats[] | undefined) => {
-        if (!old) return old;
-        return old.map(customer => 
-          customer.id === statusChangeData.customerId 
-            ? { ...customer, lastRentalStatus: statusChangeData.newStatus }
-            : customer
-        );
-      });
-
-      updateStatusMutation.mutate({
-        customerId: statusChangeData.customerId,
-        status: statusChangeData.newStatus
-      });
-    }
-  };
 
   const filteredCustomers = customers.filter((customer: CustomerWithStats) => {
     // Search filter
@@ -411,7 +353,6 @@ export default function CustomersSection() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contacto</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">RUT</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Arriendos</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deuda</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                   </tr>
@@ -447,31 +388,6 @@ export default function CustomersSection() {
                         >
                           {customer.rentalsText}
                         </button>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {customer.lastRentalStatus && (
-                          <div className="relative inline-block">
-                            <select
-                              value={customer.lastRentalStatus}
-                              onChange={(e) => handleStatusChange(customer.id, e.target.value)}
-                              className={`appearance-none px-3 py-1 pr-8 rounded text-xs font-medium text-white border-none cursor-pointer outline-none ${statusBadgeConfig[customer.lastRentalStatus as keyof typeof statusBadgeConfig]?.color}`}
-                            >
-                              <option value="pendiente" className="text-black bg-white">Pendiente</option>
-                              <option value="programada" className="text-black bg-white">Programada</option>
-                              <option value="en_ruta" className="text-black bg-white">En Ruta</option>
-                              <option value="entregada" className="text-black bg-white">Entregada</option>
-                              <option value="retiro_programado" className="text-black bg-white">Retiro Programado</option>
-                              <option value="retirada" className="text-black bg-white">Retirada</option>
-                              <option value="finalizada" className="text-black bg-white">Finalizada</option>
-                              <option value="cancelada" className="text-black bg-white">Cancelada</option>
-                            </select>
-                            <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                              <svg className="w-3 h-3 fill-white" viewBox="0 0 20 20">
-                                <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
-                              </svg>
-                            </div>
-                          </div>
-                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`text-sm font-medium ${(customer.debtAmount || 0) > 0 ? 'text-red-600' : 'text-green-600'}`}>
@@ -873,45 +789,7 @@ export default function CustomersSection() {
         </DialogContent>
       </Dialog>
 
-      {/* Status Change Confirmation Dialog */}
-      <Dialog open={showStatusDialog} onOpenChange={setShowStatusDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirmar Cambio de Estado</DialogTitle>
-            <DialogDescription>
-              ¿Estás seguro de cambiar el estado del arriendo activo a "{statusChangeData?.newStatus && statusBadgeConfig[statusChangeData.newStatus as keyof typeof statusBadgeConfig]?.label}"?
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4">
-            <div className="p-4 bg-yellow-50 rounded-lg">
-              <div className="flex items-start space-x-2">
-                <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
-                <div className="text-sm text-yellow-800">
-                  <p className="font-medium">Este cambio puede generar notificaciones automáticas:</p>
-                  <ul className="mt-2 space-y-1">
-                    <li>• Cliente será notificado por email</li>
-                    <li>• Repartidor recibirá actualización si está asignado</li>
-                    <li>• Se registrará en el historial de actividades</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowStatusDialog(false)}>
-              Cancelar
-            </Button>
-            <Button 
-              onClick={confirmStatusChange}
-              disabled={updateStatusMutation.isPending}
-            >
-              {updateStatusMutation.isPending ? "Actualizando..." : "Confirmar Cambio"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
