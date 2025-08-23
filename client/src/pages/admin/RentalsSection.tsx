@@ -56,7 +56,6 @@ const statusBadgeConfig = {
   pagado: { color: "bg-blue-500", label: "Pagado" },
   en_ruta: { color: "bg-purple-500", label: "En Ruta" },
   entregada: { color: "bg-green-500", label: "Entregada" },
-  retiro_programado: { color: "bg-orange-500", label: "Retiro Programado" },
   retirada: { color: "bg-indigo-500", label: "Retirada" },
   finalizada: { color: "bg-gray-500", label: "Finalizada" },
   cancelada: { color: "bg-red-500", label: "Cancelada" }
@@ -448,7 +447,7 @@ export default function RentalsSection() {
           if (!["pendiente", "pagado"].includes(rental.status ?? "")) return false;
           break;
         case "in_progress":
-          if (!["en_ruta", "entregada", "retiro_programado"].includes(rental.status ?? "")) return false;
+          if (!["en_ruta", "entregada"].includes(rental.status ?? "")) return false;
           break;
         case "overdue":
           if (!rental.remainingDays || rental.remainingDays > 0) return false;
@@ -611,7 +610,6 @@ export default function RentalsSection() {
                             <option value="pagado" className="text-black bg-white">Pagado</option>
                             <option value="en_ruta" className="text-black bg-white">En Ruta</option>
                             <option value="entregada" className="text-black bg-white">Entregada</option>
-                            <option value="retiro_programado" className="text-black bg-white">Retiro Programado</option>
                             <option value="retirada" className="text-black bg-white">Retirada</option>
                             <option value="finalizada" className="text-black bg-white">Finalizada</option>
                             <option value="cancelada" className="text-black bg-white">Cancelada</option>
@@ -911,7 +909,6 @@ export default function RentalsSection() {
                   <SelectItem value="pagado">Pagado</SelectItem>
                   <SelectItem value="en_ruta">En Ruta</SelectItem>
                   <SelectItem value="entregada">Entregada</SelectItem>
-                  <SelectItem value="retiro_programado">Retiro Programado</SelectItem>
                   <SelectItem value="retirada">Retirada</SelectItem>
                   <SelectItem value="finalizada">Finalizada</SelectItem>
                   <SelectItem value="cancelada">Cancelada</SelectItem>
@@ -1264,7 +1261,6 @@ export default function RentalsSection() {
                   <SelectItem value="pagado">Pagado</SelectItem>
                   <SelectItem value="en_ruta">En Ruta</SelectItem>
                   <SelectItem value="entregada">Entregada</SelectItem>
-                  <SelectItem value="retiro_programado">Retiro Programado</SelectItem>
                   <SelectItem value="retirada">Retirada</SelectItem>
                   <SelectItem value="finalizada">Finalizada</SelectItem>
                   <SelectItem value="cancelada">Cancelada</SelectItem>

@@ -239,7 +239,7 @@ class PostgresStorage implements IStorage {
       .from(rentals)
       .where(and(
         eq(rentals.driverId, id),
-        sql`status IN ('pagado', 'en_ruta', 'entregada', 'retiro_programado')`
+        sql`status IN ('pagado', 'en_ruta', 'entregada')`
       ));
 
     const completedRentals = await db

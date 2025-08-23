@@ -291,3 +291,153 @@ Arriendo Cajas - Sistema de Asignaciones
 
   return { html, text };
 }
+// Template para recordatorio de retiro 2 días antes con consejos de limpieza
+export function generatePickupReminder2DaysTemplate(rental: any, customer: any): { html: string; text: string; subject: string } {
+  const pickupDate = rental.pickupDate ? new Date(rental.pickupDate).toLocaleDateString("es-CL") : "Próximamente";
+  
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Recordatorio Retiro Cajas</title></head><body style="margin: 0; padding: 20px; font-family: Arial, sans-serif;">
+    <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+      <div style="background: linear-gradient(135deg, #2E5CA6 0%, #C8201D 100%); padding: 30px; text-align: center; border-radius: 12px 12px 0 0;">
+        <h1 style="color: white; margin: 0; font-size: 28px;">📦 Retiro de Cajas Programado</h1>
+        <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0;">Fecha de retiro: ${pickupDate}</p>
+      </div>
+      <div style="padding: 40px 30px;">
+        <p style="color: #333; font-size: 16px; margin-bottom: 25px;">¡Hola <strong>${customer.name}</strong>!</p>
+        <p style="color: #333; font-size: 16px; margin-bottom: 30px;">Te recordamos que el <strong>${pickupDate}</strong> retiraremos las cajas. Para una devolución rápida:</p>
+        
+        <div style="background: #f8f9fa; border-left: 4px solid #2E5CA6; padding: 20px; margin-bottom: 30px;">
+          <h3 style="color: #2E5CA6; margin: 0 0 15px 0;">🧹 Consejos para la devolución:</h3>
+          <ul style="color: #333; margin: 0; padding-left: 20px;">
+            <li style="margin-bottom: 10px;"><strong>Vacía completamente las cajas</strong> - Revisa bolsillos internos y esquinas</li>
+            <li style="margin-bottom: 10px;"><strong>Limpia el interior</strong> - Un paño húmedo elimina polvo y residuos</li>
+            <li style="margin-bottom: 10px;"><strong>Seca bien antes del retiro</strong> - Evita humedad</li>
+            <li style="margin-bottom: 10px;"><strong>Revisa asas y cierres</strong> - Asegúrate que estén en buen estado</li>
+            <li style="margin-bottom: 10px;"><strong>Agrupa las cajas</strong> - Tenlas listas en el mismo lugar</li>
+          </ul>
+        </div>
+        
+        <div style="background: #e8f5e8; border: 1px solid #4CAF50; border-radius: 8px; padding: 20px;">
+          <h3 style="color: #2E7D32; margin: 0 0 10px 0;">📍 Detalles del retiro:</h3>
+          <p style="margin: 5px 0; color: #333;"><strong>Fecha:</strong> ${pickupDate}</p>
+          <p style="margin: 5px 0; color: #333;"><strong>Cajas:</strong> ${rental.boxQuantity} unidades</p>
+          <p style="margin: 5px 0; color: #333;"><strong>Dirección:</strong> ${rental.pickupAddress || rental.deliveryAddress}</p>
+        </div>
+        
+        <p style="color: #666; text-align: center; margin-top: 30px;">¿Dudas? +56 9 8729 0995 | contacto@arriendocajas.cl</p>
+      </div>
+    </div>
+  </body></html>`;
+
+  const text = `Recordatorio Retiro - Arriendo Cajas
+Hola ${customer.name}, te recordamos que el ${pickupDate} retiraremos las cajas.
+Consejos: Vacía, limpia, seca, revisa y agrupa las cajas.
+Contacto: +56 9 8729 0995 | contacto@arriendocajas.cl`;
+
+  return { html, text, subject: `📦 Retiro de cajas programado para ${pickupDate}` };
+}
+
+// Template para confirmación de retiro con datos de transferencia
+export function generateReturnConfirmationTemplate(rental: any, customer: any): { html: string; text: string; subject: string } {
+  const returnDate = new Date().toLocaleDateString("es-CL");
+  const guaranteeAmount = rental.guaranteeAmount || 0;
+  
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Cajas Retiradas - Devolución Garantía</title></head><body style="margin: 0; padding: 20px; font-family: Arial, sans-serif;">
+    <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+      <div style="background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%); padding: 30px; text-align: center; border-radius: 12px 12px 0 0;">
+        <h1 style="color: white; margin: 0; font-size: 28px;">✅ Cajas Retiradas Exitosamente</h1>
+        <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0;">Retiro completado el ${returnDate}</p>
+      </div>
+      <div style="padding: 40px 30px;">
+        <p style="color: #333; font-size: 16px; margin-bottom: 25px;">¡Hola <strong>${customer.name}</strong>!</p>
+        <p style="color: #333; font-size: 16px; margin-bottom: 30px;">Hemos retirado exitosamente las <strong>${rental.boxQuantity} cajas</strong>. ¡Gracias por cuidarlas!</p>
+        
+        <div style="background: #e8f5e8; border: 2px solid #4CAF50; border-radius: 12px; padding: 25px; margin-bottom: 30px; text-align: center;">
+          <h3 style="color: #2E7D32; margin: 0 0 15px 0;">💰 Devolución de Garantía</h3>
+          <p style="color: #333; font-size: 24px; font-weight: bold; margin: 10px 0;">$${guaranteeAmount.toLocaleString("es-CL")}</p>
+        </div>
+        
+        <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 20px; margin-bottom: 25px;">
+          <h3 style="color: #856404; margin: 0 0 15px 0;">📧 Para recibir tu garantía:</h3>
+          <p style="color: #333; margin-bottom: 15px;">Responde a contacto@arriendocajas.cl con:</p>
+          <ul style="color: #333; margin: 0; padding-left: 20px;">
+            <li><strong>Nombre del titular</strong></li>
+            <li><strong>RUT del titular</strong></li>
+            <li><strong>Banco</strong></li>
+            <li><strong>Tipo de cuenta</strong> (Corriente/Vista)</li>
+            <li><strong>Número de cuenta</strong></li>
+            <li><strong>Email de confirmación</strong></li>
+          </ul>
+        </div>
+        
+        <p style="color: #666; text-align: center; font-size: 14px; margin: 20px 0;">
+          <strong>Procesamos devoluciones en 24-48 horas hábiles</strong>
+        </p>
+        <p style="color: #666; text-align: center; margin-top: 30px;">¿Dudas? +56 9 8729 0995 | contacto@arriendocajas.cl</p>
+      </div>
+    </div>
+  </body></html>`;
+
+  const text = `Cajas Retiradas - Arriendo Cajas
+Hola ${customer.name}, retiramos ${rental.boxQuantity} cajas el ${returnDate}.
+GARANTÍA: $${guaranteeAmount.toLocaleString("es-CL")}
+Envía datos bancarios a contacto@arriendocajas.cl: nombre, RUT, banco, tipo cuenta, número.
+Procesamos en 24-48h hábiles. +56 9 8729 0995`;
+
+  return { html, text, subject: `✅ Cajas retiradas - Devolución garantía $${guaranteeAmount.toLocaleString("es-CL")}` };
+}
+
+// Template para finalización con Google Maps review
+export function generateCompletionWithReviewTemplate(rental: any, customer: any): { html: string; text: string; subject: string } {
+  const googleMapsReviewUrl = "https://g.page/r/CdxFJ1234567890/review";
+  
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>¡Arriendo Finalizado!</title></head><body style="margin: 0; padding: 20px; font-family: Arial, sans-serif;">
+    <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+      <div style="background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); padding: 30px; text-align: center; border-radius: 12px 12px 0 0;">
+        <h1 style="color: #333; margin: 0; font-size: 28px;">🎉 ¡Arriendo Finalizado!</h1>
+        <p style="color: #666; margin: 10px 0 0 0;">Gracias por confiar en Arriendo Cajas</p>
+      </div>
+      <div style="padding: 40px 30px;">
+        <p style="color: #333; font-size: 16px; margin-bottom: 25px;">¡Hola <strong>${customer.name}</strong>!</p>
+        <p style="color: #333; font-size: 16px; margin-bottom: 30px;">¡Completamos exitosamente tu arriendo! Esperamos que nuestras cajas te hayan facilitado tu mudanza. Ha sido un placer trabajar contigo.</p>
+        
+        <div style="background: #f8f9fa; border-radius: 8px; padding: 20px; margin-bottom: 30px;">
+          <h3 style="color: #333; margin: 0 0 15px 0;">📦 Resumen de tu arriendo:</h3>
+          <p style="margin: 5px 0; color: #333;"><strong>Cajas:</strong> ${rental.boxQuantity} unidades</p>
+          <p style="margin: 5px 0; color: #333;"><strong>Días:</strong> ${rental.rentalDays || "N/A"} días</p>
+          <p style="margin: 5px 0; color: #333;"><strong>Servicio:</strong> Entrega y retiro incluidos</p>
+        </div>
+        
+        <div style="background: linear-gradient(135deg, #4285f4 0%, #34a853 100%); border-radius: 12px; padding: 25px; text-align: center; margin-bottom: 30px;">
+          <h3 style="color: white; margin: 0 0 15px 0;">⭐ ¡Comparte tu experiencia!</h3>
+          <p style="color: rgba(255,255,255,0.9); margin: 0 0 20px 0; font-size: 14px;">Tu opinión nos ayuda a mejorar</p>
+          <a href="${googleMapsReviewUrl}" style="display: inline-block; background: white; color: #333; text-decoration: none; padding: 15px 30px; border-radius: 25px; font-weight: bold;">⭐ Dejar Reseña en Google</a>
+        </div>
+        
+        <div style="text-align: center; margin-bottom: 25px;">
+          <p style="color: #333; font-size: 16px; margin-bottom: 15px;"><strong>¡Gracias por elegirnos!</strong></p>
+          <p style="color: #666; font-size: 14px;">Para tu próxima mudanza, estamos aquí para ayudarte.</p>
+        </div>
+        
+        <p style="color: #666; text-align: center; margin-top: 30px;">+56 9 8729 0995 | contacto@arriendocajas.cl</p>
+      </div>
+    </div>
+  </body></html>`;
+
+  const text = `¡Arriendo Finalizado! - Arriendo Cajas
+Hola ${customer.name}, completamos tu arriendo exitosamente.
+Resumen: ${rental.boxQuantity} cajas, ${rental.rentalDays || "N/A"} días.
+¡Comparte tu experiencia en Google Maps! ${googleMapsReviewUrl}
+¡Gracias por elegirnos! +56 9 8729 0995 | contacto@arriendocajas.cl`;
+
+  return { html, text, subject: "🎉 ¡Arriendo finalizado! Gracias por confiar en Arriendo Cajas" };
+}
+
+export default {
+  rentalConfirmation: generateRentalConfirmationTemplate,
+  statusChange: generateStatusChangeTemplate,
+  driverAssignment: generateDriverAssignmentTemplate,
+  pickupReminder: generatePickupReminderTemplate,
+  pickupReminder2Days: generatePickupReminder2DaysTemplate,
+  returnConfirmation: generateReturnConfirmationTemplate,
+  completionWithReview: generateCompletionWithReviewTemplate
+};
