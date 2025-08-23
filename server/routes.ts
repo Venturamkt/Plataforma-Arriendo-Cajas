@@ -560,23 +560,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update customer status (for rental status changes)
-  app.put("/api/customers/:id/status", async (req, res) => {
+  app.put("/api/customers/:id/status", requireAuth, async (req, res) => {
     try {
       const { status } = req.body;
+      const customerId = req.params.id;
       
-      // En una app real, esto buscaría el arriendo activo del cliente y actualizaría su estado
-      // Por ahora respondemos con éxito para la demo
-      await storage.logActivity({
-        type: "customer_status_updated",
-        description: `Estado de arriendo actualizado: ${status}`,
-        entityId: req.params.id,
-        entityType: "customer"
-      });
+      // Buscar el arriendo más reciente del cliente que no esté finalizado o cancelado
+      const rentals = await storage.getRentalsByCustomerId(customerId);
+      const activeRental = rentals.find(rental => 
+        !['finalizada', 'cancelada'].includes(rental.status)
+      );
       
-      res.json({ success: true, status });
+      if (!activeRental) {
+        return res.status(404).json({ error: "No se encontró un arriendo activo para actualizar" });
+      }
+      
+      // Actualizar el estado del arriendo
+      await storage.updateRental(activeRental.id, { status });
+      
+      // Enviar email de notificación del cambio de estado
+      try {
+        const customer = await storage.getCustomerById(customerId);
+        if (customer) {
+          const rentalData: RentalEmailData = {
+            customerName: customer.name,
+            customerEmail: customer.email,
+            rentalId: activeRental.id,
+            trackingCode: activeRental.trackingCode || '',
+            status,
+            deliveryAddress: activeRental.deliveryAddress || '',
+            pickupDate: activeRental.pickupDate || new Date(),
+            returnDate: activeRental.returnDate || new Date(),
+            totalAmount: activeRental.totalAmount || 0,
+            itemsCount: activeRental.itemsCount || 0
+          };
+          
+          await sendStatusChangeEmail(rentalData);
+        }
+      } catch (emailError) {
+        console.error("Error sending status change email:", emailError);
+        // No fallar la operación si el email falla
+      }
+      
+      res.json({ success: true, status, rentalId: activeRental.id });
     } catch (error) {
-      console.error("Error updating customer status:", error);
-      res.status(500).json({ error: "Error al actualizar estado" });
+      console.error("Error updating rental status:", error);
+      res.status(500).json({ error: "Error al actualizar estado del arriendo" });
     }
   });
 

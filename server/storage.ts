@@ -44,6 +44,7 @@ export interface IStorage {
   // Rentals
   getRentals(): Promise<any[]>;
   getRentalById(id: string): Promise<any>;
+  getRentalsByCustomerId(customerId: string): Promise<any[]>;
   createRental(rentalData: any): Promise<any>;
   updateRental(id: string, rentalData: any): Promise<any>;
   
@@ -294,6 +295,12 @@ class PostgresStorage implements IStorage {
   async getRentalById(id: string) {
     const result = await db.select().from(rentals).where(eq(rentals.id, id));
     return result[0] || null;
+  }
+
+  async getRentalsByCustomerId(customerId: string) {
+    return await db.select().from(rentals)
+      .where(eq(rentals.customerId, customerId))
+      .orderBy(desc(rentals.createdAt));
   }
 
   async getRental(id: string) {
