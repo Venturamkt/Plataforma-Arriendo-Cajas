@@ -269,7 +269,8 @@ export default function RentalsSection() {
         const error = await response.json();
         throw new Error(error.error || "Error al eliminar arriendo");
       }
-      return response.json();
+      // No intentar parsear JSON en respuesta 204 (No Content)
+      return null;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/rentals"] });
