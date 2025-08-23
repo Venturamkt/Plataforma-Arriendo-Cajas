@@ -72,36 +72,39 @@ export default function AdminDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [period, setPeriod] = useState("today");
 
-  // Datos simulados para el dashboard
-  const dashboardData = {
-    rentals: {
-      active: 45,
-      new: 12,
-      completed: 8,
-      cancelled: 2
-    },
-    boxes: {
-      available: 127,
-      reserved: 23,
-      inField: 45,
-      maintenance: 5
-    },
-    todayTasks: {
-      deliveries: 15,
-      pickups: 8
-    },
-    finance: {
-      pendingBalance: 85000,
-      customersInDebt: 6
-    },
-    alerts: [
-      { type: "warning", message: "5 arriendos sin repartidor asignado" },
-      { type: "danger", message: "Stock bajo: quedan 12 cajas disponibles" },
-      { type: "info", message: "3 retiros reprogramados para mañana" }
-    ]
+  // Obtener datos reales del dashboard desde la API
+  const { data: dashboardData, isLoading: dashboardLoading, error: dashboardError } = useQuery({
+    queryKey: ["/api/dashboard/stats"],
+    refetchInterval: 30000, // Actualizar cada 30 segundos
+  });
+
+  // Valores por defecto mientras cargan los datos
+  const defaultDashboardData = {
+    rentals: { active: 0, new: 0, completed: 0, programmed: 0, total: 0 },
+    inventory: { available: 0, reserved: 0, inField: 0, maintenance: 0, total: 0 },
+    finance: { pendingBalance: 0, customersInDebt: 0 },
+    todayTasks: { deliveries: 0, pickups: 0 },
+    alerts: { rentalsWithoutDriver: 0, lowStock: 0 },
+    counters: { customers: 0, drivers: 0, inventory: 0 }
   };
 
-  const renderDashboard = () => (
+  const stats = dashboardData || defaultDashboardData;
+
+  const renderDashboard = () => {
+    if (dashboardLoading) {
+      return (
+        <div className="space-y-6">
+          <div className="flex justify-center items-center min-h-96">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mx-auto"></div>
+              <p className="mt-4 text-gray-600">Cargando dashboard...</p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
@@ -125,8 +128,8 @@ export default function AdminDashboard() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{dashboardData.rentals.active}</div>
-            <p className="text-xs text-muted-foreground">+12% desde ayer</p>
+            <div className="text-2xl font-bold">{stats.rentals.active}</div>
+            <p className="text-xs text-muted-foreground">En terreno actualmente</p>
           </CardContent>
         </Card>
 
@@ -136,7 +139,7 @@ export default function AdminDashboard() {
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{dashboardData.rentals.new}</div>
+            <div className="text-2xl font-bold">{stats.rentals.new}</div>
             <p className="text-xs text-muted-foreground">Hoy</p>
           </CardContent>
         </Card>
@@ -147,8 +150,8 @@ export default function AdminDashboard() {
             <CheckCircle className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{dashboardData.boxes.available}</div>
-            <p className="text-xs text-muted-foreground">de 200 total</p>
+            <div className="text-2xl font-bold">{stats.inventory.available}</div>
+            <p className="text-xs text-muted-foreground">de {stats.inventory.total} total</p>
           </CardContent>
         </Card>
 
@@ -158,8 +161,8 @@ export default function AdminDashboard() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${dashboardData.finance.pendingBalance.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">{dashboardData.finance.customersInDebt} clientes</p>
+            <div className="text-2xl font-bold">${stats.finance.pendingBalance.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">{stats.finance.customersInDebt} clientes</p>
           </CardContent>
         </Card>
       </div>
@@ -169,7 +172,7 @@ export default function AdminDashboard() {
         <Card>
           <CardHeader>
             <CardTitle>Entregas de Hoy</CardTitle>
-            <CardDescription>{dashboardData.todayTasks.deliveries} programadas</CardDescription>
+            <CardDescription>{stats.todayTasks.deliveries} programadas</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
@@ -188,7 +191,7 @@ export default function AdminDashboard() {
         <Card>
           <CardHeader>
             <CardTitle>Retiros de Hoy</CardTitle>
-            <CardDescription>{dashboardData.todayTasks.pickups} programados</CardDescription>
+            <CardDescription>{stats.todayTasks.pickups} programados</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
@@ -215,21 +218,35 @@ export default function AdminDashboard() {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {dashboardData.alerts.map((alert, index) => (
-              <div key={index} className={`flex items-center gap-3 p-3 rounded-lg ${
-                alert.type === 'danger' ? 'bg-red-50 text-red-800' :
-                alert.type === 'warning' ? 'bg-yellow-50 text-yellow-800' :
-                'bg-blue-50 text-blue-800'
-              }`}>
-                <AlertTriangle className="h-4 w-4" />
-                <span>{alert.message}</span>
+            {/* Alerta de arriendos sin repartidor */}
+            {stats.alerts.rentalsWithoutDriver > 0 && (
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-yellow-50 text-yellow-800">
+                <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                <span>{stats.alerts.rentalsWithoutDriver} arriendos sin repartidor asignado</span>
               </div>
-            ))}
+            )}
+            
+            {/* Alerta de stock bajo */}
+            {stats.alerts.lowStock > 0 && stats.inventory.available < 20 && (
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-red-50 text-red-800">
+                <AlertTriangle className="h-4 w-4 text-red-600" />
+                <span>Stock bajo: quedan {stats.inventory.available} items disponibles</span>
+              </div>
+            )}
+            
+            {/* Mensaje cuando no hay alertas */}
+            {stats.alerts.rentalsWithoutDriver === 0 && stats.inventory.available >= 20 && (
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-green-50 text-green-800">
+                <CheckCircle className="h-4 w-4 text-green-600" />
+                <span>Sistema funcionando correctamente - Sin alertas</span>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
     </div>
   );
+  };
 
   const renderContent = () => {
     switch (activeSection) {

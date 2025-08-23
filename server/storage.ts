@@ -402,8 +402,9 @@ class PostgresStorage implements IStorage {
     // Obtener estadísticas del dashboard
     const totalCustomers = await db.select({ count: sql<number>`count(*)` }).from(customers);
     const totalDrivers = await db.select({ count: sql<number>`count(*)` }).from(drivers);
-    const totalBoxes = await db.select({ count: sql<number>`count(*)` }).from(boxes);
+    const totalInventory = await db.select({ count: sql<number>`count(*)` }).from(inventory);
     
+    // Estadísticas de arriendos por estado
     const rentalStats = await db.select({
       status: rentals.status,
       count: sql<number>`count(*)`
@@ -411,19 +412,84 @@ class PostgresStorage implements IStorage {
     .from(rentals)
     .groupBy(rentals.status);
 
-    const boxStats = await db.select({
-      status: boxes.status,
+    // Estadísticas de inventario por estado
+    const inventoryStats = await db.select({
+      status: inventory.status,
       count: sql<number>`count(*)`
     })
-    .from(boxes)
-    .groupBy(boxes.status);
+    .from(inventory)
+    .groupBy(inventory.status);
+
+    // Saldo pendiente total
+    const pendingBalance = await db
+      .select({ 
+        total: sql<string>`COALESCE(SUM(CAST(${rentals.totalAmount} AS DECIMAL) - CAST(${rentals.paidAmount} AS DECIMAL)), 0)` 
+      })
+      .from(rentals)
+      .where(sql`CAST(${rentals.paidAmount} AS DECIMAL) < CAST(${rentals.totalAmount} AS DECIMAL)`);
+
+    // Clientes con deuda
+    const customersInDebt = await db
+      .select({ count: sql<number>`count(DISTINCT ${rentals.customerId})` })
+      .from(rentals)
+      .where(sql`CAST(${rentals.paidAmount} AS DECIMAL) < CAST(${rentals.totalAmount} AS DECIMAL)`);
+
+    // Entregas y retiros de hoy
+    const today = new Date().toISOString().split('T')[0];
+    const todayDeliveries = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(rentals)
+      .where(sql`DATE(${rentals.deliveryDate}) = ${today} AND ${rentals.status} = 'programada'`);
+
+    const todayPickups = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(rentals)
+      .where(sql`DATE(${rentals.pickupDate}) = ${today} AND ${rentals.status} = 'entregada'`);
+
+    // Arriendos sin repartidor asignado
+    const rentalsWithoutDriver = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(rentals)
+      .where(sql`${rentals.driverId} IS NULL AND ${rentals.status} = 'programada'`);
+
+    // Procesar estadísticas de arriendos
+    const rentalsData = {
+      active: rentalStats.find(r => r.status === 'entregada')?.count || 0,
+      new: rentalStats.find(r => r.status === 'pendiente')?.count || 0,
+      programmed: rentalStats.find(r => r.status === 'programada')?.count || 0,
+      completed: rentalStats.find(r => r.status === 'finalizada')?.count || 0,
+      total: rentalStats.reduce((sum, r) => sum + r.count, 0)
+    };
+
+    // Procesar estadísticas de inventario
+    const inventoryData = {
+      available: inventoryStats.find(i => i.status === 'disponible')?.count || 0,
+      reserved: inventoryStats.find(i => i.status === 'reservada')?.count || 0,
+      inField: inventoryStats.find(i => i.status === 'en_terreno')?.count || 0,
+      maintenance: inventoryStats.find(i => i.status === 'en_revision')?.count || 0,
+      total: inventoryStats.reduce((sum, i) => sum + i.count, 0)
+    };
 
     return {
-      customers: totalCustomers[0]?.count || 0,
-      drivers: totalDrivers[0]?.count || 0,
-      boxes: totalBoxes[0]?.count || 0,
-      rentals: rentalStats,
-      inventory: boxStats
+      rentals: rentalsData,
+      inventory: inventoryData,
+      finance: {
+        pendingBalance: parseFloat(pendingBalance[0]?.total || "0"),
+        customersInDebt: customersInDebt[0]?.count || 0
+      },
+      todayTasks: {
+        deliveries: todayDeliveries[0]?.count || 0,
+        pickups: todayPickups[0]?.count || 0
+      },
+      alerts: {
+        rentalsWithoutDriver: rentalsWithoutDriver[0]?.count || 0,
+        lowStock: inventoryData.available < 20 ? inventoryData.available : 0
+      },
+      counters: {
+        customers: totalCustomers[0]?.count || 0,
+        drivers: totalDrivers[0]?.count || 0,
+        inventory: totalInventory[0]?.count || 0
+      }
     };
   }
 
