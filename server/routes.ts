@@ -410,7 +410,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         pickupDate: validatedData.pickupDate ? new Date(validatedData.pickupDate) : null,
         actualDeliveryDate: validatedData.actualDeliveryDate ? new Date(validatedData.actualDeliveryDate) : null,
         actualPickupDate: validatedData.actualPickupDate ? new Date(validatedData.actualPickupDate) : null,
-        driverId: validatedData.driverId || null, // Convertir string vacío a null
+        driverId: validatedData.driverId && validatedData.driverId.trim() !== '' ? validatedData.driverId : null, // Convertir string vacío a null
       };
       
       const rental = await storage.createRental(processedData);
@@ -466,7 +466,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         pickupDate: validatedData.pickupDate ? new Date(validatedData.pickupDate) : undefined,
         actualDeliveryDate: validatedData.actualDeliveryDate ? new Date(validatedData.actualDeliveryDate) : undefined,
         actualPickupDate: validatedData.actualPickupDate ? new Date(validatedData.actualPickupDate) : undefined,
-        driverId: validatedData.driverId || null, // Convertir string vacío a null
+        driverId: validatedData.driverId && validatedData.driverId.trim() !== '' ? validatedData.driverId : null, // Convertir string vacío a null
       };
       
       // Obtener el arriendo anterior para detectar cambios de estado

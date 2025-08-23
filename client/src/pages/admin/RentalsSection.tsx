@@ -404,8 +404,8 @@ export default function RentalsSection() {
             ? { 
                 ...rental, 
                 status: statusChangeData.newStatus,
-                // Si se marca como programada, mostrar que se asignará un repartidor
-                driverName: statusChangeData.newStatus === "programada" ? "Asignando repartidor..." : rental.driverName
+                // Si se marca como pagado, mostrar que se asignará un repartidor
+                driverName: statusChangeData.newStatus === "pagado" ? "Asignando repartidor..." : rental.driverName
               }
             : rental
         );
@@ -445,7 +445,7 @@ export default function RentalsSection() {
     for (const filter of activeFilters) {
       switch (filter) {
         case "pending":
-          if (!["pendiente", "programada"].includes(rental.status ?? "")) return false;
+          if (!["pendiente", "pagado"].includes(rental.status ?? "")) return false;
           break;
         case "in_progress":
           if (!["en_ruta", "entregada", "retiro_programado"].includes(rental.status ?? "")) return false;
@@ -608,7 +608,7 @@ export default function RentalsSection() {
                             className={`appearance-none px-3 py-1 pr-8 rounded text-xs font-medium text-white border-none cursor-pointer outline-none ${statusBadgeConfig[(rental.status || "pendiente") as keyof typeof statusBadgeConfig]?.color}`}
                           >
                             <option value="pendiente" className="text-black bg-white">Pendiente</option>
-                            <option value="programada" className="text-black bg-white">Programada</option>
+                            <option value="pagado" className="text-black bg-white">Pagado</option>
                             <option value="en_ruta" className="text-black bg-white">En Ruta</option>
                             <option value="entregada" className="text-black bg-white">Entregada</option>
                             <option value="retiro_programado" className="text-black bg-white">Retiro Programado</option>
@@ -637,7 +637,7 @@ export default function RentalsSection() {
                             <Truck className="h-4 w-4 mr-2 text-blue-600" />
                             <span className="text-sm">{rental.driverName}</span>
                           </div>
-                        ) : rental.status === "pendiente" ? (
+                        ) : (rental.status === "pendiente" || rental.status === "pagado") ? (
                           <Button
                             size="sm"
                             variant="outline"
