@@ -1,9 +1,27 @@
 import { db } from "./db";
-import { customers, drivers, rentals, boxes, payments } from "@shared/schema";
+import { customers, drivers, rentals, boxes, payments, users } from "@shared/schema";
+import { eq } from "drizzle-orm";
+import bcrypt from "bcrypt";
 
 export async function seedInitialData() {
   try {
-    // Verificar si ya hay datos
+    // Crear usuario admin si no existe (SIEMPRE, para development y producción)
+    const existingAdmin = await db.select().from(users).where(eq(users.email, "admin@arriendocajas.cl")).limit(1);
+    if (existingAdmin.length === 0) {
+      console.log("Creating admin user...");
+      const hashedPassword = await bcrypt.hash("admin123", 12);
+      await db.insert(users).values({
+        email: "admin@arriendocajas.cl",
+        password: hashedPassword,
+        firstName: "Administrador",
+        lastName: "Principal",
+        role: "admin",
+        isActive: true,
+      });
+      console.log("Admin user created: admin@arriendocajas.cl / admin123");
+    }
+
+    // Verificar si ya hay datos de demo (solo para development)
     const existingCustomers = await db.select().from(customers).limit(1);
     if (existingCustomers.length > 0) {
       console.log("Data already exists, skipping seed");
