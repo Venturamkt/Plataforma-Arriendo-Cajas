@@ -175,16 +175,16 @@ export default function AdminDashboard() {
             <CardDescription>{stats.todayTasks.deliveries} programadas</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between items-center p-2 bg-blue-50 rounded">
-                <span>Maria González - 15 cajas</span>
-                <Badge>En ruta</Badge>
+            {stats.todayTasks.deliveries > 0 ? (
+              <div className="space-y-2">
+                <p className="text-sm text-gray-600">No hay datos de entregas específicas disponibles</p>
+                <p className="text-xs text-gray-500">Ve a la sección Arriendos para ver todos los arriendos programados</p>
               </div>
-              <div className="flex justify-between items-center p-2 bg-green-50 rounded">
-                <span>Empresa ABC - 25 cajas</span>
-                <Badge variant="secondary">Programada</Badge>
+            ) : (
+              <div className="text-center py-4">
+                <p className="text-sm text-gray-600">No hay entregas programadas para hoy</p>
               </div>
-            </div>
+            )}
           </CardContent>
         </Card>
 
@@ -194,16 +194,16 @@ export default function AdminDashboard() {
             <CardDescription>{stats.todayTasks.pickups} programados</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between items-center p-2 bg-yellow-50 rounded">
-                <span>Juan Pérez - 10 cajas</span>
-                <Badge variant="outline">Pendiente</Badge>
+            {stats.todayTasks.pickups > 0 ? (
+              <div className="space-y-2">
+                <p className="text-sm text-gray-600">No hay datos de retiros específicos disponibles</p>
+                <p className="text-xs text-gray-500">Ve a la sección Arriendos para ver todos los retiros programados</p>
               </div>
-              <div className="flex justify-between items-center p-2 bg-green-50 rounded">
-                <span>Comercial XYZ - 8 cajas</span>
-                <Badge>Confirmado</Badge>
+            ) : (
+              <div className="text-center py-4">
+                <p className="text-sm text-gray-600">No hay retiros programados para hoy</p>
               </div>
-            </div>
+            )}
           </CardContent>
         </Card>
       </div>
