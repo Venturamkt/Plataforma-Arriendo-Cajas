@@ -258,6 +258,29 @@ export default function RentalsSection() {
     }
   });
 
+  // Delete rental mutation
+  const deleteRentalMutation = useMutation({
+    mutationFn: async (rentalId: string) => {
+      const response = await fetch(`/api/rentals/${rentalId}`, {
+        method: "DELETE"
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Error al eliminar arriendo");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/rentals"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+      toast({ title: "Arriendo eliminado con éxito", variant: "default" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    }
+  });
+
   const resetForm = () => {
     setFormData({
       customerId: "",
@@ -391,6 +414,12 @@ export default function RentalsSection() {
         rentalId: statusChangeData.rentalId,
         status: statusChangeData.newStatus
       });
+    }
+  };
+
+  const handleDeleteRental = (rentalId: string) => {
+    if (confirm("¿Estás seguro de que deseas eliminar este arriendo? Esta acción no se puede deshacer.")) {
+      deleteRentalMutation.mutate(rentalId);
     }
   };
 
@@ -639,6 +668,15 @@ export default function RentalsSection() {
                             onClick={() => handleEditRental(rental)}
                           >
                             <Edit2 className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                            onClick={() => handleDeleteRental(rental.id)}
+                            disabled={deleteRentalMutation.isPending}
+                          >
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                           {rental.trackingCode && rental.trackingToken && (
                             <Button

@@ -522,6 +522,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/rentals/:id", async (req, res) => {
+    try {
+      await storage.deleteRental(req.params.id);
+      await storage.logActivity({
+        type: "rental_deleted",
+        description: `Arriendo eliminado`,
+        entityId: req.params.id,
+        entityType: "rental"
+      });
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting rental:", error);
+      res.status(500).json({ error: "Error al eliminar arriendo" });
+    }
+  });
+
   // Payment routes
   app.get("/api/payments", async (req, res) => {
     try {

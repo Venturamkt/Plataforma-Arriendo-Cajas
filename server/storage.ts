@@ -394,7 +394,22 @@ class PostgresStorage implements IStorage {
     return result[0];
   }
 
-
+  async deleteRental(id: string) {
+    const rental = await this.getRentalById(id);
+    
+    if (!rental) {
+      throw new Error('Arriendo no encontrado');
+    }
+    
+    await db.delete(rentals).where(eq(rentals.id, id));
+    
+    await this.logActivity({
+      type: "rental_deleted",
+      description: `Arriendo eliminado - ID: ${id}`,
+      entityId: id,
+      entityType: "rental"
+    });
+  }
 
   // Boxes
   async getBoxes() {
