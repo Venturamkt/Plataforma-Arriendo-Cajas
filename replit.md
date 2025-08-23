@@ -94,6 +94,15 @@ Arriendo Cajas is a comprehensive web platform for managing a box rental busines
     - "✉️ Email: contacto@arriendocajas.cl"
     - "💬 WhatsApp: +56 9 8729 0995 (con link https://wa.me/56987290995)"
   - **Status**: ✅ SISTEMA DE EMAILS COMPLETO CON FLUJO DE COMUNICACIÓN TOTAL
+- ✅ **Corrección Bug Cálculo de Precios (Aug 23, 2025)**: Error en la celda naranja corregido
+  - **Problema**: Al agregar productos adicionales, se alteraba incorrectamente el precio total manual ($179.990 → $1.092.290)
+  - **Solución**: Implementado parámetro `preserveManualTotal` en función `recalculateFormData`
+  - **Funcionalidad**: Ahora respeta el precio total manual ingresado y solo suma productos adicionales y garantía
+  - **Correcciones específicas**: 
+    - Funciones de productos adicionales preservan el precio base manual
+    - Visualización correcta del "Precio del Arriendo" en resumen automático
+    - Cálculo separado entre precio base, productos adicionales y garantía
+  - **Status**: ✅ CÁLCULO DE PRECIOS FUNCIONANDO CORRECTAMENTE
 
 ### Current Features
 - **Home Page**: Professional landing page with 3 access portals (Customers, Drivers, Admin)

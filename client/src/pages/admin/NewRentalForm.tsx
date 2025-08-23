@@ -65,12 +65,38 @@ export default function NewRentalForm() {
   const [currentStep, setCurrentStep] = useState(1);
 
   // Función para recalcular valores automáticamente
-  const recalculateFormData = (data: any) => {
+  const recalculateFormData = (data: any, preserveManualTotal = false) => {
     const boxQuantity = parseInt(data.boxQuantity) || 0;
     const rentalDays = parseInt(data.rentalDays) || 0;
     const pricePerDay = parseFloat(data.pricePerDay) || 0;
     
     const guaranteeAmount = calculateGuarantee(boxQuantity);
+    
+    // Si preserveManualTotal es true y hay un totalAmount manual, respetarlo
+    if (preserveManualTotal && data.totalAmount) {
+      // Solo calcular productos adicionales para sumarlos al total manual
+      const additionalAmount = data.additionalProducts?.reduce((sum: number, product: any) => 
+        sum + (product.quantity * product.price * rentalDays), 0
+      ) || 0;
+      
+      // Tomar el precio base manual (sin productos ni garantía)
+      const manualBasePrice = parseFloat(data.totalAmount) || 0;
+      const totalAmount = manualBasePrice + additionalAmount + guaranteeAmount;
+      
+      let pickupDate = "";
+      if (data.deliveryDate && rentalDays > 0) {
+        pickupDate = calculateReturnDate(data.deliveryDate, rentalDays);
+      }
+      
+      return {
+        ...data,
+        guaranteeAmount: guaranteeAmount.toString(),
+        totalAmount: totalAmount.toString(),
+        pickupDate
+      };
+    }
+    
+    // Cálculo automático normal
     const totalAmount = calculateTotalAmount(boxQuantity, rentalDays, pricePerDay, data.additionalProducts);
     
     let pickupDate = "";
@@ -167,20 +193,20 @@ export default function NewRentalForm() {
   const addAdditionalProduct = (product: {name: string, price: number}) => {
     const newProduct = { ...product, quantity: 1 };
     const updatedProducts = [...formData.additionalProducts, newProduct];
-    const updatedData = recalculateFormData({ ...formData, additionalProducts: updatedProducts });
+    const updatedData = recalculateFormData({ ...formData, additionalProducts: updatedProducts }, true);
     setFormData(updatedData);
   };
 
   const updateAdditionalProduct = (index: number, field: 'quantity' | 'price', value: number) => {
     const updatedProducts = [...formData.additionalProducts];
     updatedProducts[index] = { ...updatedProducts[index], [field]: value };
-    const updatedData = recalculateFormData({ ...formData, additionalProducts: updatedProducts });
+    const updatedData = recalculateFormData({ ...formData, additionalProducts: updatedProducts }, true);
     setFormData(updatedData);
   };
 
   const removeAdditionalProduct = (index: number) => {
     const updatedProducts = formData.additionalProducts.filter((_, i) => i !== index);
-    const updatedData = recalculateFormData({ ...formData, additionalProducts: updatedProducts });
+    const updatedData = recalculateFormData({ ...formData, additionalProducts: updatedProducts }, true);
     setFormData(updatedData);
   };
 
@@ -492,7 +518,13 @@ export default function NewRentalForm() {
                         <div>
                           <p className="text-gray-600">Precio del Arriendo</p>
                           <p className="text-lg font-semibold text-blue-800">
-                            {formatCurrency((parseInt(formData.boxQuantity) * parseInt(formData.rentalDays) * parseFloat(formData.pricePerDay)).toString())}
+                            {formatCurrency(formData.totalAmount ? 
+                              (parseFloat(formData.totalAmount) - parseFloat(formData.guaranteeAmount || "0") - 
+                               (formData.additionalProducts?.reduce((sum, product) => 
+                                 sum + (product.quantity * product.price * parseInt(formData.rentalDays || "0")), 0) || 0)
+                              ).toString() :
+                              (parseInt(formData.boxQuantity) * parseInt(formData.rentalDays) * parseFloat(formData.pricePerDay)).toString()
+                            )}
                           </p>
                           <p className="text-xs text-gray-500">Precio manual establecido</p>
                         </div>
