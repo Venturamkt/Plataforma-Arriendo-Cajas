@@ -195,15 +195,15 @@ export default function NewRentalForm() {
     setFormData(updatedData);
   };
 
-  // Funciones para productos adicionales - CORREGIDAS DEFINITIVAMENTE
+  // Funciones para productos adicionales - PRECIOS FIJOS TOTALES
   const updateTotalAmount = (newProducts: any[] = formData.additionalProducts) => {
     // SIEMPRE usar baseRentalPrice como base, nunca totalAmount
     const basePrice = parseFloat(formData.baseRentalPrice || "0");
     const boxes = parseInt(formData.boxQuantity) || 1;
-    const days = parseInt(formData.rentalDays) || 1;
     
+    // Productos adicionales son precios FIJOS TOTALES, NO por día
     const additionalAmount = newProducts.reduce((sum, product) => 
-      sum + (product.quantity * product.price * days), 0
+      sum + (product.quantity * product.price), 0
     );
     const guaranteeAmount = calculateGuarantee(boxes);
     const newTotal = basePrice + additionalAmount + guaranteeAmount;
@@ -219,10 +219,16 @@ export default function NewRentalForm() {
     // Verificar que el producto no esté ya agregado
     const alreadyExists = formData.additionalProducts.some(p => p.name === product.name);
     if (alreadyExists) {
-      toast({
-        title: "Producto ya agregado",
-        description: `${product.name} ya está en la lista de productos adicionales.`,
-        variant: "destructive"
+      // Si ya existe, eliminarlo primero para permitir agregarlo de nuevo con precio correcto
+      const updatedProducts = formData.additionalProducts.filter(p => p.name !== product.name);
+      const newProduct = { ...product, quantity: 1 };
+      const finalProducts = [...updatedProducts, newProduct];
+      const newAmounts = updateTotalAmount(finalProducts);
+      
+      setFormData({ 
+        ...formData, 
+        additionalProducts: finalProducts,
+        ...newAmounts
       });
       return;
     }
@@ -473,7 +479,7 @@ export default function NewRentalForm() {
                     placeholder="150000"
                     className="h-12 text-lg border-orange-200 bg-orange-50"
                   />
-                  <p className="text-sm text-orange-600">Precio total manual para {formData.boxQuantity} cajas por {formData.rentalDays} días</p>
+                  <p className="text-sm text-orange-600">Precio total FIJO del arriendo (no se multiplica por días)</p>
                 </div>
 
                 {/* Productos Adicionales */}
@@ -585,7 +591,7 @@ export default function NewRentalForm() {
                               parseFloat(formData.baseRentalPrice || "0") + 
                               parseFloat(formData.guaranteeAmount || "0") +
                               (formData.additionalProducts?.reduce((sum, product) => 
-                                sum + (product.quantity * product.price * parseInt(formData.rentalDays || "1")), 0) || 0)
+                                sum + (product.quantity * product.price), 0) || 0)
                             ).toString())}
                           </p>
                           <p className="text-xs text-gray-500">

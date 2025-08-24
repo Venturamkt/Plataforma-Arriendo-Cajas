@@ -42,10 +42,10 @@ export const calculateTotalAmount = (
 export const BOX_QUANTITY_SHORTCUTS = [2, 5, 10, 15];
 export const RENTAL_DAYS_SHORTCUTS = [7, 14, 30];
 
-// Productos adicionales comunes
+// Productos adicionales comunes - PRECIOS FIJOS TOTALES
 export const ADDITIONAL_PRODUCTS = [
-  { name: "Carrito plegable", price: 500 },
-  { name: "Base móvil", price: 300 },
-  { name: "Kit 2 bases móviles", price: 500 },
-  { name: "Correa Ratchet", price: 200 },
+  { name: "Carrito plegable", price: 15000 }, // Precio fijo total para todo el arriendo
+  { name: "Base móvil", price: 9000 }, // Precio fijo total para todo el arriendo
+  { name: "Kit 2 bases móviles", price: 15000 }, // Precio fijo total para todo el arriendo
+  { name: "Correa Ratchet", price: 6000 }, // Precio fijo total para todo el arriendo
 ];
