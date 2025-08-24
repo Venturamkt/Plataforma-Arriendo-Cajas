@@ -94,20 +94,23 @@ Arriendo Cajas is a comprehensive web platform for managing a box rental busines
     - "✉️ Email: contacto@arriendocajas.cl"
     - "💬 WhatsApp: +56 9 8729 0995 (con link https://wa.me/56987290995)"
   - **Status**: ✅ SISTEMA DE EMAILS COMPLETO CON FLUJO DE COMUNICACIÓN TOTAL
-- ✅ **Corrección Final Bug Cálculo de Precios (Aug 23, 2025)**: Error en la celda naranja DEFINITIVAMENTE resuelto
-  - **Problema**: Al agregar productos adicionales, se duplicaba el cálculo exponencialmente (173.990 → 204.590 → 809.990)
-  - **Causa raíz final**: Función `updateTotalAmount` usaba `formData.totalAmount` como fallback en lugar de solo `baseRentalPrice`
-  - **Solución DEFINITIVA**: 
-    - Campo `baseRentalPrice` es la ÚNICA fuente de verdad para el precio base de las cajas
-    - Función `updateTotalAmount` corregida para NUNCA usar `totalAmount` como base
-    - Input de precio total establece `baseRentalPrice` inmutable y recalcula total inmediatamente
-    - Lógica simplificada: `Total = baseRentalPrice (fijo) + productos adicionales + garantía`
-  - **Funcionalidades finales**:
-    - Input "Precio Total del Arriendo" establece `baseRentalPrice` inmutable
-    - Todas las funciones de productos adicionales usan SOLO `baseRentalPrice` como base
-    - `totalAmount` es SOLO resultado del cálculo, nunca fuente
-    - Eliminada lógica compleja de `preserveManualTotal` y `recalculateFormData` para productos
-  - **Status**: ✅ CÁLCULO DE PRECIOS COMPLETAMENTE FUNCIONAL - baseRentalPrice inmutable garantiza cálculo correcto
+- ✅ **Corrección Final Bug Cálculo de Precios (Aug 24, 2025)**: Sistema de precios COMPLETAMENTE funcional
+  - **Problema**: Error exponencial en cálculos (173.990 → 809.990) e inconsistencia entre pasos del formulario
+  - **Soluciones implementadas**: 
+    - **Precios fijos totales**: Productos adicionales son precios fijos, NO por día
+    - **Cálculo unificado**: Todos los pasos usan la misma fórmula: `Base + Garantía + Productos`
+    - **handleSubmit corregido**: Calcula total correcto antes de enviar a la base de datos
+    - **Separación clara**: `baseRentalPrice` (inmutable) vs cálculo dinámico del total
+  - **Precios actualizados**:
+    - Carrito plegable: $15.000 (total fijo)
+    - Base móvil: $9.000 (total fijo)
+    - Kit 2 bases móviles: $15.000 (total fijo)
+    - Correa Ratchet: $6.000 (total fijo)
+  - **Funcionalidad mejorada**:
+    - Consistencia entre paso 1 y paso 3 del formulario
+    - Reemplazo automático de productos duplicados con precios correctos
+    - Texto clarificado: "Precio total FIJO del arriendo (no se multiplica por días)"
+  - **Status**: ✅ SISTEMA DE PRECIOS COMPLETAMENTE FUNCIONAL - Cálculos correctos en todos los pasos
 
 ### Current Features
 - **Home Page**: Professional landing page with 3 access portals (Customers, Drivers, Admin)

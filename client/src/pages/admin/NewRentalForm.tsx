@@ -268,13 +268,21 @@ export default function NewRentalForm() {
   };
 
   const handleSubmit = () => {
+    // Calcular el total correcto antes de enviar
+    const correctTotal = (
+      parseFloat(formData.baseRentalPrice || "0") + 
+      parseFloat(formData.guaranteeAmount || "0") +
+      (formData.additionalProducts?.reduce((sum, product) => 
+        sum + (product.quantity * product.price), 0) || 0)
+    );
+
     createRentalMutation.mutate({
       ...formData,
       boxQuantity: parseInt(formData.boxQuantity),
       rentalDays: parseInt(formData.rentalDays),
       pricePerDay: formData.pricePerDay, // Mantener como string
       guaranteeAmount: formData.guaranteeAmount, // Mantener como string
-      totalAmount: formData.totalAmount, // Mantener como string
+      totalAmount: correctTotal.toString(), // Usar el total correcto calculado
       paidAmount: formData.paidAmount || "0", // Mantener como string
       deliveryDate: formData.deliveryDate || null,
       pickupDate: formData.pickupDate || null,
