@@ -73,10 +73,10 @@ export default function NewRentalForm() {
     
     const guaranteeAmount = calculateGuarantee(boxQuantity);
     
-    // Si preserveManualTotal es true y hay un precio base guardado, respetarlo
-    if (preserveManualTotal && data.baseRentalPrice) {
-      // Usar el precio base original ingresado manualmente
-      const baseRentalPrice = parseFloat(data.baseRentalPrice) || 0;
+    // Si preserveManualTotal es true, usar el precio base si existe, sino usar totalAmount actual
+    if (preserveManualTotal) {
+      // Usar el precio base si existe, sino el totalAmount actual como base
+      const baseRentalPrice = parseFloat(data.baseRentalPrice || data.totalAmount) || 0;
       
       // Calcular solo productos adicionales
       const additionalAmount = data.additionalProducts?.reduce((sum: number, product: any) => 
@@ -84,6 +84,9 @@ export default function NewRentalForm() {
       ) || 0;
       
       const totalAmount = baseRentalPrice + additionalAmount + guaranteeAmount;
+      
+      // Si no había baseRentalPrice, establecerlo ahora
+      const finalBasePrice = data.baseRentalPrice || data.totalAmount;
       
       let pickupDate = "";
       if (data.deliveryDate && rentalDays > 0) {
@@ -94,7 +97,7 @@ export default function NewRentalForm() {
         ...data,
         guaranteeAmount: guaranteeAmount.toString(),
         totalAmount: totalAmount.toString(),
-        baseRentalPrice: data.baseRentalPrice, // Mantener precio base original
+        baseRentalPrice: finalBasePrice, // Establecer o mantener precio base
         pickupDate
       };
     }
@@ -192,25 +195,57 @@ export default function NewRentalForm() {
     setFormData(updatedData);
   };
 
-  // Funciones para productos adicionales
+  // Funciones para productos adicionales - SIMPLIFICADAS
+  const updateTotalAmount = (newProducts: any[] = formData.additionalProducts) => {
+    const basePrice = parseFloat(formData.baseRentalPrice || formData.totalAmount || "0");
+    const boxes = parseInt(formData.boxQuantity) || 1;
+    const days = parseInt(formData.rentalDays) || 1;
+    
+    const additionalAmount = newProducts.reduce((sum, product) => 
+      sum + (product.quantity * product.price * days), 0
+    );
+    const guaranteeAmount = calculateGuarantee(boxes);
+    
+    return {
+      baseRentalPrice: formData.baseRentalPrice || formData.totalAmount || "0",
+      totalAmount: (basePrice + additionalAmount + guaranteeAmount).toString(),
+      guaranteeAmount: guaranteeAmount.toString()
+    };
+  };
+
   const addAdditionalProduct = (product: {name: string, price: number}) => {
     const newProduct = { ...product, quantity: 1 };
     const updatedProducts = [...formData.additionalProducts, newProduct];
-    const updatedData = recalculateFormData({ ...formData, additionalProducts: updatedProducts }, true);
-    setFormData(updatedData);
+    const newAmounts = updateTotalAmount(updatedProducts);
+    
+    setFormData({ 
+      ...formData, 
+      additionalProducts: updatedProducts,
+      ...newAmounts
+    });
   };
 
   const updateAdditionalProduct = (index: number, field: 'quantity' | 'price', value: number) => {
     const updatedProducts = [...formData.additionalProducts];
     updatedProducts[index] = { ...updatedProducts[index], [field]: value };
-    const updatedData = recalculateFormData({ ...formData, additionalProducts: updatedProducts }, true);
-    setFormData(updatedData);
+    const newAmounts = updateTotalAmount(updatedProducts);
+    
+    setFormData({ 
+      ...formData, 
+      additionalProducts: updatedProducts,
+      ...newAmounts
+    });
   };
 
   const removeAdditionalProduct = (index: number) => {
     const updatedProducts = formData.additionalProducts.filter((_, i) => i !== index);
-    const updatedData = recalculateFormData({ ...formData, additionalProducts: updatedProducts }, true);
-    setFormData(updatedData);
+    const newAmounts = updateTotalAmount(updatedProducts);
+    
+    setFormData({ 
+      ...formData, 
+      additionalProducts: updatedProducts,
+      ...newAmounts
+    });
   };
 
   const handleSubmit = () => {
@@ -406,24 +441,18 @@ export default function NewRentalForm() {
                     type="number"
                     value={formData.totalAmount || ""}
                     onChange={(e) => {
-                      // Usar directamente el valor total ingresado como precio base
+                      // El valor ingresado es el precio total que incluye SOLO las cajas
                       const basePrice = e.target.value;
                       const boxes = parseInt(formData.boxQuantity) || 1;
                       const days = parseInt(formData.rentalDays) || 1;
                       const pricePerDay = parseFloat(basePrice) / (boxes * days);
                       
-                      // Calcular total con productos adicionales y garantía
-                      const additionalAmount = formData.additionalProducts?.reduce((sum, product) => 
-                        sum + (product.quantity * product.price * days), 0
-                      ) || 0;
-                      const guaranteeAmount = calculateGuarantee(boxes);
-                      const totalAmount = parseFloat(basePrice || "0") + additionalAmount + guaranteeAmount;
-                      
+                      // NO recalcular automáticamente con productos adicionales aquí
+                      // Solo guardar el precio base y actualizar el display
                       setFormData({ 
                         ...formData, 
-                        baseRentalPrice: basePrice, // Guardar precio base original
-                        totalAmount: totalAmount.toString(),
-                        guaranteeAmount: guaranteeAmount.toString(),
+                        baseRentalPrice: basePrice, // Precio SOLO de las cajas
+                        totalAmount: basePrice, // Mostrar exactamente lo que escribió el usuario
                         pricePerDay: !isNaN(pricePerDay) ? pricePerDay.toString() : "0"
                       });
                     }}
