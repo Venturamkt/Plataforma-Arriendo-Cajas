@@ -216,6 +216,17 @@ export default function NewRentalForm() {
   };
 
   const addAdditionalProduct = (product: {name: string, price: number}) => {
+    // Verificar que el producto no esté ya agregado
+    const alreadyExists = formData.additionalProducts.some(p => p.name === product.name);
+    if (alreadyExists) {
+      toast({
+        title: "Producto ya agregado",
+        description: `${product.name} ya está en la lista de productos adicionales.`,
+        variant: "destructive"
+      });
+      return;
+    }
+    
     const newProduct = { ...product, quantity: 1 };
     const updatedProducts = [...formData.additionalProducts, newProduct];
     const newAmounts = updateTotalAmount(updatedProducts);
@@ -570,7 +581,7 @@ export default function NewRentalForm() {
                         <div>
                           <p className="text-gray-600">Total</p>
                           <p className="text-2xl font-bold text-blue-800">
-                            {formatCurrency((
+{formatCurrency((
                               parseFloat(formData.baseRentalPrice || "0") + 
                               parseFloat(formData.guaranteeAmount || "0") +
                               (formData.additionalProducts?.reduce((sum, product) => 
