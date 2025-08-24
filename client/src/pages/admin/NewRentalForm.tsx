@@ -195,7 +195,7 @@ export default function NewRentalForm() {
     setFormData(updatedData);
   };
 
-  // Funciones para productos adicionales - CORREGIDAS
+  // Funciones para productos adicionales - CORREGIDAS DEFINITIVAMENTE
   const updateTotalAmount = (newProducts: any[] = formData.additionalProducts) => {
     // SIEMPRE usar baseRentalPrice como base, nunca totalAmount
     const basePrice = parseFloat(formData.baseRentalPrice || "0");
@@ -206,10 +206,11 @@ export default function NewRentalForm() {
       sum + (product.quantity * product.price * days), 0
     );
     const guaranteeAmount = calculateGuarantee(boxes);
+    const newTotal = basePrice + additionalAmount + guaranteeAmount;
     
     return {
-      baseRentalPrice: formData.baseRentalPrice, // Mantener el precio base original
-      totalAmount: (basePrice + additionalAmount + guaranteeAmount).toString(),
+      baseRentalPrice: formData.baseRentalPrice, // Mantener el precio base original INMUTABLE
+      totalAmount: newTotal.toString(), // Nuevo total calculado
       guaranteeAmount: guaranteeAmount.toString()
     };
   };
@@ -440,26 +441,21 @@ export default function NewRentalForm() {
                   </Label>
                   <Input
                     type="number"
-                    value={formData.totalAmount || ""}
+                    value={formData.baseRentalPrice || ""}
                     onChange={(e) => {
-                      // El valor ingresado es el precio total que incluye SOLO las cajas
+                      // El valor ingresado es el precio SOLO de las cajas (inmutable)
                       const basePrice = e.target.value;
                       const boxes = parseInt(formData.boxQuantity) || 1;
                       const days = parseInt(formData.rentalDays) || 1;
                       const pricePerDay = parseFloat(basePrice) / (boxes * days);
                       
-                      // Guardar el precio base y recalcular total con productos actuales
-                      const additionalAmount = formData.additionalProducts?.reduce((sum, product) => 
-                        sum + (product.quantity * product.price * days), 0
-                      ) || 0;
-                      const guaranteeAmount = calculateGuarantee(boxes);
-                      const newTotal = parseFloat(basePrice || "0") + additionalAmount + guaranteeAmount;
-                      
+                      // SOLO guardar el precio base, NO calcular el total aquí
+                      // El total se calculará automáticamente en el resumen
                       setFormData({ 
                         ...formData, 
-                        baseRentalPrice: basePrice, // Precio SOLO de las cajas (inmutable)
-                        totalAmount: newTotal.toString(), // Total calculado correctamente
-                        guaranteeAmount: guaranteeAmount.toString(),
+                        baseRentalPrice: basePrice, // Precio SOLO de las cajas (lo que escribió el usuario)
+                        totalAmount: basePrice, // Mostrar exactamente lo que escribió
+                        guaranteeAmount: calculateGuarantee(boxes).toString(),
                         pricePerDay: !isNaN(pricePerDay) ? pricePerDay.toString() : "0"
                       });
                     }}
@@ -574,7 +570,12 @@ export default function NewRentalForm() {
                         <div>
                           <p className="text-gray-600">Total</p>
                           <p className="text-2xl font-bold text-blue-800">
-                            {formatCurrency(formData.totalAmount || "0")}
+                            {formatCurrency((
+                              parseFloat(formData.baseRentalPrice || "0") + 
+                              parseFloat(formData.guaranteeAmount || "0") +
+                              (formData.additionalProducts?.reduce((sum, product) => 
+                                sum + (product.quantity * product.price * parseInt(formData.rentalDays || "1")), 0) || 0)
+                            ).toString())}
                           </p>
                           <p className="text-xs text-gray-500">
                             {formData.additionalProducts.length > 0 && "Incluye productos adicionales"}
