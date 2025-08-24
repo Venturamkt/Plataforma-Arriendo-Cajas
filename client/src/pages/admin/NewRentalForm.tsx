@@ -195,9 +195,10 @@ export default function NewRentalForm() {
     setFormData(updatedData);
   };
 
-  // Funciones para productos adicionales - SIMPLIFICADAS
+  // Funciones para productos adicionales - CORREGIDAS
   const updateTotalAmount = (newProducts: any[] = formData.additionalProducts) => {
-    const basePrice = parseFloat(formData.baseRentalPrice || formData.totalAmount || "0");
+    // SIEMPRE usar baseRentalPrice como base, nunca totalAmount
+    const basePrice = parseFloat(formData.baseRentalPrice || "0");
     const boxes = parseInt(formData.boxQuantity) || 1;
     const days = parseInt(formData.rentalDays) || 1;
     
@@ -207,7 +208,7 @@ export default function NewRentalForm() {
     const guaranteeAmount = calculateGuarantee(boxes);
     
     return {
-      baseRentalPrice: formData.baseRentalPrice || formData.totalAmount || "0",
+      baseRentalPrice: formData.baseRentalPrice, // Mantener el precio base original
       totalAmount: (basePrice + additionalAmount + guaranteeAmount).toString(),
       guaranteeAmount: guaranteeAmount.toString()
     };
@@ -447,12 +448,18 @@ export default function NewRentalForm() {
                       const days = parseInt(formData.rentalDays) || 1;
                       const pricePerDay = parseFloat(basePrice) / (boxes * days);
                       
-                      // NO recalcular automáticamente con productos adicionales aquí
-                      // Solo guardar el precio base y actualizar el display
+                      // Guardar el precio base y recalcular total con productos actuales
+                      const additionalAmount = formData.additionalProducts?.reduce((sum, product) => 
+                        sum + (product.quantity * product.price * days), 0
+                      ) || 0;
+                      const guaranteeAmount = calculateGuarantee(boxes);
+                      const newTotal = parseFloat(basePrice || "0") + additionalAmount + guaranteeAmount;
+                      
                       setFormData({ 
                         ...formData, 
-                        baseRentalPrice: basePrice, // Precio SOLO de las cajas
-                        totalAmount: basePrice, // Mostrar exactamente lo que escribió el usuario
+                        baseRentalPrice: basePrice, // Precio SOLO de las cajas (inmutable)
+                        totalAmount: newTotal.toString(), // Total calculado correctamente
+                        guaranteeAmount: guaranteeAmount.toString(),
                         pricePerDay: !isNaN(pricePerDay) ? pricePerDay.toString() : "0"
                       });
                     }}

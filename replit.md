@@ -94,19 +94,20 @@ Arriendo Cajas is a comprehensive web platform for managing a box rental busines
     - "✉️ Email: contacto@arriendocajas.cl"
     - "💬 WhatsApp: +56 9 8729 0995 (con link https://wa.me/56987290995)"
   - **Status**: ✅ SISTEMA DE EMAILS COMPLETO CON FLUJO DE COMUNICACIÓN TOTAL
-- ✅ **Corrección Definitiva Bug Cálculo de Precios (Aug 23, 2025)**: Error en la celda naranja completamente resuelto
-  - **Problema**: Al agregar productos adicionales, se duplicaba el cálculo (173.990 → 210.050 → 246.650 → 288.680)
-  - **Causa raíz**: La función recalculateFormData sumaba productos adicionales al total que ya los incluía
-  - **Solución definitiva**: 
-    - Agregado campo `baseRentalPrice` para guardar el precio base original de la celda naranja
-    - Lógica de cálculo completamente rediseñada: `Total = Precio Base + Productos Adicionales + Garantía`
-    - Cada cambio en productos adicionales usa el precio base original, no el total acumulado
-  - **Funcionalidades corregidas**:
-    - Input de "Precio Total del Arriendo" guarda valor como `baseRentalPrice`
-    - Productos adicionales se suman al precio base, no al total
-    - Visualización correcta en "Precio del Arriendo" del resumen
-    - Parámetro `preserveManualTotal` implementado en todas las funciones de productos
-  - **Status**: ✅ CÁLCULO DE PRECIOS COMPLETAMENTE FUNCIONAL - Precio base se mantiene fijo
+- ✅ **Corrección Final Bug Cálculo de Precios (Aug 23, 2025)**: Error en la celda naranja DEFINITIVAMENTE resuelto
+  - **Problema**: Al agregar productos adicionales, se duplicaba el cálculo exponencialmente (173.990 → 204.590 → 809.990)
+  - **Causa raíz final**: Función `updateTotalAmount` usaba `formData.totalAmount` como fallback en lugar de solo `baseRentalPrice`
+  - **Solución DEFINITIVA**: 
+    - Campo `baseRentalPrice` es la ÚNICA fuente de verdad para el precio base de las cajas
+    - Función `updateTotalAmount` corregida para NUNCA usar `totalAmount` como base
+    - Input de precio total establece `baseRentalPrice` inmutable y recalcula total inmediatamente
+    - Lógica simplificada: `Total = baseRentalPrice (fijo) + productos adicionales + garantía`
+  - **Funcionalidades finales**:
+    - Input "Precio Total del Arriendo" establece `baseRentalPrice` inmutable
+    - Todas las funciones de productos adicionales usan SOLO `baseRentalPrice` como base
+    - `totalAmount` es SOLO resultado del cálculo, nunca fuente
+    - Eliminada lógica compleja de `preserveManualTotal` y `recalculateFormData` para productos
+  - **Status**: ✅ CÁLCULO DE PRECIOS COMPLETAMENTE FUNCIONAL - baseRentalPrice inmutable garantiza cálculo correcto
 
 ### Current Features
 - **Home Page**: Professional landing page with 3 access portals (Customers, Drivers, Admin)
