@@ -210,7 +210,7 @@ export default function NewRentalForm() {
     
     return {
       baseRentalPrice: formData.baseRentalPrice, // Mantener el precio base original INMUTABLE
-      totalAmount: newTotal.toString(), // Nuevo total calculado
+      totalAmount: formData.baseRentalPrice, // NO actualizar totalAmount aquí, se calcula dinámicamente
       guaranteeAmount: guaranteeAmount.toString()
     };
   };
@@ -784,7 +784,12 @@ export default function NewRentalForm() {
                     </CardHeader>
                     <CardContent>
                       <p className="text-3xl font-bold text-blue-800">
-                        {formatCurrency(formData.totalAmount)}
+                        {formatCurrency((
+                          parseFloat(formData.baseRentalPrice || "0") + 
+                          parseFloat(formData.guaranteeAmount || "0") +
+                          (formData.additionalProducts?.reduce((sum, product) => 
+                            sum + (product.quantity * product.price), 0) || 0)
+                        ).toString())}
                       </p>
                       <p className="text-sm text-gray-600">
                         Incluye garantía de {formatCurrency(formData.guaranteeAmount)}
