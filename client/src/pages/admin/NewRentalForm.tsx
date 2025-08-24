@@ -50,6 +50,7 @@ export default function NewRentalForm() {
     pricePerDay: "1000",
     guaranteeAmount: "",
     totalAmount: "",
+    baseRentalPrice: "", // Precio base original sin productos adicionales
     paidAmount: "",
     deliveryDate: "",
     pickupDate: "",
@@ -72,16 +73,17 @@ export default function NewRentalForm() {
     
     const guaranteeAmount = calculateGuarantee(boxQuantity);
     
-    // Si preserveManualTotal es true y hay un totalAmount manual, respetarlo
-    if (preserveManualTotal && data.totalAmount) {
-      // Solo calcular productos adicionales para sumarlos al total manual
+    // Si preserveManualTotal es true y hay un precio base guardado, respetarlo
+    if (preserveManualTotal && data.baseRentalPrice) {
+      // Usar el precio base original ingresado manualmente
+      const baseRentalPrice = parseFloat(data.baseRentalPrice) || 0;
+      
+      // Calcular solo productos adicionales
       const additionalAmount = data.additionalProducts?.reduce((sum: number, product: any) => 
         sum + (product.quantity * product.price * rentalDays), 0
       ) || 0;
       
-      // Tomar el precio base manual (sin productos ni garantía)
-      const manualBasePrice = parseFloat(data.totalAmount) || 0;
-      const totalAmount = manualBasePrice + additionalAmount + guaranteeAmount;
+      const totalAmount = baseRentalPrice + additionalAmount + guaranteeAmount;
       
       let pickupDate = "";
       if (data.deliveryDate && rentalDays > 0) {
@@ -92,6 +94,7 @@ export default function NewRentalForm() {
         ...data,
         guaranteeAmount: guaranteeAmount.toString(),
         totalAmount: totalAmount.toString(),
+        baseRentalPrice: data.baseRentalPrice, // Mantener precio base original
         pickupDate
       };
     }
@@ -403,16 +406,24 @@ export default function NewRentalForm() {
                     type="number"
                     value={formData.totalAmount || ""}
                     onChange={(e) => {
-                      // Usar directamente el valor total ingresado
-                      const totalPrice = e.target.value;
+                      // Usar directamente el valor total ingresado como precio base
+                      const basePrice = e.target.value;
                       const boxes = parseInt(formData.boxQuantity) || 1;
                       const days = parseInt(formData.rentalDays) || 1;
-                      const pricePerDay = parseFloat(totalPrice) / (boxes * days);
+                      const pricePerDay = parseFloat(basePrice) / (boxes * days);
                       
-                      // No usar recalculateFormData para evitar sobrescribir el total manual
+                      // Calcular total con productos adicionales y garantía
+                      const additionalAmount = formData.additionalProducts?.reduce((sum, product) => 
+                        sum + (product.quantity * product.price * days), 0
+                      ) || 0;
+                      const guaranteeAmount = calculateGuarantee(boxes);
+                      const totalAmount = parseFloat(basePrice || "0") + additionalAmount + guaranteeAmount;
+                      
                       setFormData({ 
                         ...formData, 
-                        totalAmount: totalPrice,
+                        baseRentalPrice: basePrice, // Guardar precio base original
+                        totalAmount: totalAmount.toString(),
+                        guaranteeAmount: guaranteeAmount.toString(),
                         pricePerDay: !isNaN(pricePerDay) ? pricePerDay.toString() : "0"
                       });
                     }}
@@ -518,11 +529,7 @@ export default function NewRentalForm() {
                         <div>
                           <p className="text-gray-600">Precio del Arriendo</p>
                           <p className="text-lg font-semibold text-blue-800">
-                            {formatCurrency(formData.totalAmount ? 
-                              (parseFloat(formData.totalAmount) - parseFloat(formData.guaranteeAmount || "0") - 
-                               (formData.additionalProducts?.reduce((sum, product) => 
-                                 sum + (product.quantity * product.price * parseInt(formData.rentalDays || "0")), 0) || 0)
-                              ).toString() :
+                            {formatCurrency(formData.baseRentalPrice || 
                               (parseInt(formData.boxQuantity) * parseInt(formData.rentalDays) * parseFloat(formData.pricePerDay)).toString()
                             )}
                           </p>

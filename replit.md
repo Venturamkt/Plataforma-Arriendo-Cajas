@@ -94,15 +94,19 @@ Arriendo Cajas is a comprehensive web platform for managing a box rental busines
     - "✉️ Email: contacto@arriendocajas.cl"
     - "💬 WhatsApp: +56 9 8729 0995 (con link https://wa.me/56987290995)"
   - **Status**: ✅ SISTEMA DE EMAILS COMPLETO CON FLUJO DE COMUNICACIÓN TOTAL
-- ✅ **Corrección Bug Cálculo de Precios (Aug 23, 2025)**: Error en la celda naranja corregido
-  - **Problema**: Al agregar productos adicionales, se alteraba incorrectamente el precio total manual ($179.990 → $1.092.290)
-  - **Solución**: Implementado parámetro `preserveManualTotal` en función `recalculateFormData`
-  - **Funcionalidad**: Ahora respeta el precio total manual ingresado y solo suma productos adicionales y garantía
-  - **Correcciones específicas**: 
-    - Funciones de productos adicionales preservan el precio base manual
-    - Visualización correcta del "Precio del Arriendo" en resumen automático
-    - Cálculo separado entre precio base, productos adicionales y garantía
-  - **Status**: ✅ CÁLCULO DE PRECIOS FUNCIONANDO CORRECTAMENTE
+- ✅ **Corrección Definitiva Bug Cálculo de Precios (Aug 23, 2025)**: Error en la celda naranja completamente resuelto
+  - **Problema**: Al agregar productos adicionales, se duplicaba el cálculo (173.990 → 210.050 → 246.650 → 288.680)
+  - **Causa raíz**: La función recalculateFormData sumaba productos adicionales al total que ya los incluía
+  - **Solución definitiva**: 
+    - Agregado campo `baseRentalPrice` para guardar el precio base original de la celda naranja
+    - Lógica de cálculo completamente rediseñada: `Total = Precio Base + Productos Adicionales + Garantía`
+    - Cada cambio en productos adicionales usa el precio base original, no el total acumulado
+  - **Funcionalidades corregidas**:
+    - Input de "Precio Total del Arriendo" guarda valor como `baseRentalPrice`
+    - Productos adicionales se suman al precio base, no al total
+    - Visualización correcta en "Precio del Arriendo" del resumen
+    - Parámetro `preserveManualTotal` implementado en todas las funciones de productos
+  - **Status**: ✅ CÁLCULO DE PRECIOS COMPLETAMENTE FUNCIONAL - Precio base se mantiene fijo
 
 ### Current Features
 - **Home Page**: Professional landing page with 3 access portals (Customers, Drivers, Admin)
