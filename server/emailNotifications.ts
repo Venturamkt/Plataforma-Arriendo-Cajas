@@ -63,7 +63,7 @@ export async function sendRentalCreatedEmail(data: RentalEmailData): Promise<boo
           <div style="border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 15px;">
             <div style="display: flex; justify-content: space-between; margin: 8px 0;">
               <span><strong>Arriendo ${data.boxQuantity} cajas:</strong></span>
-              <span style="font-weight: bold;">$${(data.baseRentalPrice || 0).toLocaleString('es-CL')}</span>
+              <span style="font-weight: bold;">$${((data.totalAmount || 0) - (data.guaranteeAmount || 0) - (data.additionalProducts && data.additionalProducts.length > 0 ? data.additionalProducts.reduce((sum, product) => sum + (product.quantity * product.price), 0) : 0)).toLocaleString('es-CL')}</span>
             </div>
             ${data.additionalProducts && data.additionalProducts.length > 0 ? 
               data.additionalProducts.map(product => 
