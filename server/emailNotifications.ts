@@ -1,7 +1,7 @@
 import { sendEmail, type EmailData } from './emailService';
 import { generateTrackingUrl } from './trackingUtils';
 
-interface RentalEmailData {
+export interface RentalEmailData {
   customerName: string;
   customerEmail: string;
   trackingCode: string;
@@ -13,6 +13,14 @@ interface RentalEmailData {
   driverName?: string;
   driverPhone?: string;
   status: string;
+  totalAmount?: number;
+  baseRentalPrice?: number;
+  guaranteeAmount?: number;
+  additionalProducts?: Array<{
+    name: string;
+    quantity: number;
+    price: number;
+  }>;
 }
 
 // Email para creación de arriendo (estado: pendiente)
@@ -40,6 +48,42 @@ export async function sendRentalCreatedEmail(data: RentalEmailData): Promise<boo
         
         <p>Hemos recibido tu solicitud de arriendo. Se encuentra en estado <strong>PENDIENTE</strong>. <span style="background: #fff3cd; padding: 2px 6px; border-radius: 3px; color: #856404;">Solo al pagar se confirma el arriendo</span> y puedes tener tus cajas aseguradas.</p>
         
+        <!-- PRECIO TOTAL EN GRANDE -->
+        <div style="background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%); padding: 25px; border-radius: 10px; margin: 20px 0; text-align: center;">
+          <h2 style="color: white; margin: 0; font-size: 24px;">💰 PRECIO TOTAL</h2>
+          <div style="color: white; font-size: 36px; font-weight: bold; margin: 10px 0;">
+            $${(data.totalAmount || 0).toLocaleString('es-CL')}
+          </div>
+          <p style="color: #e8f5e8; margin: 0; font-size: 14px;">Precio final del arriendo</p>
+        </div>
+
+        <!-- DESGLOSE DE PRECIOS -->
+        <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #4CAF50;">
+          <h3 style="margin-top: 0; color: #4CAF50;">📊 Desglose de Precios</h3>
+          <div style="border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 15px;">
+            <div style="display: flex; justify-content: space-between; margin: 8px 0;">
+              <span><strong>Arriendo ${data.boxQuantity} cajas:</strong></span>
+              <span style="font-weight: bold;">$${(data.baseRentalPrice || 0).toLocaleString('es-CL')}</span>
+            </div>
+            ${data.additionalProducts && data.additionalProducts.length > 0 ? 
+              data.additionalProducts.map(product => 
+                `<div style="display: flex; justify-content: space-between; margin: 8px 0; color: #666;">
+                  <span>${product.quantity}x ${product.name}:</span>
+                  <span>$${(product.quantity * product.price).toLocaleString('es-CL')}</span>
+                </div>`
+              ).join('') : ''
+            }
+            <div style="display: flex; justify-content: space-between; margin: 8px 0; color: #856404;">
+              <span><strong>Garantía:</strong> <small>(se devuelve al entregar las cajas)</small></span>
+              <span style="font-weight: bold;">$${(data.guaranteeAmount || 0).toLocaleString('es-CL')}</span>
+            </div>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 18px; font-weight: bold; color: #2E5CA6;">
+            <span>TOTAL A PAGAR:</span>
+            <span>$${(data.totalAmount || 0).toLocaleString('es-CL')}</span>
+          </div>
+        </div>
+
         <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2E5CA6;">
           <h3 style="margin-top: 0; color: #2E5CA6;">📦 Detalles del Arriendo</h3>
           <ul style="list-style: none; padding: 0;">

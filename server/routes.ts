@@ -431,13 +431,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const emailData: RentalEmailData = {
             customerName: customer.name,
             customerEmail: customer.email,
-            trackingCode: rental.trackingCode,
-            trackingToken: rental.trackingToken,
+            trackingCode: rental.trackingCode || '',
+            trackingToken: rental.trackingToken || '',
             boxQuantity: rental.boxQuantity,
             deliveryDate: rental.deliveryDate?.toISOString() || '',
             pickupDate: rental.pickupDate?.toISOString() || '',
             deliveryAddress: rental.deliveryAddress,
-            status: rental.status
+            status: rental.status,
+            totalAmount: parseFloat(rental.totalAmount || '0'),
+            baseRentalPrice: parseFloat(rental.pricePerDay || '0'),
+            guaranteeAmount: parseFloat(rental.guaranteeAmount || '0'),
+            additionalProducts: (rental.additionalProducts as any[]) || []
           };
           
           await sendStatusChangeEmail('pendiente', emailData);
@@ -504,10 +508,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
               deliveryAddress: rental.deliveryAddress,
               driverName: driver?.name,
               driverPhone: driver?.phone,
-              status: rental.status
+              status: rental.status || '',
+              totalAmount: parseFloat(rental.totalAmount || '0'),
+              baseRentalPrice: parseFloat(rental.pricePerDay || '0'),
+              guaranteeAmount: parseFloat(rental.guaranteeAmount || '0'),
+              additionalProducts: (rental.additionalProducts as any[]) || []
             };
             
-            await sendStatusChangeEmail(rental.status, emailData);
+            await sendStatusChangeEmail(rental.status || 'pendiente', emailData);
             console.log(`Email de cambio de estado enviado a: ${customer.email} - Estado: ${rental.status}`);
           }
         } catch (emailError) {
@@ -802,7 +810,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
               deliveryAddress: rental.deliveryAddress,
               driverName: driver?.name,
               driverPhone: driver?.phone,
-              status: rental.status
+              status: rental.status || '',
+              totalAmount: parseFloat(rental.totalAmount || '0'),
+              baseRentalPrice: parseFloat(rental.pricePerDay || '0'),
+              guaranteeAmount: parseFloat(rental.guaranteeAmount || '0'),
+              additionalProducts: (rental.additionalProducts as any[]) || []
             };
             
             // Enviar email específico para "En Ruta" o email genérico de cambio de estado
@@ -810,7 +822,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               await sendRentalOnRouteEmail(emailData);
               console.log(`Email "En Ruta" enviado a: ${customer.email} - Repartidor: ${driver?.name}`);
             } else {
-              await sendStatusChangeEmail(rental.status, emailData);
+              await sendStatusChangeEmail(rental.status || 'pendiente', emailData);
               console.log(`Email de cambio de estado enviado a: ${customer.email} - Estado: ${rental.status}`);
             }
           }
