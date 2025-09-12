@@ -706,6 +706,21 @@ const SAMPLE_DATA: RentalEmailData = {
   customerId: 'customer-456'
 };
 
+// Datos de ejemplo para email de repartidor
+const SAMPLE_DRIVER_DATA = {
+  driverName: 'Carlos Martínez',
+  driverEmail: 'carlos.martinez@email.com',
+  customerName: 'María González',
+  customerPhone: '+56 9 8765 4321',
+  rentalId: 'R240912001',
+  boxQuantity: 15,
+  deliveryDate: '2024-09-15',
+  deliveryAddress: 'Av. Providencia 1234, Providencia, Santiago',
+  pickupDate: '2024-09-22',
+  pickupAddress: 'Av. Las Condes 5678, Las Condes, Santiago',
+  notes: 'Entregar en horario de oficina (9:00-18:00). Llamar antes de llegar.'
+};
+
 export function generateEmailPreview(emailType: string): { subject: string; htmlContent: string } {
   const data = SAMPLE_DATA;
   const trackingUrl = generateTrackingUrl(data.trackingCode, data.trackingToken);
@@ -745,6 +760,11 @@ export function generateEmailPreview(emailType: string): { subject: string; html
       return {
         subject: `🎉 ¡Arriendo completado! Ayúdanos con una reseña - ${escapeHtmlServer(data.trackingCode)}`,
         htmlContent: generateCompletedEmailHTML(data, trackingUrl)
+      };
+    case 'driver_assignment':
+      return {
+        subject: `Nueva Asignación de Reparto - Arriendo #${SAMPLE_DRIVER_DATA.rentalId}`,
+        htmlContent: generateDriverAssignmentHTML()
       };
     default:
       return {
@@ -1161,6 +1181,76 @@ function generateCompletedEmailHTML(data: RentalEmailData, trackingUrl: string):
           <p style="margin: 5px 0;">Si tienes alguna consulta, no dudes en contactarnos:</p>
           <p style="margin: 5px 0;">✉️ <strong>Email:</strong> contacto@arriendocajas.cl</p>
           <p style="margin: 5px 0;">💬 <strong>WhatsApp:</strong> <a href="https://wa.me/56987290995" style="color: #25D366; text-decoration: none;">+56 9 8729 0995</a></p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+function generateDriverAssignmentHTML(): string {
+  const data = SAMPLE_DRIVER_DATA;
+  
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <title>Nueva Asignación de Reparto</title>
+    </head>
+    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+        <h1 style="color: white; margin: 0; font-size: 28px;">🚚 Nueva Asignación de Reparto</h1>
+        <p style="color: white; margin: 10px 0 0 0; font-size: 16px;">Arriendo #${escapeHtmlServer(data.rentalId)}</p>
+      </div>
+      
+      <div style="background: #fff8e1; padding: 30px; border-radius: 0 0 10px 10px;">
+        <h2 style="color: #F57C00; margin-top: 0;">Estimado/a ${escapeHtmlServer(data.driverName)},</h2>
+        
+        <p>Se le ha asignado un nuevo servicio de reparto. A continuación encontrará todos los detalles:</p>
+        
+        <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #FF9800;">
+          <h3 style="margin-top: 0; color: #FF9800;">📋 Detalles del Arriendo</h3>
+          <div style="margin: 10px 0;"><strong>ID Arriendo:</strong> ${escapeHtmlServer(data.rentalId)}</div>
+          <div style="margin: 10px 0;"><strong>Cliente:</strong> ${escapeHtmlServer(data.customerName)}</div>
+          <div style="margin: 10px 0;"><strong>Teléfono:</strong> ${escapeHtmlServer(data.customerPhone)}</div>
+          <div style="margin: 10px 0;"><strong>Cantidad de cajas:</strong> ${data.boxQuantity}</div>
+          <div style="margin: 10px 0;"><strong>Fecha de entrega:</strong> ${data.deliveryDate}</div>
+          <div style="margin: 10px 0;"><strong>Dirección de entrega:</strong> ${escapeHtmlServer(data.deliveryAddress)}</div>
+          ${data.pickupDate ? `<div style="margin: 10px 0;"><strong>Fecha de retiro:</strong> ${data.pickupDate}</div>` : ''}
+          ${data.pickupAddress && data.pickupAddress !== data.deliveryAddress ? 
+            `<div style="margin: 10px 0;"><strong>Dirección de retiro:</strong> ${escapeHtmlServer(data.pickupAddress)}</div>` : ''}
+          ${data.notes ? `<div style="margin: 10px 0;"><strong>Notas especiales:</strong> ${escapeHtmlServer(data.notes)}</div>` : ''}
+        </div>
+        
+        <div style="background: #fff3cd; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ffc107;">
+          <h3 style="margin-top: 0; color: #856404;">📝 Instrucciones Importantes</h3>
+          <ul style="color: #856404; margin: 10px 0; padding-left: 20px;">
+            <li><strong>Confirmar disponibilidad</strong> para la fecha asignada</li>
+            <li><strong>Contactar al cliente</strong> antes de la entrega/retiro</li>
+            <li><strong>Verificar dirección y horario</strong> con el cliente</li>
+            <li><strong>Reportar cualquier novedad</strong> a asignaciones@arriendocajas.cl</li>
+            <li><strong>Mantener las cajas en buen estado</strong> durante el transporte</li>
+          </ul>
+        </div>
+        
+        <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <h3 style="margin-top: 0; color: #2E7D32;">✅ Confirmar Recepción</h3>
+          <p style="margin: 0;">Por favor, <strong>confirme la recepción de esta asignación</strong> respondiendo a este email o contactando directamente a asignaciones@arriendocajas.cl</p>
+        </div>
+        
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="https://wa.me/56987290995" style="background: linear-gradient(135deg, #25D366 0%, #1BAE42 100%); color: white; text-decoration: none; padding: 15px 30px; border-radius: 25px; font-weight: bold; display: inline-block;">
+            💬 Confirmar por WhatsApp
+          </a>
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+          <p style="margin: 5px 0; color: #666; font-size: 14px;"><strong>Arriendo Cajas</strong></p>
+          <p style="margin: 5px 0; color: #666; font-size: 14px;">Email: contacto@arriendocajas.cl</p>
+          <p style="margin: 5px 0; color: #666; font-size: 14px;">Asignaciones: asignaciones@arriendocajas.cl</p>
+          <p style="margin: 5px 0; color: #666; font-size: 14px;">WhatsApp: +56 9 8729 0995</p>
         </div>
       </div>
     </body>

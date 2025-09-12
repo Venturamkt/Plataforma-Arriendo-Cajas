@@ -1335,7 +1335,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { emailType } = req.params;
       
-      const validTypes = ['pending', 'pending_reminder', 'paid', 'on_route', 'delivered', 'picked_up', 'completed'];
+      const validTypes = ['pending', 'pending_reminder', 'paid', 'on_route', 'delivered', 'picked_up', 'completed', 'driver_assignment'];
       
       if (!validTypes.includes(emailType)) {
         return res.status(400).json({ 
@@ -1409,6 +1409,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           label: 'Finalizada', 
           description: 'Arriendo completado, solicitud de reseña',
           icon: '🎉',
+          color: 'orange'
+        },
+        { 
+          id: 'driver_assignment', 
+          label: 'Asignación Repartidor', 
+          description: 'Email de asignación enviado al conductor',
+          icon: '🚚',
           color: 'orange'
         }
       ];
