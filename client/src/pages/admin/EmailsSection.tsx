@@ -72,7 +72,7 @@ export default function EmailsSection() {
 
   // Fetch email preview (only when needed)
   const { data: previewResponse, isLoading: previewLoading, refetch: refetchPreview } = useQuery({
-    queryKey: ['/api/admin/email-preview', selectedPreviewType],
+    queryKey: [`/api/admin/email-preview/${selectedPreviewType}`],
     enabled: false // Only fetch when explicitly requested
   });
 
@@ -124,18 +124,14 @@ export default function EmailsSection() {
 
   const handlePreviewEmail = async () => {
     try {
-      console.log('Preview button clicked, selectedPreviewType:', selectedPreviewType);
       const result = await refetchPreview();
-      console.log('Preview result:', result);
       if (result.data) {
         const data = result.data as any;
-        console.log('Preview data:', data);
         setPreviewData({
           subject: data.subject,
           htmlContent: data.htmlContent
         });
         setShowPreviewDialog(true);
-        console.log('Dialog should be opening...');
       }
     } catch (error) {
       console.error('Error loading preview:', error);
