@@ -10,7 +10,8 @@ import {
   inventory,
   rentalItems,
   calendarEvents,
-  companySettings
+  companySettings,
+  emailLogs
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, lte, like, sql } from "drizzle-orm";
@@ -70,6 +71,11 @@ export interface IStorage {
   // Company Settings
   getCompanySettings(): Promise<any>;
   saveCompanySettings(settingsData: any): Promise<any>;
+  
+  // Email Logs
+  createEmailLog(emailData: any): Promise<any>;
+  getEmailLogs(): Promise<any[]>;
+  getEmailLogById(id: string): Promise<any>;
 }
 
 class PostgresStorage implements IStorage {
@@ -933,6 +939,24 @@ class PostgresStorage implements IStorage {
       const result = await db.insert(companySettings).values(settingsData).returning();
       return result[0];
     }
+  }
+
+  // Email Logs
+  async createEmailLog(emailData: any) {
+    const result = await db.insert(emailLogs).values(emailData).returning();
+    return result[0];
+  }
+
+  async getEmailLogs() {
+    const result = await db.select().from(emailLogs)
+      .orderBy(desc(emailLogs.createdAt));
+    return result;
+  }
+
+  async getEmailLogById(id: string) {
+    const result = await db.select().from(emailLogs)
+      .where(eq(emailLogs.id, id));
+    return result[0] || null;
   }
 
   generateCSV(data: any, type: string): string {

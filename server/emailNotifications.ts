@@ -1,5 +1,7 @@
 import { sendEmail, type EmailData } from './emailService';
 import { generateTrackingUrl } from './trackingUtils';
+import { storage } from './storage';
+import type { EmailLog } from '@shared/schema';
 
 export interface RentalEmailData {
   customerName: string;
@@ -21,6 +23,60 @@ export interface RentalEmailData {
     quantity: number;
     price: number;
   }>;
+  rentalId?: string;
+  customerId?: string;
+}
+
+// Función auxiliar para registrar logs de emails
+async function logEmail(
+  emailType: string,
+  emailData: EmailData,
+  htmlContent: string,
+  rentalId?: string,
+  customerId?: string,
+  status: 'sent' | 'failed' = 'sent',
+  errorMessage?: string,
+  customerName?: string
+): Promise<void> {
+  try {
+    await storage.createEmailLog({
+      emailType,
+      toEmail: Array.isArray(emailData.to) ? emailData.to.join(', ') : emailData.to,
+      toName: customerName || null,
+      subject: emailData.subject,
+      htmlContent,
+      rentalId,
+      customerId,
+      status,
+      errorMessage,
+    });
+  } catch (error) {
+    console.error('Error logging email:', error);
+  }
+}
+
+// Función wrapper que envía email y registra log automáticamente
+async function sendEmailWithLogging(
+  emailType: string,
+  emailData: EmailData,
+  htmlContent: string,
+  rentalId?: string,
+  customerId?: string,
+  customerName?: string
+): Promise<boolean> {
+  try {
+    const result = await sendEmail(emailData);
+    
+    // Registrar log de email exitoso
+    await logEmail(emailType, emailData, htmlContent, rentalId, customerId, 'sent', undefined, customerName);
+    
+    return result;
+  } catch (error) {
+    // Registrar log de email fallido
+    await logEmail(emailType, emailData, htmlContent, rentalId, customerId, 'failed', error?.toString(), customerName);
+    
+    return false;
+  }
 }
 
 // Email para creación de arriendo (estado: pendiente)
@@ -146,11 +202,11 @@ export async function sendRentalCreatedEmail(data: RentalEmailData): Promise<boo
     </html>
   `;
 
-  return await sendEmail({
+  return await sendEmailWithLogging('pending', {
     to: data.customerEmail,
     subject,
     html: htmlContent
-  });
+  }, htmlContent, data.rentalId, data.customerId, data.customerName);
 }
 
 // Email recordatorio para arriendos pendientes (5 días antes)
@@ -234,11 +290,11 @@ export async function sendPendingReminderEmail(data: RentalEmailData): Promise<b
     </html>
   `;
 
-  return await sendEmail({
+  return await sendEmailWithLogging('pending_reminder', {
     to: data.customerEmail,
     subject,
     html: htmlContent
-  });
+  }, htmlContent, data.rentalId, data.customerId, data.customerName);
 }
 
 // Email para arriendo pagado
@@ -299,11 +355,11 @@ export async function sendRentalPaidEmail(data: RentalEmailData): Promise<boolea
     </html>
   `;
 
-  return await sendEmail({
+  return await sendEmailWithLogging('paid', {
     to: data.customerEmail,
     subject,
     html: htmlContent
-  });
+  }, htmlContent, data.rentalId, data.customerId, data.customerName);
 }
 
 // Email para arriendo entregado
@@ -366,11 +422,11 @@ export async function sendRentalDeliveredEmail(data: RentalEmailData): Promise<b
     </html>
   `;
 
-  return await sendEmail({
+  return await sendEmailWithLogging('delivered', {
     to: data.customerEmail,
     subject,
     html: htmlContent
-  });
+  }, htmlContent, data.rentalId, data.customerId, data.customerName);
 }
 
 // Email para arriendo retirado
@@ -422,11 +478,11 @@ export async function sendRentalPickedUpEmail(data: RentalEmailData): Promise<bo
     </html>
   `;
 
-  return await sendEmail({
+  return await sendEmailWithLogging('picked_up', {
     to: data.customerEmail,
     subject,
     html: htmlContent
-  });
+  }, htmlContent, data.rentalId, data.customerId, data.customerName);
 }
 
 // Email para arriendo en ruta 
@@ -510,11 +566,11 @@ export async function sendRentalOnRouteEmail(data: RentalEmailData): Promise<boo
     </html>
   `;
 
-  return await sendEmail({
+  return await sendEmailWithLogging('on_route', {
     to: data.customerEmail,
     subject,
     html: htmlContent
-  });
+  }, htmlContent, data.rentalId, data.customerId, data.customerName);
 }
 
 // Email para arriendo finalizado (con solicitud de review)
@@ -595,11 +651,11 @@ export async function sendRentalCompletedEmail(data: RentalEmailData): Promise<b
     </html>
   `;
 
-  return await sendEmail({
+  return await sendEmailWithLogging('completed', {
     to: data.customerEmail,
     subject,
     html: htmlContent
-  });
+  }, htmlContent, data.rentalId, data.customerId, data.customerName);
 }
 
 // Función helper para enviar email según el estado
@@ -616,6 +672,8 @@ export async function sendStatusChangeEmail(
       return await sendRentalDeliveredEmail(data);
     case 'retirada':
       return await sendRentalPickedUpEmail(data);
+    case 'en_ruta':
+      return await sendRentalOnRouteEmail(data);
     case 'finalizada':
       return await sendRentalCompletedEmail(data);
     default:
