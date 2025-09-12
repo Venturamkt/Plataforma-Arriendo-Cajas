@@ -1230,6 +1230,106 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Email Logs Administration Endpoints (requires admin auth)
+  app.get("/api/admin/email-logs", requireAuth, async (req, res) => {
+    try {
+      // Obtener parámetros de consulta para filtros
+      const { emailType, status, toEmail, startDate, endDate, limit, offset } = req.query;
+      
+      // Por ahora, obtener todos los logs (sin filtros complejos)
+      const emailLogs = await storage.getEmailLogs();
+      
+      // Aplicar filtros básicos si se proporcionan
+      let filteredLogs = emailLogs;
+      
+      if (emailType && emailType !== 'all') {
+        filteredLogs = filteredLogs.filter(log => log.emailType === emailType);
+      }
+      
+      if (status && status !== 'all') {
+        filteredLogs = filteredLogs.filter(log => log.status === status);
+      }
+      
+      if (toEmail) {
+        filteredLogs = filteredLogs.filter(log => 
+          log.toEmail?.toLowerCase().includes((toEmail as string).toLowerCase())
+        );
+      }
+      
+      // Aplicar paginación básica
+      const limitNum = limit ? parseInt(limit as string) : 50;
+      const offsetNum = offset ? parseInt(offset as string) : 0;
+      const paginatedLogs = filteredLogs.slice(offsetNum, offsetNum + limitNum);
+      
+      res.json({
+        logs: paginatedLogs,
+        total: filteredLogs.length,
+        limit: limitNum,
+        offset: offsetNum
+      });
+    } catch (error) {
+      console.error("Error fetching email logs:", error);
+      res.status(500).json({ error: "Error fetching email logs" });
+    }
+  });
+
+  // Get specific email log by ID
+  app.get("/api/admin/email-logs/:id", requireAuth, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const emailLog = await storage.getEmailLogById(id);
+      
+      if (!emailLog) {
+        return res.status(404).json({ error: "Email log not found" });
+      }
+      
+      res.json(emailLog);
+    } catch (error) {
+      console.error("Error fetching email log:", error);
+      res.status(500).json({ error: "Error fetching email log" });
+    }
+  });
+
+  // Get email logs statistics
+  app.get("/api/admin/email-stats", requireAuth, async (req, res) => {
+    try {
+      const emailLogs = await storage.getEmailLogs();
+      
+      const stats = {
+        total: emailLogs.length,
+        byType: {} as Record<string, number>,
+        byStatus: {} as Record<string, number>,
+        today: 0,
+        thisWeek: 0,
+        thisMonth: 0
+      };
+      
+      const now = new Date();
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const weekStart = new Date(todayStart.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      
+      emailLogs.forEach(log => {
+        // Count by type
+        stats.byType[log.emailType] = (stats.byType[log.emailType] || 0) + 1;
+        
+        // Count by status
+        stats.byStatus[log.status] = (stats.byStatus[log.status] || 0) + 1;
+        
+        // Count by time periods
+        const logDate = new Date(log.createdAt);
+        if (logDate >= todayStart) stats.today++;
+        if (logDate >= weekStart) stats.thisWeek++;
+        if (logDate >= monthStart) stats.thisMonth++;
+      });
+      
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching email stats:", error);
+      res.status(500).json({ error: "Error fetching email stats" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

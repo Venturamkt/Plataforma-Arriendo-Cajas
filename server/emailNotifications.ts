@@ -3,6 +3,28 @@ import { generateTrackingUrl } from './trackingUtils';
 import { storage } from './storage';
 import type { EmailLog } from '@shared/schema';
 
+// HTML escaping function to prevent XSS attacks
+function escapeHtml(text: string | null | undefined): string {
+  if (text === null || text === undefined) return '';
+  
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// Alternative HTML escaping for server-side (since document may not be available)
+function escapeHtmlServer(text: string | null | undefined): string {
+  if (text === null || text === undefined) return '';
+  
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+    .replace(/\//g, '&#x2F;');
+}
+
 export interface RentalEmailData {
   customerName: string;
   customerEmail: string;
@@ -83,7 +105,7 @@ async function sendEmailWithLogging(
 export async function sendRentalCreatedEmail(data: RentalEmailData): Promise<boolean> {
   const trackingUrl = generateTrackingUrl(data.trackingCode, data.trackingToken);
   
-  const subject = `📋 Cotización Recibida - Código ${data.trackingCode}`;
+  const subject = `📋 Cotización Recibida - Código ${escapeHtmlServer(data.trackingCode)}`;
   
   const htmlContent = `
     <!DOCTYPE html>
@@ -96,11 +118,11 @@ export async function sendRentalCreatedEmail(data: RentalEmailData): Promise<boo
     <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
       <div style="background: linear-gradient(135deg, #2E5CA6 0%, #C8201D 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
         <h1 style="color: white; margin: 0; font-size: 28px;">📋 Cotización Recibida</h1>
-        <p style="color: white; margin: 10px 0 0 0; font-size: 16px;">Tu código de seguimiento: <strong>${data.trackingCode}</strong></p>
+        <p style="color: white; margin: 10px 0 0 0; font-size: 16px;">Tu código de seguimiento: <strong>${escapeHtmlServer(data.trackingCode)}</strong></p>
       </div>
       
       <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
-        <h2 style="color: #2E5CA6; margin-top: 0;">Hola ${data.customerName},</h2>
+        <h2 style="color: #2E5CA6; margin-top: 0;">Hola ${escapeHtmlServer(data.customerName)},</h2>
         
         <p>Hemos recibido tu solicitud de arriendo. Se encuentra en estado <strong>PENDIENTE</strong>. <span style="background: #fff3cd; padding: 2px 6px; border-radius: 3px; color: #856404;">Solo al pagar se confirma el arriendo</span> y puedes tener tus cajas aseguradas.</p>
         
@@ -124,7 +146,7 @@ export async function sendRentalCreatedEmail(data: RentalEmailData): Promise<boo
             ${data.additionalProducts && data.additionalProducts.length > 0 ? 
               data.additionalProducts.map(product => 
                 `<div style="display: flex; justify-content: space-between; margin: 8px 0; color: #666;">
-                  <span>${product.quantity}x ${product.name}:</span>
+                  <span>${product.quantity}x ${escapeHtmlServer(product.name)}:</span>
                   <span>$${(product.quantity * product.price).toLocaleString('es-CL')}</span>
                 </div>`
               ).join('') : ''
@@ -143,11 +165,11 @@ export async function sendRentalCreatedEmail(data: RentalEmailData): Promise<boo
         <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2E5CA6;">
           <h3 style="margin-top: 0; color: #2E5CA6;">📦 Detalles del Arriendo</h3>
           <ul style="list-style: none; padding: 0;">
-            <li style="margin: 8px 0;"><strong>Código:</strong> ${data.trackingCode}</li>
+            <li style="margin: 8px 0;"><strong>Código:</strong> ${escapeHtmlServer(data.trackingCode)}</li>
             <li style="margin: 8px 0;"><strong>Cantidad:</strong> ${data.boxQuantity} cajas</li>
             <li style="margin: 8px 0;"><strong>Fecha de entrega:</strong> ${new Date(data.deliveryDate).toLocaleDateString('es-CL')}</li>
             <li style="margin: 8px 0;"><strong>Fecha de retiro:</strong> ${new Date(data.pickupDate).toLocaleDateString('es-CL')}</li>
-            <li style="margin: 8px 0;"><strong>Dirección:</strong> ${data.deliveryAddress}</li>
+            <li style="margin: 8px 0;"><strong>Dirección:</strong> ${escapeHtmlServer(data.deliveryAddress)}</li>
           </ul>
         </div>
         
@@ -182,7 +204,7 @@ export async function sendRentalCreatedEmail(data: RentalEmailData): Promise<boo
         
         <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 20px 0;">
           <p style="margin: 0; font-size: 14px; color: #1565c0;">
-            💡 <strong>Consejo:</strong> Guarda este email y el código ${data.trackingCode} para hacer seguimiento de tu arriendo en cualquier momento.
+            💡 <strong>Consejo:</strong> Guarda este email y el código ${escapeHtmlServer(data.trackingCode)} para hacer seguimiento de tu arriendo en cualquier momento.
           </p>
         </div>
         
@@ -218,7 +240,7 @@ export async function sendPendingReminderEmail(data: RentalEmailData): Promise<b
     day: 'numeric'
   });
 
-  const subject = `Tu arriendo está reservado para ${deliveryDate}`;
+  const subject = `Tu arriendo está reservado para ${escapeHtmlServer(deliveryDate)}`;
   
   const basePrice = (data.totalAmount || 0) - (data.guaranteeAmount || 0) - 
     (data.additionalProducts && data.additionalProducts.length > 0 ? 
@@ -234,13 +256,13 @@ export async function sendPendingReminderEmail(data: RentalEmailData): Promise<b
     </head>
     <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 500px; margin: 0 auto; padding: 20px;">
       <div style="text-align: center; margin-bottom: 30px;">
-        <h1 style="color: #2E5CA6; margin: 0; font-size: 24px;">¡Hola ${data.customerName}!</h1>
+        <h1 style="color: #2E5CA6; margin: 0; font-size: 24px;">¡Hola ${escapeHtmlServer(data.customerName)}!</h1>
         <p style="color: #666; margin: 10px 0 0 0;">Te recordamos tu arriendo programado</p>
       </div>
       
       <div style="background: #f8f9fa; padding: 25px; border-radius: 8px; margin: 20px 0;">
         <div style="text-align: center; margin-bottom: 20px;">
-          <div style="color: #C8201D; font-size: 18px; font-weight: bold;">📅 ${deliveryDate}</div>
+          <div style="color: #C8201D; font-size: 18px; font-weight: bold;">📅 ${escapeHtmlServer(deliveryDate)}</div>
           <p style="margin: 5px 0 0 0; color: #666; font-size: 14px;">Fecha de entrega programada</p>
         </div>
         
@@ -249,7 +271,7 @@ export async function sendPendingReminderEmail(data: RentalEmailData): Promise<b
             <span style="font-weight: bold;">📦 Cantidad:</span> ${data.boxQuantity} cajas
           </div>
           <div style="margin: 8px 0;">
-            <span style="font-weight: bold;">📍 Dirección:</span> ${data.deliveryAddress}
+            <span style="font-weight: bold;">📍 Dirección:</span> ${escapeHtmlServer(data.deliveryAddress)}
           </div>
           <div style="margin: 8px 0; padding: 10px; background: white; border-radius: 5px;">
             <span style="font-weight: bold; color: #2E5CA6;">💰 Total:</span> 
@@ -282,7 +304,7 @@ export async function sendPendingReminderEmail(data: RentalEmailData): Promise<b
       
       <div style="text-align: center; border-top: 1px solid #ddd; padding-top: 20px; margin-top: 30px;">
         <p style="color: #666; font-size: 12px; margin: 0;">
-          Arriendo Cajas - Código: ${data.trackingCode}<br>
+          Arriendo Cajas - Código: ${escapeHtmlServer(data.trackingCode)}<br>
           Este email fue enviado automáticamente
         </p>
       </div>
@@ -301,7 +323,7 @@ export async function sendPendingReminderEmail(data: RentalEmailData): Promise<b
 export async function sendRentalPaidEmail(data: RentalEmailData): Promise<boolean> {
   const trackingUrl = generateTrackingUrl(data.trackingCode, data.trackingToken);
   
-  const subject = `✅ Pago Confirmado - Arriendo ${data.trackingCode}`;
+  const subject = `✅ Pago Confirmado - Arriendo ${escapeHtmlServer(data.trackingCode)}`;
   
   const htmlContent = `
     <!DOCTYPE html>
@@ -314,22 +336,22 @@ export async function sendRentalPaidEmail(data: RentalEmailData): Promise<boolea
     <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
       <div style="background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
         <h1 style="color: white; margin: 0; font-size: 28px;">✅ ¡Pago Confirmado!</h1>
-        <p style="color: white; margin: 10px 0 0 0; font-size: 16px;">Código: <strong>${data.trackingCode}</strong></p>
+        <p style="color: white; margin: 10px 0 0 0; font-size: 16px;">Código: <strong>${escapeHtmlServer(data.trackingCode)}</strong></p>
       </div>
       
       <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
-        <h2 style="color: #2E5CA6; margin-top: 0;">Hola ${data.customerName},</h2>
+        <h2 style="color: #2E5CA6; margin-top: 0;">Hola ${escapeHtmlServer(data.customerName)},</h2>
         
         <p>¡Excelentes noticias! Tu pago ha sido confirmado y tu arriendo está <strong>ASEGURADO</strong>. Tus cajas están reservadas y listas para la entrega programada.</p>
         
         <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #4CAF50;">
           <h3 style="margin-top: 0; color: #4CAF50;">📦 Arriendo Confirmado</h3>
           <ul style="list-style: none; padding: 0;">
-            <li style="margin: 8px 0;"><strong>Código:</strong> ${data.trackingCode}</li>
+            <li style="margin: 8px 0;"><strong>Código:</strong> ${escapeHtmlServer(data.trackingCode)}</li>
             <li style="margin: 8px 0;"><strong>Cantidad:</strong> ${data.boxQuantity} cajas</li>
             <li style="margin: 8px 0;"><strong>Fecha de entrega:</strong> ${new Date(data.deliveryDate).toLocaleDateString('es-CL')}</li>
             <li style="margin: 8px 0;"><strong>Fecha de retiro:</strong> ${new Date(data.pickupDate).toLocaleDateString('es-CL')}</li>
-            <li style="margin: 8px 0;"><strong>Dirección:</strong> ${data.deliveryAddress}</li>
+            <li style="margin: 8px 0;"><strong>Dirección:</strong> ${escapeHtmlServer(data.deliveryAddress)}</li>
           </ul>
         </div>
         
@@ -366,7 +388,7 @@ export async function sendRentalPaidEmail(data: RentalEmailData): Promise<boolea
 export async function sendRentalDeliveredEmail(data: RentalEmailData): Promise<boolean> {
   const trackingUrl = generateTrackingUrl(data.trackingCode, data.trackingToken);
   
-  const subject = `✅ Cajas Entregadas - Código ${data.trackingCode}`;
+  const subject = `✅ Cajas Entregadas - Código ${escapeHtmlServer(data.trackingCode)}`;
   
   const htmlContent = `
     <!DOCTYPE html>
@@ -379,11 +401,11 @@ export async function sendRentalDeliveredEmail(data: RentalEmailData): Promise<b
     <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
       <div style="background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
         <h1 style="color: white; margin: 0; font-size: 28px;">✅ ¡Cajas Entregadas!</h1>
-        <p style="color: white; margin: 10px 0 0 0; font-size: 16px;">Código: <strong>${data.trackingCode}</strong></p>
+        <p style="color: white; margin: 10px 0 0 0; font-size: 16px;">Código: <strong>${escapeHtmlServer(data.trackingCode)}</strong></p>
       </div>
       
       <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
-        <h2 style="color: #2E5CA6; margin-top: 0;">Hola ${data.customerName},</h2>
+        <h2 style="color: #2E5CA6; margin-top: 0;">Hola ${escapeHtmlServer(data.customerName)},</h2>
         
         <p>¡Perfecto! Tus ${data.boxQuantity} cajas han sido <strong>ENTREGADAS</strong> exitosamente.</p>
         
@@ -392,7 +414,7 @@ export async function sendRentalDeliveredEmail(data: RentalEmailData): Promise<b
           <ul style="list-style: none; padding: 0;">
             <li style="margin: 8px 0;"><strong>Cantidad entregada:</strong> ${data.boxQuantity} cajas</li>
             <li style="margin: 8px 0;"><strong>Fecha de retiro programada:</strong> ${new Date(data.pickupDate).toLocaleDateString('es-CL')}</li>
-            <li style="margin: 8px 0;"><strong>Dirección:</strong> ${data.deliveryAddress}</li>
+            <li style="margin: 8px 0;"><strong>Dirección:</strong> ${escapeHtmlServer(data.deliveryAddress)}</li>
           </ul>
         </div>
         
@@ -433,7 +455,7 @@ export async function sendRentalDeliveredEmail(data: RentalEmailData): Promise<b
 export async function sendRentalPickedUpEmail(data: RentalEmailData): Promise<boolean> {
   const trackingUrl = generateTrackingUrl(data.trackingCode, data.trackingToken);
   
-  const subject = `📦 Cajas Retiradas - Código ${data.trackingCode}`;
+  const subject = `📦 Cajas Retiradas - Código ${escapeHtmlServer(data.trackingCode)}`;
   
   const htmlContent = `
     <!DOCTYPE html>
@@ -446,11 +468,11 @@ export async function sendRentalPickedUpEmail(data: RentalEmailData): Promise<bo
     <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
       <div style="background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
         <h1 style="color: white; margin: 0; font-size: 28px;">📦 Cajas Retiradas</h1>
-        <p style="color: white; margin: 10px 0 0 0; font-size: 16px;">Código: <strong>${data.trackingCode}</strong></p>
+        <p style="color: white; margin: 10px 0 0 0; font-size: 16px;">Código: <strong>${escapeHtmlServer(data.trackingCode)}</strong></p>
       </div>
       
       <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
-        <h2 style="color: #2E5CA6; margin-top: 0;">Hola ${data.customerName},</h2>
+        <h2 style="color: #2E5CA6; margin-top: 0;">Hola ${escapeHtmlServer(data.customerName)},</h2>
         
         <p>Las ${data.boxQuantity} cajas han sido <strong>RETIRADAS</strong> exitosamente. El arriendo está casi finalizado.</p>
         
@@ -490,7 +512,7 @@ export async function sendRentalOnRouteEmail(data: RentalEmailData): Promise<boo
   const trackingUrl = generateTrackingUrl(data.trackingCode, data.trackingToken);
   const estimatedTime = "30-45 minutos";
   
-  const subject = `🚚 ¡Vamos en camino! - Código ${data.trackingCode}`;
+  const subject = `🚚 ¡Vamos en camino! - Código ${escapeHtmlServer(data.trackingCode)}`;
   
   const htmlContent = `
     <!DOCTYPE html>
@@ -503,19 +525,19 @@ export async function sendRentalOnRouteEmail(data: RentalEmailData): Promise<boo
     <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
       <div style="background: linear-gradient(135deg, #2E5CA6 0%, #4CAF50 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
         <h1 style="color: white; margin: 0; font-size: 28px;">🚚 ¡Vamos en Camino!</h1>
-        <p style="color: white; margin: 10px 0 0 0; font-size: 16px;">Tu repartidor está en ruta - Código: <strong>${data.trackingCode}</strong></p>
+        <p style="color: white; margin: 10px 0 0 0; font-size: 16px;">Tu repartidor está en ruta - Código: <strong>${escapeHtmlServer(data.trackingCode)}</strong></p>
       </div>
       
       <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
-        <h2 style="color: #2E5CA6; margin-top: 0;">¡Hola ${data.customerName}!</h2>
+        <h2 style="color: #2E5CA6; margin-top: 0;">¡Hola ${escapeHtmlServer(data.customerName)}!</h2>
         
         <p>¡Buenas noticias! Nuestro repartidor ya está <strong>EN CAMINO</strong> hacia tu dirección con las <strong>${data.boxQuantity} cajas</strong> que solicitaste. 🎉</p>
         
         <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2E5CA6;">
           <h3 style="margin-top: 0; color: #2E5CA6;">👤 Tu repartidor:</h3>
           <ul style="list-style: none; padding: 0;">
-            <li style="margin: 8px 0;"><strong>Nombre:</strong> ${data.driverName || 'Por confirmar'}</li>
-            <li style="margin: 8px 0;"><strong>Teléfono:</strong> ${data.driverPhone || 'Por confirmar'}</li>
+            <li style="margin: 8px 0;"><strong>Nombre:</strong> ${escapeHtmlServer(data.driverName || 'Por confirmar')}</li>
+            <li style="margin: 8px 0;"><strong>Teléfono:</strong> ${escapeHtmlServer(data.driverPhone || 'Por confirmar')}</li>
             <li style="margin: 8px 0;"><strong>Tiempo estimado:</strong> ${estimatedTime}</li>
           </ul>
         </div>
@@ -524,7 +546,7 @@ export async function sendRentalOnRouteEmail(data: RentalEmailData): Promise<boo
           <h3 style="margin-top: 0; color: #333;">📦 Detalles de tu entrega:</h3>
           <ul style="list-style: none; padding: 0;">
             <li style="margin: 8px 0;"><strong>Cantidad:</strong> ${data.boxQuantity} cajas</li>
-            <li style="margin: 8px 0;"><strong>Dirección:</strong> ${data.deliveryAddress}</li>
+            <li style="margin: 8px 0;"><strong>Dirección:</strong> ${escapeHtmlServer(data.deliveryAddress)}</li>
           </ul>
         </div>
         
@@ -578,7 +600,7 @@ export async function sendRentalCompletedEmail(data: RentalEmailData): Promise<b
   const trackingUrl = generateTrackingUrl(data.trackingCode, data.trackingToken);
   const googleReviewUrl = 'https://g.page/r/CUv8pKvyA5WbEAE/review';
   
-  const subject = `🎉 Arriendo Finalizado - Código ${data.trackingCode}`;
+  const subject = `🎉 Arriendo Finalizado - Código ${escapeHtmlServer(data.trackingCode)}`;
   
   const htmlContent = `
     <!DOCTYPE html>
@@ -591,11 +613,11 @@ export async function sendRentalCompletedEmail(data: RentalEmailData): Promise<b
     <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
       <div style="background: linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
         <h1 style="color: white; margin: 0; font-size: 28px;">🎉 ¡Arriendo Finalizado!</h1>
-        <p style="color: white; margin: 10px 0 0 0; font-size: 16px;">Código: <strong>${data.trackingCode}</strong></p>
+        <p style="color: white; margin: 10px 0 0 0; font-size: 16px;">Código: <strong>${escapeHtmlServer(data.trackingCode)}</strong></p>
       </div>
       
       <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
-        <h2 style="color: #2E5CA6; margin-top: 0;">¡Gracias ${data.customerName}!</h2>
+        <h2 style="color: #2E5CA6; margin-top: 0;">¡Gracias ${escapeHtmlServer(data.customerName)}!</h2>
         
         <p>Tu arriendo ha sido <strong>FINALIZADO</strong> exitosamente. La garantía será devuelta según el método de pago original.</p>
         
