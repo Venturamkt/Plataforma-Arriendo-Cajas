@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
+import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
 
 interface ProtectedAdminRouteProps {
@@ -14,6 +15,13 @@ export default function ProtectedAdminRoute({ children }: ProtectedAdminRoutePro
     retry: false,
   });
 
+  // Manejar redirección cuando no hay autenticación
+  useEffect(() => {
+    if (!isLoading && (error || !authData || !(authData as any).user)) {
+      setLocation("/admin/login");
+    }
+  }, [isLoading, error, authData, setLocation]);
+
   // Mientras está cargando
   if (isLoading) {
     return (
@@ -26,10 +34,16 @@ export default function ProtectedAdminRoute({ children }: ProtectedAdminRoutePro
     );
   }
 
-  // Si hay error o no está autenticado
+  // Si hay error o no está autenticado, devuelve null mientras redirige
   if (error || !authData || !(authData as any).user) {
-    setLocation("/admin/login");
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-blue-50">
+        <div className="text-center">
+          <Loader2 className="mx-auto h-8 w-8 animate-spin text-red-600" />
+          <p className="mt-2 text-gray-600">Redirigiendo...</p>
+        </div>
+      </div>
+    );
   }
 
   const user = (authData as any).user;

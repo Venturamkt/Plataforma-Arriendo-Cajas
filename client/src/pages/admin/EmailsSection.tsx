@@ -76,8 +76,8 @@ export default function EmailsSection() {
     enabled: false // Only fetch when explicitly requested
   });
 
-  const emailLogs: EmailLog[] = emailLogsData?.logs || [];
-  const stats: EmailStats = emailStats || {
+  const emailLogs: EmailLog[] = (emailLogsData as any)?.logs || [];
+  const stats: EmailStats = (emailStats as any) || {
     total: 0,
     today: 0,
     thisWeek: 0,
@@ -124,13 +124,18 @@ export default function EmailsSection() {
 
   const handlePreviewEmail = async () => {
     try {
+      console.log('Preview button clicked, selectedPreviewType:', selectedPreviewType);
       const result = await refetchPreview();
+      console.log('Preview result:', result);
       if (result.data) {
+        const data = result.data as any;
+        console.log('Preview data:', data);
         setPreviewData({
-          subject: result.data.subject,
-          htmlContent: result.data.htmlContent
+          subject: data.subject,
+          htmlContent: data.htmlContent
         });
         setShowPreviewDialog(true);
+        console.log('Dialog should be opening...');
       }
     } catch (error) {
       console.error('Error loading preview:', error);
@@ -228,7 +233,7 @@ export default function EmailsSection() {
                   <SelectValue placeholder="Selecciona un tipo" />
                 </SelectTrigger>
                 <SelectContent>
-                  {emailTypes?.map((type: any) => (
+                  {(emailTypes as any)?.map((type: any) => (
                     <SelectItem key={type.id} value={type.id}>
                       <div className="flex items-center gap-2">
                         <span>{type.icon}</span>
@@ -263,7 +268,7 @@ export default function EmailsSection() {
           
           {emailTypes && (
             <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {emailTypes.map((type: any) => (
+              {(emailTypes as any).map((type: any) => (
                 <div 
                   key={type.id}
                   className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
@@ -541,7 +546,7 @@ export default function EmailsSection() {
                   <div>
                     <Label className="font-semibold">Tipo:</Label>
                     <Badge className="ml-2">
-                      {emailTypes?.find((t: any) => t.id === selectedPreviewType)?.icon} {emailTypes?.find((t: any) => t.id === selectedPreviewType)?.label}
+                      {(emailTypes as any)?.find((t: any) => t.id === selectedPreviewType)?.icon} {(emailTypes as any)?.find((t: any) => t.id === selectedPreviewType)?.label}
                     </Badge>
                   </div>
                   <div>
