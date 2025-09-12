@@ -14,7 +14,8 @@ import {
   AlertTriangle,
   TrendingUp,
   Clock,
-  CheckCircle
+  CheckCircle,
+  Mail
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,7 @@ import PaymentsSection from "./admin/PaymentsSection";
 import ReportsSection from "./admin/ReportsSection";
 import CalendarSection from "./admin/CalendarSectionNew";
 import ConfigurationSection from "./admin/ConfigurationSection";
+import EmailsSection from "./admin/EmailsSection";
 import CompanyLogo from "@/components/CompanyLogo";
 
 const sidebarItems = [
@@ -38,6 +40,7 @@ const sidebarItems = [
   { id: "inventory", label: "Inventario", icon: Package },
   { id: "drivers", label: "Repartidores", icon: Truck },
   { id: "payments", label: "Pagos / Finanzas", icon: DollarSign },
+  { id: "emails", label: "Emails", icon: Mail },
   { id: "reports", label: "Reportes", icon: BarChart3 },
   { id: "calendar", label: "Calendario", icon: Calendar },
   { id: "configuration", label: "Configuración", icon: Settings },
@@ -270,6 +273,8 @@ export default function AdminDashboard() {
         return <CalendarSection />;
       case "configuration":
         return <ConfigurationSection />;
+      case "emails":
+        return <EmailsSection />;
       case "settings":
         return <div className="p-8 text-center"><h2 className="text-2xl">Configuración - En desarrollo</h2></div>;
       default:
