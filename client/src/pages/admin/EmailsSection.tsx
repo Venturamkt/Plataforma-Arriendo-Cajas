@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { useQuery } from '@tanstack/react-query';
-import { Mail, Search, Eye, Filter, TrendingUp, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { Mail, Search, Eye, Filter, TrendingUp, Clock, CheckCircle, XCircle, Play, RefreshCw } from 'lucide-react';
 import DOMPurify from 'dompurify';
 
 interface EmailLog {
@@ -48,10 +48,13 @@ export default function EmailsSection() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedEmail, setSelectedEmail] = useState<EmailLog | null>(null);
   const [showEmailDialog, setShowEmailDialog] = useState(false);
+  const [selectedPreviewType, setSelectedPreviewType] = useState('pending');
+  const [showPreviewDialog, setShowPreviewDialog] = useState(false);
+  const [previewData, setPreviewData] = useState<{subject: string; htmlContent: string} | null>(null);
 
   // Fetch email logs
   const { data: emailLogsData, isLoading: emailLogsLoading } = useQuery({
-    queryKey: ['/api/admin/email-logs', { emailType: typeFilter, status: statusFilter, toEmail: searchQuery }],
+    queryKey: ['/api/admin/email-logs'],
     enabled: true
   });
 
@@ -59,6 +62,18 @@ export default function EmailsSection() {
   const { data: emailStats, isLoading: statsLoading } = useQuery({
     queryKey: ['/api/admin/email-stats'],
     enabled: true
+  });
+
+  // Fetch available email types
+  const { data: emailTypes, isLoading: typesLoading } = useQuery({
+    queryKey: ['/api/admin/email-types'],
+    enabled: true
+  });
+
+  // Fetch email preview (only when needed)
+  const { data: previewResponse, isLoading: previewLoading, refetch: refetchPreview } = useQuery({
+    queryKey: ['/api/admin/email-preview', selectedPreviewType],
+    enabled: false // Only fetch when explicitly requested
   });
 
   const emailLogs: EmailLog[] = emailLogsData?.logs || [];
@@ -105,6 +120,32 @@ export default function EmailsSection() {
   const viewEmailContent = (email: EmailLog) => {
     setSelectedEmail(email);
     setShowEmailDialog(true);
+  };
+
+  const handlePreviewEmail = async () => {
+    try {
+      const result = await refetchPreview();
+      if (result.data) {
+        setPreviewData({
+          subject: result.data.subject,
+          htmlContent: result.data.htmlContent
+        });
+        setShowPreviewDialog(true);
+      }
+    } catch (error) {
+      console.error('Error loading preview:', error);
+    }
+  };
+
+  const getTypeColor = (color: string) => {
+    const colors: Record<string, string> = {
+      yellow: 'bg-yellow-100 text-yellow-800',
+      orange: 'bg-orange-100 text-orange-800',
+      green: 'bg-green-100 text-green-800',
+      blue: 'bg-blue-100 text-blue-800',
+      purple: 'bg-purple-100 text-purple-800'
+    };
+    return colors[color] || 'bg-gray-100 text-gray-800';
   };
 
   return (
@@ -166,6 +207,85 @@ export default function EmailsSection() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Email Preview Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Play className="h-5 w-5" />
+            Vista Previa de Templates
+          </CardTitle>
+          <CardDescription>
+            Previsualiza cómo se ven los emails antes de ser enviados a los clientes
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-4 items-end">
+            <div className="flex-1">
+              <Label htmlFor="preview-type">Tipo de Email</Label>
+              <Select value={selectedPreviewType} onValueChange={setSelectedPreviewType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona un tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  {emailTypes?.map((type: any) => (
+                    <SelectItem key={type.id} value={type.id}>
+                      <div className="flex items-center gap-2">
+                        <span>{type.icon}</span>
+                        <span>{type.label}</span>
+                      </div>
+                    </SelectItem>
+                  )) || [
+                    <SelectItem key="pendiente" value="pendiente">📋 Pendiente</SelectItem>,
+                    <SelectItem key="pending_reminder" value="pending_reminder">⏰ Recordatorio</SelectItem>,
+                    <SelectItem key="pagado" value="pagado">✅ Pagado</SelectItem>,
+                    <SelectItem key="en_ruta" value="en_ruta">🚚 En Ruta</SelectItem>,
+                    <SelectItem key="entregada" value="entregada">📦 Entregada</SelectItem>,
+                    <SelectItem key="retirada" value="retirada">✅ Retirada</SelectItem>,
+                    <SelectItem key="finalizada" value="finalizada">🎉 Finalizada</SelectItem>
+                  ]}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button 
+              onClick={handlePreviewEmail}
+              disabled={previewLoading}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {previewLoading ? (
+                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Eye className="h-4 w-4 mr-2" />
+              )}
+              Ver Vista Previa
+            </Button>
+          </div>
+          
+          {emailTypes && (
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {emailTypes.map((type: any) => (
+                <div 
+                  key={type.id}
+                  className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                    selectedPreviewType === type.id 
+                      ? 'border-blue-500 bg-blue-50' 
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                  onClick={() => setSelectedPreviewType(type.id)}
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-lg">{type.icon}</span>
+                    <Badge className={getTypeColor(type.color)}>
+                      {type.label}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-gray-600">{type.description}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Filters */}
       <Card>
@@ -396,6 +516,58 @@ export default function EmailsSection() {
           
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowEmailDialog(false)}>
+              Cerrar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Email Preview Dialog */}
+      <Dialog open={showPreviewDialog} onOpenChange={setShowPreviewDialog}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Vista Previa del Template</DialogTitle>
+          </DialogHeader>
+          
+          {previewData && (
+            <div className="space-y-4">
+              {/* Preview Info */}
+              <div className="p-4 bg-blue-50 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <Eye className="h-5 w-5 text-blue-600" />
+                  <Label className="font-semibold text-blue-800">Previsualización con datos de ejemplo</Label>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="font-semibold">Tipo:</Label>
+                    <Badge className="ml-2">
+                      {emailTypes?.find((t: any) => t.id === selectedPreviewType)?.icon} {emailTypes?.find((t: any) => t.id === selectedPreviewType)?.label}
+                    </Badge>
+                  </div>
+                  <div>
+                    <Label className="font-semibold">Cliente ejemplo:</Label>
+                    <span className="text-sm ml-2">María González</span>
+                  </div>
+                  <div className="col-span-1 md:col-span-2">
+                    <Label className="font-semibold">Asunto:</Label>
+                    <p className="text-sm font-mono bg-white p-2 rounded border mt-1">{previewData.subject}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Preview HTML Content */}
+              <div>
+                <Label className="font-semibold">Contenido del Email:</Label>
+                <div 
+                  className="mt-2 border rounded-lg p-4 bg-white max-h-96 overflow-y-auto"
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(previewData.htmlContent) }}
+                />
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowPreviewDialog(false)}>
               Cerrar
             </Button>
           </DialogFooter>

@@ -711,7 +711,7 @@ export function generateEmailPreview(emailType: string): { subject: string; html
   const trackingUrl = generateTrackingUrl(data.trackingCode, data.trackingToken);
 
   switch (emailType) {
-    case 'pendiente':
+    case 'pending':
       return {
         subject: `📋 Cotización Recibida - Código ${escapeHtmlServer(data.trackingCode)}`,
         htmlContent: generatePendingEmailHTML(data, trackingUrl)
@@ -721,27 +721,27 @@ export function generateEmailPreview(emailType: string): { subject: string; html
         subject: `⏰ Recordatorio: Tu cotización está pendiente - ${escapeHtmlServer(data.trackingCode)}`,
         htmlContent: generatePendingReminderHTML(data, trackingUrl)
       };
-    case 'pagado':
+    case 'paid':
       return {
         subject: `✅ ¡Pago Confirmado! - Código ${escapeHtmlServer(data.trackingCode)}`,
         htmlContent: generatePaidEmailHTML(data, trackingUrl)
       };
-    case 'en_ruta':
+    case 'on_route':
       return {
         subject: `🚚 Tu repartidor va en camino - ${escapeHtmlServer(data.trackingCode)}`,
         htmlContent: generateOnRouteEmailHTML(data, trackingUrl)
       };
-    case 'entregada':
+    case 'delivered':
       return {
         subject: `📦 ¡Cajas entregadas! - Código ${escapeHtmlServer(data.trackingCode)}`,
         htmlContent: generateDeliveredEmailHTML(data, trackingUrl)
       };
-    case 'retirada':
+    case 'picked_up':
       return {
         subject: `✅ Cajas retiradas - Devolución de garantía - ${escapeHtmlServer(data.trackingCode)}`,
         htmlContent: generatePickedUpEmailHTML(data, trackingUrl)
       };
-    case 'finalizada':
+    case 'completed':
       return {
         subject: `🎉 ¡Arriendo completado! Ayúdanos con una reseña - ${escapeHtmlServer(data.trackingCode)}`,
         htmlContent: generateCompletedEmailHTML(data, trackingUrl)

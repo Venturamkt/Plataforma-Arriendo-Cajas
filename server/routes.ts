@@ -1335,7 +1335,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { emailType } = req.params;
       
-      const validTypes = ['pendiente', 'pending_reminder', 'pagado', 'en_ruta', 'entregada', 'retirada', 'finalizada'];
+      const validTypes = ['pending', 'pending_reminder', 'paid', 'on_route', 'delivered', 'picked_up', 'completed'];
       
       if (!validTypes.includes(emailType)) {
         return res.status(400).json({ 
@@ -1363,7 +1363,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const emailTypes = [
         { 
-          id: 'pendiente', 
+          id: 'pending', 
           label: 'Pendiente', 
           description: 'Email inicial cuando se crea una cotización',
           icon: '📋',
@@ -1377,35 +1377,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
           color: 'orange'
         },
         { 
-          id: 'pagado', 
+          id: 'paid', 
           label: 'Pagado', 
           description: 'Confirmación de pago recibido',
           icon: '✅',
           color: 'green'
         },
         { 
-          id: 'en_ruta', 
+          id: 'on_route', 
           label: 'En Ruta', 
           description: 'Repartidor en camino con datos del conductor',
           icon: '🚚',
           color: 'blue'
         },
         { 
-          id: 'entregada', 
+          id: 'delivered', 
           label: 'Entregada', 
           description: 'Cajas entregadas exitosamente',
           icon: '📦',
           color: 'green'
         },
         { 
-          id: 'retirada', 
+          id: 'picked_up', 
           label: 'Retirada', 
           description: 'Cajas retiradas, procesando devolución de garantía',
           icon: '✅',
           color: 'purple'
         },
         { 
-          id: 'finalizada', 
+          id: 'completed', 
           label: 'Finalizada', 
           description: 'Arriendo completado, solicitud de reseña',
           icon: '🎉',
