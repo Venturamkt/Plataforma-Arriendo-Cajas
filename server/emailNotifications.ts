@@ -153,6 +153,94 @@ export async function sendRentalCreatedEmail(data: RentalEmailData): Promise<boo
   });
 }
 
+// Email recordatorio para arriendos pendientes (5 días antes)
+export async function sendPendingReminderEmail(data: RentalEmailData): Promise<boolean> {
+  const deliveryDate = new Date(data.deliveryDate).toLocaleDateString('es-CL', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+
+  const subject = `Tu arriendo está reservado para ${deliveryDate}`;
+  
+  const basePrice = (data.totalAmount || 0) - (data.guaranteeAmount || 0) - 
+    (data.additionalProducts && data.additionalProducts.length > 0 ? 
+      data.additionalProducts.reduce((sum, product) => sum + (product.quantity * product.price), 0) : 0);
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <title>Tu arriendo está reservado</title>
+    </head>
+    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 500px; margin: 0 auto; padding: 20px;">
+      <div style="text-align: center; margin-bottom: 30px;">
+        <h1 style="color: #2E5CA6; margin: 0; font-size: 24px;">¡Hola ${data.customerName}!</h1>
+        <p style="color: #666; margin: 10px 0 0 0;">Te recordamos tu arriendo programado</p>
+      </div>
+      
+      <div style="background: #f8f9fa; padding: 25px; border-radius: 8px; margin: 20px 0;">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <div style="color: #C8201D; font-size: 18px; font-weight: bold;">📅 ${deliveryDate}</div>
+          <p style="margin: 5px 0 0 0; color: #666; font-size: 14px;">Fecha de entrega programada</p>
+        </div>
+        
+        <div style="border-top: 1px solid #ddd; padding-top: 20px;">
+          <div style="margin: 8px 0;">
+            <span style="font-weight: bold;">📦 Cantidad:</span> ${data.boxQuantity} cajas
+          </div>
+          <div style="margin: 8px 0;">
+            <span style="font-weight: bold;">📍 Dirección:</span> ${data.deliveryAddress}
+          </div>
+          <div style="margin: 8px 0; padding: 10px; background: white; border-radius: 5px;">
+            <span style="font-weight: bold; color: #2E5CA6;">💰 Total:</span> 
+            <span style="font-size: 18px; font-weight: bold; color: #2E5CA6;">$${(data.totalAmount || 0).toLocaleString('es-CL')}</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="background: #fff3cd; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
+        <p style="margin: 0; font-weight: bold; color: #856404;">
+          ⏰ Solo necesitas confirmar el pago para asegurar tus cajas
+        </p>
+      </div>
+      
+      <div style="text-align: center; margin: 25px 0;">
+        <p style="margin: 10px 0; color: #666;">¿Tienes dudas o quieres confirmar?</p>
+        
+        <div style="margin: 15px 0;">
+          <a href="mailto:contacto@arriendocajas.cl" style="display: inline-block; background: #2E5CA6; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; margin: 5px;">
+            ✉️ Responder Email
+          </a>
+        </div>
+        
+        <div style="margin: 15px 0;">
+          <a href="https://wa.me/56987290995" style="display: inline-block; background: #25D366; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; margin: 5px;">
+            💬 WhatsApp
+          </a>
+        </div>
+      </div>
+      
+      <div style="text-align: center; border-top: 1px solid #ddd; padding-top: 20px; margin-top: 30px;">
+        <p style="color: #666; font-size: 12px; margin: 0;">
+          Arriendo Cajas - Código: ${data.trackingCode}<br>
+          Este email fue enviado automáticamente
+        </p>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return await sendEmail({
+    to: data.customerEmail,
+    subject,
+    html: htmlContent
+  });
+}
+
 // Email para arriendo pagado
 export async function sendRentalPaidEmail(data: RentalEmailData): Promise<boolean> {
   const trackingUrl = generateTrackingUrl(data.trackingCode, data.trackingToken);
