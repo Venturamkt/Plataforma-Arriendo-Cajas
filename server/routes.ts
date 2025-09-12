@@ -8,7 +8,7 @@ import { insertCustomerSchema, insertDriverSchema, insertRentalSchema, insertPay
 import { z } from "zod";
 import bcrypt from "bcrypt";
 import { sendEmail, emailTemplates, sendDriverAssignmentEmail } from "./emailService";
-import { sendStatusChangeEmail, sendRentalOnRouteEmail, type RentalEmailData } from "./emailNotifications";
+import { sendStatusChangeEmail, sendRentalOnRouteEmail, generateEmailPreview, type RentalEmailData } from "./emailNotifications";
 import { generateTrackingCode, generateTrackingUrl } from "./trackingUtils";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -1327,6 +1327,96 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching email stats:", error);
       res.status(500).json({ error: "Error fetching email stats" });
+    }
+  });
+
+  // Email Preview Endpoints (requires admin auth)
+  app.get("/api/admin/email-preview/:emailType", requireAuth, async (req, res) => {
+    try {
+      const { emailType } = req.params;
+      
+      const validTypes = ['pendiente', 'pending_reminder', 'pagado', 'en_ruta', 'entregada', 'retirada', 'finalizada'];
+      
+      if (!validTypes.includes(emailType)) {
+        return res.status(400).json({ 
+          error: "Tipo de email no válido", 
+          validTypes 
+        });
+      }
+      
+      const preview = generateEmailPreview(emailType);
+      
+      res.json({
+        emailType,
+        subject: preview.subject,
+        htmlContent: preview.htmlContent,
+        generatedAt: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Error generating email preview:", error);
+      res.status(500).json({ error: "Error generating email preview" });
+    }
+  });
+
+  // Get all available email types
+  app.get("/api/admin/email-types", requireAuth, async (req, res) => {
+    try {
+      const emailTypes = [
+        { 
+          id: 'pendiente', 
+          label: 'Pendiente', 
+          description: 'Email inicial cuando se crea una cotización',
+          icon: '📋',
+          color: 'yellow'
+        },
+        { 
+          id: 'pending_reminder', 
+          label: 'Recordatorio', 
+          description: 'Recordatorio de pago después de 5 días',
+          icon: '⏰',
+          color: 'orange'
+        },
+        { 
+          id: 'pagado', 
+          label: 'Pagado', 
+          description: 'Confirmación de pago recibido',
+          icon: '✅',
+          color: 'green'
+        },
+        { 
+          id: 'en_ruta', 
+          label: 'En Ruta', 
+          description: 'Repartidor en camino con datos del conductor',
+          icon: '🚚',
+          color: 'blue'
+        },
+        { 
+          id: 'entregada', 
+          label: 'Entregada', 
+          description: 'Cajas entregadas exitosamente',
+          icon: '📦',
+          color: 'green'
+        },
+        { 
+          id: 'retirada', 
+          label: 'Retirada', 
+          description: 'Cajas retiradas, procesando devolución de garantía',
+          icon: '✅',
+          color: 'purple'
+        },
+        { 
+          id: 'finalizada', 
+          label: 'Finalizada', 
+          description: 'Arriendo completado, solicitud de reseña',
+          icon: '🎉',
+          color: 'orange'
+        }
+      ];
+      
+      res.json(emailTypes);
+    } catch (error) {
+      console.error("Error fetching email types:", error);
+      res.status(500).json({ error: "Error fetching email types" });
     }
   });
 

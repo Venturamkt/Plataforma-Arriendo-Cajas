@@ -680,6 +680,489 @@ export async function sendRentalCompletedEmail(data: RentalEmailData): Promise<b
   }, htmlContent, data.rentalId, data.customerId, data.customerName);
 }
 
+// FUNCIONES DE PREVISUALIZACIÓN (solo generan HTML sin enviar)
+
+// Datos de ejemplo para previsualizaciones
+const SAMPLE_DATA: RentalEmailData = {
+  customerName: 'María González',
+  customerEmail: 'maria.gonzalez@email.com',
+  trackingCode: 'AC240912',
+  trackingToken: 'XY5Z9K',
+  boxQuantity: 15,
+  deliveryDate: '2024-09-15',
+  pickupDate: '2024-09-22',
+  deliveryAddress: 'Av. Providencia 1234, Providencia, Santiago',
+  driverName: 'Carlos Martínez',
+  driverPhone: '+56 9 8765 4321',
+  status: 'pendiente',
+  totalAmount: 45000,
+  baseRentalPrice: 30000,
+  guaranteeAmount: 10000,
+  additionalProducts: [
+    { name: 'Carrito plegable', quantity: 1, price: 15000 },
+    { name: 'Correa Ratchet', quantity: 2, price: 6000 }
+  ],
+  rentalId: 'sample-123',
+  customerId: 'customer-456'
+};
+
+export function generateEmailPreview(emailType: string): { subject: string; htmlContent: string } {
+  const data = SAMPLE_DATA;
+  const trackingUrl = generateTrackingUrl(data.trackingCode, data.trackingToken);
+
+  switch (emailType) {
+    case 'pendiente':
+      return {
+        subject: `📋 Cotización Recibida - Código ${escapeHtmlServer(data.trackingCode)}`,
+        htmlContent: generatePendingEmailHTML(data, trackingUrl)
+      };
+    case 'pending_reminder':
+      return {
+        subject: `⏰ Recordatorio: Tu cotización está pendiente - ${escapeHtmlServer(data.trackingCode)}`,
+        htmlContent: generatePendingReminderHTML(data, trackingUrl)
+      };
+    case 'pagado':
+      return {
+        subject: `✅ ¡Pago Confirmado! - Código ${escapeHtmlServer(data.trackingCode)}`,
+        htmlContent: generatePaidEmailHTML(data, trackingUrl)
+      };
+    case 'en_ruta':
+      return {
+        subject: `🚚 Tu repartidor va en camino - ${escapeHtmlServer(data.trackingCode)}`,
+        htmlContent: generateOnRouteEmailHTML(data, trackingUrl)
+      };
+    case 'entregada':
+      return {
+        subject: `📦 ¡Cajas entregadas! - Código ${escapeHtmlServer(data.trackingCode)}`,
+        htmlContent: generateDeliveredEmailHTML(data, trackingUrl)
+      };
+    case 'retirada':
+      return {
+        subject: `✅ Cajas retiradas - Devolución de garantía - ${escapeHtmlServer(data.trackingCode)}`,
+        htmlContent: generatePickedUpEmailHTML(data, trackingUrl)
+      };
+    case 'finalizada':
+      return {
+        subject: `🎉 ¡Arriendo completado! Ayúdanos con una reseña - ${escapeHtmlServer(data.trackingCode)}`,
+        htmlContent: generateCompletedEmailHTML(data, trackingUrl)
+      };
+    default:
+      return {
+        subject: 'Template no encontrado',
+        htmlContent: '<p>Tipo de email no válido</p>'
+      };
+  }
+}
+
+// Funciones auxiliares para generar HTML (extraídas de las funciones existentes)
+function generatePendingEmailHTML(data: RentalEmailData, trackingUrl: string): string {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <title>Cotización Recibida</title>
+    </head>
+    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background: linear-gradient(135deg, #2E5CA6 0%, #C8201D 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+        <h1 style="color: white; margin: 0; font-size: 28px;">📋 Cotización Recibida</h1>
+        <p style="color: white; margin: 10px 0 0 0; font-size: 16px;">Tu código de seguimiento: <strong>${escapeHtmlServer(data.trackingCode)}</strong></p>
+      </div>
+      
+      <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
+        <h2 style="color: #2E5CA6; margin-top: 0;">Hola ${escapeHtmlServer(data.customerName)},</h2>
+        
+        <p>Hemos recibido tu solicitud de arriendo. Se encuentra en estado <strong>PENDIENTE</strong>. <span style="background: #fff3cd; padding: 2px 6px; border-radius: 3px; color: #856404;">Solo al pagar se confirma el arriendo</span> y puedes tener tus cajas aseguradas.</p>
+        
+        <!-- PRECIO TOTAL EN GRANDE -->
+        <div style="background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%); padding: 25px; border-radius: 10px; margin: 20px 0; text-align: center;">
+          <h2 style="color: white; margin: 0; font-size: 24px;">💰 PRECIO TOTAL</h2>
+          <div style="color: white; font-size: 36px; font-weight: bold; margin: 10px 0;">
+            $${(data.totalAmount || 0).toLocaleString('es-CL')}
+          </div>
+          <p style="color: #e8f5e8; margin: 0; font-size: 14px;">Precio final del arriendo</p>
+        </div>
+
+        <!-- DESGLOSE DE PRECIOS -->
+        <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #4CAF50;">
+          <h3 style="margin-top: 0; color: #4CAF50;">📊 Desglose de Precios</h3>
+          <div style="border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 15px;">
+            <div style="display: flex; justify-content: space-between; margin: 8px 0;">
+              <span><strong>Arriendo ${data.boxQuantity} cajas:</strong></span>
+              <span><strong>$${(data.baseRentalPrice || 0).toLocaleString('es-CL')}</strong></span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin: 8px 0;">
+              <span><strong>Garantía (reembolsable):</strong></span>
+              <span><strong>$${(data.guaranteeAmount || 0).toLocaleString('es-CL')}</strong></span>
+            </div>
+            ${data.additionalProducts?.map(product => `
+              <div style="display: flex; justify-content: space-between; margin: 8px 0;">
+                <span>${escapeHtmlServer(product.name)} (${product.quantity}):</span>
+                <span>$${product.price.toLocaleString('es-CL')}</span>
+              </div>
+            `).join('') || ''}
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 18px; font-weight: bold; color: #4CAF50;">
+            <span>TOTAL:</span>
+            <span>$${(data.totalAmount || 0).toLocaleString('es-CL')}</span>
+          </div>
+        </div>
+        
+        <!-- DETALLES DEL ARRIENDO -->
+        <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2E5CA6;">
+          <h3 style="margin-top: 0; color: #2E5CA6;">📋 Detalles del Arriendo</h3>
+          <div style="margin: 10px 0;"><strong>📦 Cantidad:</strong> ${data.boxQuantity} cajas</div>
+          <div style="margin: 10px 0;"><strong>📅 Entrega:</strong> ${data.deliveryDate}</div>
+          <div style="margin: 10px 0;"><strong>📅 Retiro:</strong> ${data.pickupDate}</div>
+          <div style="margin: 10px 0;"><strong>📍 Dirección:</strong> ${escapeHtmlServer(data.deliveryAddress)}</div>
+        </div>
+        
+        <!-- INSTRUCCIONES DE PAGO -->
+        <div style="background: #e3f2fd; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #1976d2;">
+          <h3 style="margin-top: 0; color: #1976d2;">💳 Instrucciones de Pago</h3>
+          <p style="margin: 0;">Para confirmar tu arriendo, realiza la transferencia por el monto total y envíanos el comprobante por WhatsApp.</p>
+        </div>
+        
+        <!-- BOTÓN DE SEGUIMIENTO -->
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${trackingUrl}" style="background: linear-gradient(135deg, #2E5CA6 0%, #C8201D 100%); color: white; text-decoration: none; padding: 15px 30px; border-radius: 25px; font-weight: bold; display: inline-block;">
+            🔍 Seguir mi Arriendo
+          </a>
+        </div>
+        
+        <!-- CONTACTO -->
+        <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+          <p style="margin: 5px 0;">Si tienes alguna consulta, no dudes en contactarnos:</p>
+          <p style="margin: 5px 0;">✉️ <strong>Email:</strong> contacto@arriendocajas.cl</p>
+          <p style="margin: 5px 0;">💬 <strong>WhatsApp:</strong> <a href="https://wa.me/56987290995" style="color: #25D366; text-decoration: none;">+56 9 8729 0995</a></p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+function generatePendingReminderHTML(data: RentalEmailData, trackingUrl: string): string {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <title>Recordatorio - Pago Pendiente</title>
+    </head>
+    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background: linear-gradient(135deg, #ff9800 0%, #e65100 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+        <h1 style="color: white; margin: 0; font-size: 28px;">⏰ Recordatorio de Pago</h1>
+        <p style="color: white; margin: 10px 0 0 0; font-size: 16px;">Tu cotización está esperando confirmación</p>
+      </div>
+      
+      <div style="background: #fff8e1; padding: 30px; border-radius: 0 0 10px 10px;">
+        <h2 style="color: #e65100; margin-top: 0;">Hola ${escapeHtmlServer(data.customerName)},</h2>
+        
+        <p>Tu cotización <strong>${escapeHtmlServer(data.trackingCode)}</strong> está pendiente de pago desde hace 5 días. ¡No pierdas tu fecha de entrega programada!</p>
+        
+        <div style="background: linear-gradient(135deg, #ff5722 0%, #d84315 100%); padding: 25px; border-radius: 10px; margin: 20px 0; text-align: center;">
+          <h2 style="color: white; margin: 0; font-size: 24px;">💰 MONTO A PAGAR</h2>
+          <div style="color: white; font-size: 36px; font-weight: bold; margin: 10px 0;">
+            $${(data.totalAmount || 0).toLocaleString('es-CL')}
+          </div>
+          <p style="color: #ffccbc; margin: 0; font-size: 14px;">Entrega programada: ${data.deliveryDate}</p>
+        </div>
+        
+        <div style="background: #fff3e0; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ff9800;">
+          <h3 style="margin-top: 0; color: #ef6c00;">🚀 ¡Actúa Rápido!</h3>
+          <p style="margin: 0;">Confirma tu pago hoy para asegurar:</p>
+          <ul style="margin: 10px 0;">
+            <li>✅ Tu fecha de entrega del <strong>${data.deliveryDate}</strong></li>
+            <li>✅ Disponibilidad de las ${data.boxQuantity} cajas</li>
+            <li>✅ Precio bloqueado sin cambios</li>
+          </ul>
+        </div>
+        
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${trackingUrl}" style="background: linear-gradient(135deg, #ff5722 0%, #d84315 100%); color: white; text-decoration: none; padding: 15px 30px; border-radius: 25px; font-weight: bold; display: inline-block;">
+            💳 Confirmar Pago Ahora
+          </a>
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+          <p style="margin: 5px 0;">Si tienes alguna consulta, no dudes en contactarnos:</p>
+          <p style="margin: 5px 0;">✉️ <strong>Email:</strong> contacto@arriendocajas.cl</p>
+          <p style="margin: 5px 0;">💬 <strong>WhatsApp:</strong> <a href="https://wa.me/56987290995" style="color: #25D366; text-decoration: none;">+56 9 8729 0995</a></p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+function generatePaidEmailHTML(data: RentalEmailData, trackingUrl: string): string {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <title>Pago Confirmado</title>
+    </head>
+    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+        <h1 style="color: white; margin: 0; font-size: 28px;">✅ ¡Pago Confirmado!</h1>
+        <p style="color: white; margin: 10px 0 0 0; font-size: 16px;">Tu arriendo está confirmado - ${escapeHtmlServer(data.trackingCode)}</p>
+      </div>
+      
+      <div style="background: #f1f8e9; padding: 30px; border-radius: 0 0 10px 10px;">
+        <h2 style="color: #2E7D32; margin-top: 0;">¡Excelente ${escapeHtmlServer(data.customerName)}!</h2>
+        
+        <p>Tu pago ha sido confirmado exitosamente. Tu arriendo está <strong>CONFIRMADO</strong> y las cajas están reservadas para ti.</p>
+        
+        <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #4CAF50;">
+          <h3 style="margin-top: 0; color: #4CAF50;">📦 Resumen del Arriendo</h3>
+          <div style="margin: 10px 0;"><strong>📦 Cantidad:</strong> ${data.boxQuantity} cajas</div>
+          <div style="margin: 10px 0;"><strong>📅 Entrega:</strong> ${data.deliveryDate}</div>
+          <div style="margin: 10px 0;"><strong>📅 Retiro:</strong> ${data.pickupDate}</div>
+          <div style="margin: 10px 0;"><strong>📍 Dirección:</strong> ${escapeHtmlServer(data.deliveryAddress)}</div>
+          <div style="margin: 10px 0;"><strong>💰 Total pagado:</strong> $${(data.totalAmount || 0).toLocaleString('es-CL')}</div>
+        </div>
+        
+        <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <h3 style="margin-top: 0; color: #2E7D32;">📋 Próximos Pasos</h3>
+          <ol style="margin: 0; padding-left: 20px;">
+            <li style="margin: 8px 0;">Prepararemos tus cajas para la entrega</li>
+            <li style="margin: 8px 0;">Te asignaremos un repartidor y recibirás sus datos</li>
+            <li style="margin: 8px 0;">El día de entrega recibirás notificación cuando vaya en camino</li>
+          </ol>
+        </div>
+        
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${trackingUrl}" style="background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%); color: white; text-decoration: none; padding: 15px 30px; border-radius: 25px; font-weight: bold; display: inline-block;">
+            🔍 Seguir mi Arriendo
+          </a>
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+          <p style="margin: 5px 0;">Si tienes alguna consulta, no dudes en contactarnos:</p>
+          <p style="margin: 5px 0;">✉️ <strong>Email:</strong> contacto@arriendocajas.cl</p>
+          <p style="margin: 5px 0;">💬 <strong>WhatsApp:</strong> <a href="https://wa.me/56987290995" style="color: #25D366; text-decoration: none;">+56 9 8729 0995</a></p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+function generateOnRouteEmailHTML(data: RentalEmailData, trackingUrl: string): string {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <title>Repartidor en Camino</title>
+    </head>
+    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background: linear-gradient(135deg, #2196F3 0%, #1565C0 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+        <h1 style="color: white; margin: 0; font-size: 28px;">🚚 ¡Tu repartidor va en camino!</h1>
+        <p style="color: white; margin: 10px 0 0 0; font-size: 16px;">Código: ${escapeHtmlServer(data.trackingCode)}</p>
+      </div>
+      
+      <div style="background: #e3f2fd; padding: 30px; border-radius: 0 0 10px 10px;">
+        <h2 style="color: #1565C0; margin-top: 0;">Hola ${escapeHtmlServer(data.customerName)},</h2>
+        
+        <p>¡Buenas noticias! Tu repartidor ya salió y se dirige hacia tu dirección de entrega.</p>
+        
+        <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2196F3;">
+          <h3 style="margin-top: 0; color: #2196F3;">👨‍🚚 Datos del Repartidor</h3>
+          <div style="margin: 10px 0;"><strong>Conductor:</strong> ${escapeHtmlServer(data.driverName || 'Por asignar')}</div>
+          <div style="margin: 10px 0;"><strong>Teléfono:</strong> ${escapeHtmlServer(data.driverPhone || 'Por confirmar')}</div>
+          <div style="margin: 10px 0;"><strong>Tiempo estimado:</strong> 30-60 minutos</div>
+        </div>
+        
+        <div style="background: #fff3e0; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ff9800;">
+          <h3 style="margin-top: 0; color: #ef6c00;">📋 Prepárate para la Entrega</h3>
+          <ul style="margin: 10px 0; padding-left: 20px;">
+            <li>Asegúrate de estar disponible en: <strong>${escapeHtmlServer(data.deliveryAddress)}</strong></li>
+            <li>Ten un espacio preparado para las ${data.boxQuantity} cajas</li>
+            <li>El repartidor te llamará al llegar</li>
+          </ul>
+        </div>
+        
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${trackingUrl}" style="background: linear-gradient(135deg, #2196F3 0%, #1565C0 100%); color: white; text-decoration: none; padding: 15px 30px; border-radius: 25px; font-weight: bold; display: inline-block;">
+            🔍 Seguir Entrega
+          </a>
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+          <p style="margin: 5px 0;">Si tienes alguna consulta, no dudes en contactarnos:</p>
+          <p style="margin: 5px 0;">✉️ <strong>Email:</strong> contacto@arriendocajas.cl</p>
+          <p style="margin: 5px 0;">💬 <strong>WhatsApp:</strong> <a href="https://wa.me/56987290995" style="color: #25D366; text-decoration: none;">+56 9 8729 0995</a></p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+function generateDeliveredEmailHTML(data: RentalEmailData, trackingUrl: string): string {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <title>Cajas Entregadas</title>
+    </head>
+    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+        <h1 style="color: white; margin: 0; font-size: 28px;">📦 ¡Cajas entregadas!</h1>
+        <p style="color: white; margin: 10px 0 0 0; font-size: 16px;">Tu arriendo ${escapeHtmlServer(data.trackingCode)} está activo</p>
+      </div>
+      
+      <div style="background: #f1f8e9; padding: 30px; border-radius: 0 0 10px 10px;">
+        <h2 style="color: #2E7D32; margin-top: 0;">¡Perfecto ${escapeHtmlServer(data.customerName)}!</h2>
+        
+        <p>Tus ${data.boxQuantity} cajas han sido entregadas exitosamente. ¡Ya puedes usar tus cajas para tu mudanza!</p>
+        
+        <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #4CAF50;">
+          <h3 style="margin-top: 0; color: #4CAF50;">📅 Información del Retiro</h3>
+          <div style="margin: 10px 0;"><strong>Fecha de retiro programada:</strong> ${data.pickupDate}</div>
+          <div style="margin: 10px 0;"><strong>Dirección de retiro:</strong> ${escapeHtmlServer(data.deliveryAddress)}</div>
+          <div style="margin: 10px 0;"><strong>Te contactaremos:</strong> 1-2 días antes del retiro</div>
+        </div>
+        
+        <div style="background: #fff3e0; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ff9800;">
+          <h3 style="margin-top: 0; color: #ef6c00;">📋 Consejos Importantes</h3>
+          <ul style="margin: 10px 0; padding-left: 20px;">
+            <li>Cuida las cajas durante tu mudanza</li>
+            <li>Mantenlas secas y en buen estado</li>
+            <li>Limpia cualquier residuo antes del retiro</li>
+            <li>Ten las cajas listas para el día de retiro</li>
+          </ul>
+        </div>
+        
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${trackingUrl}" style="background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%); color: white; text-decoration: none; padding: 15px 30px; border-radius: 25px; font-weight: bold; display: inline-block;">
+            🔍 Ver mi Arriendo
+          </a>
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+          <p style="margin: 5px 0;">Si tienes alguna consulta, no dudes en contactarnos:</p>
+          <p style="margin: 5px 0;">✉️ <strong>Email:</strong> contacto@arriendocajas.cl</p>
+          <p style="margin: 5px 0;">💬 <strong>WhatsApp:</strong> <a href="https://wa.me/56987290995" style="color: #25D366; text-decoration: none;">+56 9 8729 0995</a></p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+function generatePickedUpEmailHTML(data: RentalEmailData, trackingUrl: string): string {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <title>Cajas Retiradas - Devolución de Garantía</title>
+    </head>
+    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background: linear-gradient(135deg, #9C27B0 0%, #6A1B9A 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+        <h1 style="color: white; margin: 0; font-size: 28px;">✅ Cajas retiradas exitosamente</h1>
+        <p style="color: white; margin: 10px 0 0 0; font-size: 16px;">Procesando devolución de garantía</p>
+      </div>
+      
+      <div style="background: #f3e5f5; padding: 30px; border-radius: 0 0 10px 10px;">
+        <h2 style="color: #6A1B9A; margin-top: 0;">¡Gracias ${escapeHtmlServer(data.customerName)}!</h2>
+        
+        <p>Hemos retirado exitosamente las ${data.boxQuantity} cajas de tu arriendo <strong>${escapeHtmlServer(data.trackingCode)}</strong>.</p>
+        
+        <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #9C27B0;">
+          <h3 style="margin-top: 0; color: #9C27B0;">💰 Devolución de Garantía</h3>
+          <div style="margin: 10px 0;"><strong>Monto a devolver:</strong> $${(data.guaranteeAmount || 0).toLocaleString('es-CL')}</div>
+          <div style="margin: 10px 0;"><strong>Estado:</strong> <span style="color: #4CAF50;">En proceso</span></div>
+          <div style="margin: 10px 0;"><strong>Tiempo estimado:</strong> 1-3 días hábiles</div>
+        </div>
+        
+        <div style="background: #e1f5fe; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2196F3;">
+          <h3 style="margin-top: 0; color: #1976d2;">📋 Datos Bancarios</h3>
+          <p style="margin: 0;">Para procesar la devolución, necesitamos que nos envíes por WhatsApp:</p>
+          <ul style="margin: 10px 0; padding-left: 20px;">
+            <li>Nombre completo del titular</li>
+            <li>RUT del titular</li>
+            <li>Banco</li>
+            <li>Tipo de cuenta (corriente/ahorro)</li>
+            <li>Número de cuenta</li>
+          </ul>
+        </div>
+        
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="https://wa.me/56987290995" style="background: linear-gradient(135deg, #25D366 0%, #1BAE42 100%); color: white; text-decoration: none; padding: 15px 30px; border-radius: 25px; font-weight: bold; display: inline-block;">
+            💬 Enviar Datos Bancarios
+          </a>
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+          <p style="margin: 5px 0;">Si tienes alguna consulta, no dudes en contactarnos:</p>
+          <p style="margin: 5px 0;">✉️ <strong>Email:</strong> contacto@arriendocajas.cl</p>
+          <p style="margin: 5px 0;">💬 <strong>WhatsApp:</strong> <a href="https://wa.me/56987290995" style="color: #25D366; text-decoration: none;">+56 9 8729 0995</a></p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+function generateCompletedEmailHTML(data: RentalEmailData, trackingUrl: string): string {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <title>Arriendo Completado - Ayúdanos con una Reseña</title>
+    </head>
+    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+        <h1 style="color: white; margin: 0; font-size: 28px;">🎉 ¡Arriendo completado!</h1>
+        <p style="color: white; margin: 10px 0 0 0; font-size: 16px;">Gracias por confiar en nosotros</p>
+      </div>
+      
+      <div style="background: #fff8e1; padding: 30px; border-radius: 0 0 10px 10px;">
+        <h2 style="color: #F57C00; margin-top: 0;">¡Muchas gracias ${escapeHtmlServer(data.customerName)}!</h2>
+        
+        <p>Tu arriendo <strong>${escapeHtmlServer(data.trackingCode)}</strong> ha sido completado exitosamente. Esperamos que nuestro servicio haya sido de gran ayuda en tu mudanza.</p>
+        
+        <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #FF9800;">
+          <h3 style="margin-top: 0; color: #FF9800;">⭐ ¿Te gustaría ayudarnos?</h3>
+          <p style="margin: 0;">Tu opinión es muy valiosa para nosotros. Si estás conforme con el servicio, nos ayudarías muchísimo dejando una reseña en Google Maps.</p>
+        </div>
+        
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="https://maps.google.com/search/arriendo+cajas+chile" style="background: linear-gradient(135deg, #4285F4 0%, #1565C0 100%); color: white; text-decoration: none; padding: 15px 30px; border-radius: 25px; font-weight: bold; display: inline-block;">
+            ⭐ Dejar Reseña en Google
+          </a>
+        </div>
+        
+        <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <h3 style="margin-top: 0; color: #2E7D32;">🔄 ¿Necesitas cajas nuevamente?</h3>
+          <p style="margin: 0;">¡Estaremos encantados de ayudarte en tu próxima mudanza! Contáctanos cuando lo necesites.</p>
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+          <p style="margin: 5px 0;">Si tienes alguna consulta, no dudes en contactarnos:</p>
+          <p style="margin: 5px 0;">✉️ <strong>Email:</strong> contacto@arriendocajas.cl</p>
+          <p style="margin: 5px 0;">💬 <strong>WhatsApp:</strong> <a href="https://wa.me/56987290995" style="color: #25D366; text-decoration: none;">+56 9 8729 0995</a></p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
 // Función helper para enviar email según el estado
 export async function sendStatusChangeEmail(
   status: string,
