@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient-simple";
 import { 
   Calendar, 
   Users, 
@@ -15,7 +16,8 @@ import {
   TrendingUp,
   Clock,
   CheckCircle,
-  Mail
+  Mail,
+  LogOut
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -74,6 +76,32 @@ export default function AdminDashboard() {
   }, []);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [period, setPeriod] = useState("today");
+
+  // Función de logout
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Logout failed');
+      return response.json();
+    },
+    onSuccess: () => {
+      // Clear all cached data
+      queryClient.clear();
+      // Redirect to home page
+      window.location.href = "/";
+    },
+    onError: () => {
+      // Even if logout fails, redirect to home
+      window.location.href = "/";
+    }
+  });
+
+  const handleLogout = () => {
+    logoutMutation.mutate();
+  };
 
   // Obtener datos reales del dashboard desde la API
   const { data: dashboardData, isLoading: dashboardLoading, error: dashboardError } = useQuery({
@@ -343,6 +371,17 @@ export default function AdminDashboard() {
 
           <div className="flex items-center gap-4">
             <span className="text-sm text-gray-600">Portal Administrador</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleLogout}
+              className="flex items-center gap-2 text-gray-600 hover:text-red-600"
+              disabled={logoutMutation.isPending}
+              data-testid="button-logout"
+            >
+              <LogOut className="h-4 w-4" />
+              <span className="hidden sm:inline">Cerrar Sesión</span>
+            </Button>
             <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
               <span className="text-white text-sm font-medium">A</span>
             </div>
