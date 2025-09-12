@@ -250,6 +250,33 @@ export const paymentsRelations = relations(payments, ({ one }) => ({
   }),
 }));
 
+// Logs de emails enviados
+export const emailLogs = pgTable("email_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  emailType: varchar("email_type").notNull(), // "pending", "paid", "delivered", "reminder", etc.
+  toEmail: varchar("to_email").notNull(),
+  toName: varchar("to_name"),
+  subject: text("subject").notNull(),
+  htmlContent: text("html_content").notNull(),
+  rentalId: varchar("rental_id").references(() => rentals.id),
+  customerId: varchar("customer_id").references(() => customers.id),
+  status: varchar("status", { enum: ["sent", "failed", "pending"] }).default("sent"),
+  errorMessage: text("error_message"),
+  sentAt: timestamp("sent_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const emailLogsRelations = relations(emailLogs, ({ one }) => ({
+  rental: one(rentals, {
+    fields: [emailLogs.rentalId],
+    references: [rentals.id],
+  }),
+  customer: one(customers, {
+    fields: [emailLogs.customerId],
+    references: [customers.id],
+  }),
+}));
+
 // Schemas de validación
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -276,6 +303,7 @@ export const insertPaymentSchema = createInsertSchema(payments);
 export const insertBoxSchema = createInsertSchema(boxes);
 export const insertInventorySchema = createInsertSchema(inventory);
 export const insertRentalItemSchema = createInsertSchema(rentalItems);
+export const insertEmailLogSchema = createInsertSchema(emailLogs);
 
 // Tipos
 export type User = typeof users.$inferSelect;
@@ -288,6 +316,7 @@ export type Payment = typeof payments.$inferSelect;
 export type Box = typeof boxes.$inferSelect;
 export type Inventory = typeof inventory.$inferSelect;
 export type RentalItem = typeof rentalItems.$inferSelect;
+export type EmailLog = typeof emailLogs.$inferSelect;
 export type Activity = typeof activities.$inferSelect;
 export type NotificationTemplate = typeof notificationTemplates.$inferSelect;
 export type CompanySettings = typeof companySettings.$inferSelect;
