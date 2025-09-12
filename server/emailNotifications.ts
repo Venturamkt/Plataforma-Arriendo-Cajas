@@ -850,40 +850,45 @@ function generatePendingReminderHTML(data: RentalEmailData, trackingUrl: string)
     <head>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1">
-      <title>Recordatorio - Pago Pendiente</title>
+      <title>Recordatorio - Tu arriendo se acerca</title>
     </head>
     <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <div style="background: linear-gradient(135deg, #ff9800 0%, #e65100 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-        <h1 style="color: white; margin: 0; font-size: 28px;">⏰ Recordatorio de Pago</h1>
-        <p style="color: white; margin: 10px 0 0 0; font-size: 16px;">Tu cotización está esperando confirmación</p>
+      <div style="background: linear-gradient(135deg, #2196F3 0%, #1565C0 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+        <h1 style="color: white; margin: 0; font-size: 28px;">📅 Tu arriendo se acerca</h1>
+        <p style="color: white; margin: 10px 0 0 0; font-size: 16px;">Faltan solo 5 días para tu entrega</p>
       </div>
       
-      <div style="background: #fff8e1; padding: 30px; border-radius: 0 0 10px 10px;">
-        <h2 style="color: #e65100; margin-top: 0;">Hola ${escapeHtmlServer(data.customerName)},</h2>
+      <div style="background: #e3f2fd; padding: 30px; border-radius: 0 0 10px 10px;">
+        <h2 style="color: #1565C0; margin-top: 0;">Hola ${escapeHtmlServer(data.customerName)},</h2>
         
-        <p>Tu cotización <strong>${escapeHtmlServer(data.trackingCode)}</strong> está pendiente de pago desde hace 5 días. ¡No pierdas tu fecha de entrega programada!</p>
+        <p>Tu arriendo <strong>${escapeHtmlServer(data.trackingCode)}</strong> está programado para el <strong>${data.deliveryDate}</strong>. Nos falta confirmar el pago para tener todo listo.</p>
         
-        <div style="background: linear-gradient(135deg, #ff5722 0%, #d84315 100%); padding: 25px; border-radius: 10px; margin: 20px 0; text-align: center;">
-          <h2 style="color: white; margin: 0; font-size: 24px;">💰 MONTO A PAGAR</h2>
+        <div style="background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%); padding: 25px; border-radius: 10px; margin: 20px 0; text-align: center;">
+          <h2 style="color: white; margin: 0; font-size: 24px;">💰 MONTO TOTAL</h2>
           <div style="color: white; font-size: 36px; font-weight: bold; margin: 10px 0;">
             $${(data.totalAmount || 0).toLocaleString('es-CL')}
           </div>
-          <p style="color: #ffccbc; margin: 0; font-size: 14px;">Entrega programada: ${data.deliveryDate}</p>
+          <p style="color: #e8f5e8; margin: 0; font-size: 14px;">Entrega: ${data.deliveryDate}</p>
         </div>
         
         <div style="background: #fff3e0; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ff9800;">
-          <h3 style="margin-top: 0; color: #ef6c00;">🚀 ¡Actúa Rápido!</h3>
-          <p style="margin: 0;">Confirma tu pago hoy para asegurar:</p>
+          <h3 style="margin-top: 0; color: #ef6c00;">❓ ¿Tienes alguna duda?</h3>
+          <p style="margin: 0;">Si tienes preguntas sobre tu arriendo o necesitas hacer algún cambio, contáctanos lo antes posible:</p>
           <ul style="margin: 10px 0;">
-            <li>✅ Tu fecha de entrega del <strong>${data.deliveryDate}</strong></li>
-            <li>✅ Disponibilidad de las ${data.boxQuantity} cajas</li>
-            <li>✅ Precio bloqueado sin cambios</li>
+            <li>📞 <strong>WhatsApp:</strong> +56 9 8729 0995</li>
+            <li>✉️ <strong>Email:</strong> contacto@arriendocajas.cl</li>
+            <li>⏰ <strong>Horario:</strong> Lunes a Viernes 9:00 - 18:00</li>
           </ul>
         </div>
         
+        <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <h3 style="margin-top: 0; color: #2E7D32;">✅ Para confirmar tu arriendo</h3>
+          <p style="margin: 0;">Realiza la transferencia por el monto total y envíanos el comprobante por WhatsApp. Una vez confirmado el pago, coordinaremos la entrega.</p>
+        </div>
+        
         <div style="text-align: center; margin: 30px 0;">
-          <a href="${trackingUrl}" style="background: linear-gradient(135deg, #ff5722 0%, #d84315 100%); color: white; text-decoration: none; padding: 15px 30px; border-radius: 25px; font-weight: bold; display: inline-block;">
-            💳 Confirmar Pago Ahora
+          <a href="${trackingUrl}" style="background: linear-gradient(135deg, #2196F3 0%, #1565C0 100%); color: white; text-decoration: none; padding: 15px 30px; border-radius: 25px; font-weight: bold; display: inline-block;">
+            📋 Ver mi Arriendo
           </a>
         </div>
         
